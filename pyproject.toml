@@ -11,6 +11,7 @@ dependencies = [
     "python-dotenv",
     "drf-spectacular",
     "requests",
+    "pre-commit",
 ]
 
 [tool.uv]
