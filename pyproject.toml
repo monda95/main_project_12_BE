@@ -1,0 +1,53 @@
+[project]
+name = "main-project"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "django",
+    "djangorestframework",
+    "psycopg2-binary",
+    "python-dotenv",
+    "drf-spectacular",
+    "requests",
+]
+
+[tool.uv]
+# uv 관련 설정 (기본 환경)
+managed = true
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["tests.py", "test_*.py", "*_test.py"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+# black 대체 (포매팅)
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+docstring-code-format = true
+
+# isort 대체 (import 정렬)
+[tool.ruff.lint]
+select = ["E", "F", "I"]  # E=pycodestyle, F=pyflakes, I=import 정렬
+
+# flake8/pylint 일부 대체
+ignore = [
+    "E501",  # line too long (black이 처리)
+]
+
+# mypy 일부 타입 검사도 가능
+[tool.ruff.lint.typing]
+runtime-checks = true
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-django>=4.11.1",
+    "ruff>=0.12.12",
+]
