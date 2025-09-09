@@ -1,33 +1,39 @@
-version: '3.9'
+version: "3.9"
+
 services:
-  web:
-    build: .
-    command: python manage.py runserver 0.0.0.0:8000
+  db:
+    image: postgres:16-alpine
+    container_name: app-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - ./backend:/app
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h 127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app-web
+    depends_on:
+      db:
+        condition: service_healthy
     env_file:
       - .env
     ports:
       - "8000:8000"
-    depends_on:
-      - db
-
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: main_project
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - "8080:8080"
+      - .:/app        # 개발 중 핫리로드. (운영 배포 시 제거 권장)
+    restart: unless-stopped
 
 volumes:
-  pgdata:
+  pg_data:

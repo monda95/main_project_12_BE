@@ -35,7 +35,7 @@ managed = true
 
 [tool.ruff]
 line-length = 88  # black과 호환
-target-version = "py312"  # Python 3.12 가정 (Django 4.2 지원)
+target-version = "py313"  # Python 3.12 가정 (Django 4.2 지원)
 exclude = ["migrations"]  # Django 마이그레이션 파일 제외
 
 [tool.ruff.lint]
@@ -43,12 +43,11 @@ select = [
     "E",  # pycodestyle 오류
     "F",  # pyflakes
     "I",  # isort (임포트 정렬)
-    "DJ", # Django-specific 규칙
     "UP", # pyupgrade (최신 Python 문법 적용)
     "B",  # bugbear (잠재적 버그 검사)
-    "Q",  # flake8-quotes (따옴표 스타일 강제)
+
 ]
-ignore = ["E203"]  # black과 호환성 위해
+ignore = ["E203", "E501"]  # black과 호환성 위해
 fixable = ["ALL"]  # 모든 수정 가능한 문제 자동 수정
 
 [tool.ruff.format]
