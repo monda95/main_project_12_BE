@@ -5,50 +5,54 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "django",
-    "djangorestframework",
-    "psycopg2-binary",
-    "python-dotenv",
-    "drf-spectacular",
-    "requests",
-    "pre-commit",
+    "django>=5.2.6",
+    "djangorestframework>=3.16.1",
+    "psycopg2-binary>=2.9.10",
+    "python-dotenv>=1.1.1",
+    "drf-spectacular>=0.28.0",
+    "requests>=2.32.5",
+    "pillow>=11.3.0",
+    "gunicorn>=21.2",
+    "uvicorn>=0.24.0",
+    "django-filter>=25.1",
+    "djangorestframework-simplejwt>=5.5.1",
 ]
-
-[tool.uv]
-# uv 관련 설정 (기본 환경)
-managed = true
-
-[tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "config.settings"
-python_files = ["tests.py", "test_*.py", "*_test.py"]
-
-[tool.ruff]
-line-length = 88
-target-version = "py311"
-
-# black 대체 (포매팅)
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-line-ending = "lf"
-docstring-code-format = true
-
-# isort 대체 (import 정렬)
-[tool.ruff.lint]
-select = ["E", "F", "I"]  # E=pycodestyle, F=pyflakes, I=import 정렬
-
-# flake8/pylint 일부 대체
-ignore = [
-    "E501",  # line too long (black이 처리)
-]
-
-# mypy 일부 타입 검사도 가능
-[tool.ruff.lint.typing]
-runtime-checks = true
 
 [dependency-groups]
 dev = [
     "pytest>=8.4.2",
     "pytest-django>=4.11.1",
     "ruff>=0.12.12",
+    "pre-commit>=4.3.0",
+    "pytest-cov>=6.2.1",
+
 ]
+
+
+[tool.uv]
+# uv 관련 설정 (기본 환경)
+managed = true
+
+[tool.ruff]
+line-length = 88  # black과 호환
+target-version = "py312"  # Python 3.12 가정 (Django 4.2 지원)
+exclude = ["migrations"]  # Django 마이그레이션 파일 제외
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle 오류
+    "F",  # pyflakes
+    "I",  # isort (임포트 정렬)
+    "DJ", # Django-specific 규칙
+    "UP", # pyupgrade (최신 Python 문법 적용)
+    "B",  # bugbear (잠재적 버그 검사)
+    "Q",  # flake8-quotes (따옴표 스타일 강제)
+]
+ignore = ["E203"]  # black과 호환성 위해
+fixable = ["ALL"]  # 모든 수정 가능한 문제 자동 수정
+
+[tool.ruff.format]
+quote-style = "double"  # black과 일치
+indent-style = "space"
+skip-magic-trailing-comma = false
+

@@ -317,6 +317,7 @@ Authorization: Bearer <access_token>
 - **시스템**: 4개
 
 ---
+# 📊 ERD
 ```mermaid
 erDiagram
     User {
@@ -359,7 +360,6 @@ erDiagram
 ```
 
 # 📊 데이터베이스 설계 명세서
-<br>
 
 ## 📋 테이블 구조
 
@@ -605,58 +605,6 @@ class Message(models.Model):
         return f"{self.role}: {self.content[:50]}..."
 ```
 
----
-
-## 🔧 Django 설정 예시
-
-### settings.py (데이터베이스 설정)
-```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DB_NAME', 'fluent_ai'),
-        'USER': os.environ.get('DB_USER', 'admin'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '3306'),
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
-    }
-}
-
-# 커스텀 User 모델 사용
-AUTH_USER_MODEL = 'your_app.User'
-```
-
-### requirements.txt (uv 사용 시 pyproject.toml)
-```toml
-[project]
-dependencies = [
-    "django>=4.2",
-    "djangorestframework>=3.14",
-    "mysqlclient>=2.1",
-    "python-decouple>=3.6",
-    "django-cors-headers>=4.0",
-    "djangorestframework-simplejwt>=5.2",
-]
-```
-
----
-
-## 🚀 마이그레이션 명령어
-
-```bash
-# 모델 변경사항 감지
-python manage.py makemigrations
-
-# 데이터베이스에 마이그레이션 적용
-python manage.py migrate
-
-# 슈퍼유저 생성
-python manage.py createsuperuser
-```
 
 ---
 
