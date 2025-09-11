@@ -36,8 +36,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third-party 앱
     "rest_framework",
+    "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    "drf_spectacular",
+    "django_filters",
     # 로컬 앱
     "apps.users",
     "apps.conversations",
@@ -174,7 +177,7 @@ SPECTACULAR_SETTINGS = {
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "ko-kr"
 
 TIME_ZONE = "Asia/Seoul"
 
@@ -202,3 +205,5 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
 }
+
+AUTH_USER_MODEL = "apps.users.User"
