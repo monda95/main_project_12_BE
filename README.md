@@ -20,23 +20,23 @@
 
 ## 2. 요구사항 목록
 
-| 요구사항 ID | 요구사항 명 | 구분 | 설명 | 중요도 | 비고 |
-|---|---|---|---|---|---|
-| DH_RF01001 | 회원가입(자체) | 기능 | 이메일·아이디 중복 검사, 비밀번호 유효성 검사 | 상 | 운영에선 이메일 인증 필수 | - SimpleJWT (Refresh 회전 + 블랙리스트)
-| DH_RF01002 | 로그인/토큰 발급 | 기능 | SimpleJWT (Refresh 회전 + 블랙리스트)), 재발급 지원 | 상 | SimpleSimpleJWT (Refresh 회전 + 블랙리스트)
-| DH_RF01003 | 로그아웃 | 기능 | 클라이언트 토큰 삭제, (선택) 서버 Refresh 블랙리스트 | 상 | 블랙리스트 앱 사용 가능 |
-| DH_RF01004 | 마이페이지 조회/수정 | 기능 | 닉네임·이미지·이메일 등 수정 | 중 | 개인정보 보호 고려 |
-| DH_RF01005 | 비밀번호 변경 | 기능 | 기존 비밀번호 검증 후 변경 | 상 | OWASP 권고 준수 |
-| DH_RF02001 | 대화 관리 | 기능 | 대화 생성/조회/수정/삭제 | 상 | 사용자 소유권 유지 |
-| DH_RF02002 | 메시지 관리 | 기능 | 대화 내 메시지 작성/조회(페이징) | 상 | |
-| DH_RF02003 | 태그 관리 | 기능 | 태그 CRUD, 대화↔태그 연결/해제 | 중 | M:N(ConversationTag) |
-| DH_RF03001 | AI 추론(Gemini) | 기능 | 프롬프트 전달·응답 저장/반환 | 상 | 옵션(temperature,max_tokens) |
-| DH_RF03002 | **모델 성능 모니터링 데이터 저장** | 기능 | 추론별 latency/status/tokens 저장 | 중 | `inference_runs` |
-| DH_RF02004 | **데이터 전처리 파이프라인** | 기능 | Dataset 등록·전처리 Job 생성/조회 | 중 | `datasets`, `preprocessing_jobs` |
-| DH_RQ04001 | 보안성 | 비기능 | 모든 API는 HTTPS, SimpleJWT (Refresh 회전 + 블랙리스트)
-| DH_RQ04002 | 성능 | 비기능 | **평균 응답 ≤ 2초, 동시 30**(t2.micro 기준) | 중 | |
-| DH_RQ04003 | 개발/배포 | 비기능 | Git 관리, Dev/Prod 차이 최소화 | 중 | |
-| DH_RQ04IDEMP | 멱등성(전처리 한정) | 비기능 | 전처리 생성에 `client_job_id` 지원 | 중 | UNIQUE(dataset_id, client_job_id) |
+| 요구사항 ID | 요구사항 명 | 구분 | 설명                                            | 중요도 | 비고 |
+|---|---|---|-----------------------------------------------|---|---|
+| DH_RF01001 | 회원가입(자체) | 기능 | 이메일 중복 검사, 비밀번호 유효성 검사                        | 상 | 운영에선 이메일 인증 필수 | - SimpleJWT (Refresh 회전 + 블랙리스트)
+| DH_RF01002 | 로그인/토큰 발급 | 기능 | SimpleJWT (Refresh 회전 + 블랙리스트)), 재발급 지원       | 상 | SimpleSimpleJWT (Refresh 회전 + 블랙리스트)
+| DH_RF01003 | 로그아웃 | 기능 | 클라이언트 토큰 삭제, (선택) 서버 Refresh 블랙리스트            | 상 | 블랙리스트 앱 사용 가능 |
+| DH_RF01004 | 마이페이지 조회/수정 | 기능 | 닉네임·이미지 등 정보 수정                               | 중 | 개인정보 보호 고려 |
+| DH_RF01005 | 비밀번호 변경 | 기능 | 기존 비밀번호 검증 후 변경                               | 상 | OWASP 권고 준수 |
+| DH_RF02001 | 대화 관리 | 기능 | 대화 생성/조회/수정/삭제                                | 상 | 사용자 소유권 유지 |
+| DH_RF02002 | 메시지 관리 | 기능 | 대화 내 메시지 작성/조회(페이징)                           | 상 | |
+| DH_RF02003 | 태그 관리 | 기능 | 태그 CRUD, 대화↔태그 연결/해제                          | 중 | M:N(ConversationTag) |
+| DH_RF03001 | AI 추론(Gemini) | 기능 | 프롬프트 전달·응답 저장/반환                              | 상 | 옵션(temperature,max_tokens) |
+| DH_RF03002 | **모델 성능 모니터링 데이터 저장** | 기능 | 추론별 latency/status/tokens 저장                  | 중 | `inference_runs` |
+| DH_RF02004 | **데이터 전처리 파이프라인** | 기능 | Dataset 등록·전처리 Job 생성/조회                      | 중 | `datasets`, `preprocessing_jobs` |
+| DH_RQ04001 | 보안성 | 비기능 | 모든 API는 HTTPS, SimpleJWT (Refresh 회전 + 블랙리스트) 
+| DH_RQ04002 | 성능 | 비기능 | **평균 응답 ≤ 2초, 동시 30**(t2.micro 기준)            | 중 | |
+| DH_RQ04003 | 개발/배포 | 비기능 | Git 관리, Dev/Prod 차이 최소화                       | 중 | |
+| DH_RQ04IDEMP | 멱등성(전처리 한정) | 비기능 | 전처리 생성에 `client_job_id` 지원                    | 중 | UNIQUE(dataset_id, client_job_id) |
 
 ## 3. 제약 및 참고
 - 인증: **SimpleSimpleJWT (Refresh 회전 + 블랙리스트)).
@@ -53,81 +53,87 @@
 erDiagram
     User {
         bigint id PK
-        string username UK
-        string email UK
-        string (Django Auth에서 관리)
-        string nickname
-        string image_url
-        timestamptz created_at
-        timestamptz updated_at
+        string email "UK (case-insensitive via LOWER()); 로그인 이메일"
+        string username "가입자 이름(표시용, 비고유)"
+        string password "암호 해시 저장"
+        string nickname "닉네임"
+        string image_url "프로필 이미지 URL"
+        string phone_number "정규화: 숫자만(3~25자리)"
+        boolean is_active "계정 활성화; DEFAULT true"
+        timestamptz email_verified_at "이메일 인증 시각(미인증=NULL)"
+        timestamptz created_at "생성 시각"
+        timestamptz updated_at "수정 시각"
     }
 
     Conversation {
         bigint id PK
-        bigint owner_id FK
-        string title
-        timestamptz created_at
-        timestamptz updated_at
+        bigint owner_id FK "FK→User.id; ON DELETE CASCADE"
+        string title "대화 제목"
+        timestamptz created_at "생성 시각"
+        timestamptz updated_at "수정 시각"
     }
 
     Message {
         bigint id PK
-        bigint conversation_id FK
-        string role  "user/assistant/system"
-        text content
-        timestamptz created_at
+        bigint conversation_id FK "FK→Conversation.id; ON DELETE CASCADE"
+        string role  "역할: user/assistant/system"
+        text content "메시지 내용"
+        timestamptz created_at "생성 시각"
     }
 
     Tag {
         bigint id PK
-        string name UK
-        timestamptz created_at
+        string name UK "태그명(유일; lower(name) 유니크 권장)"
+        timestamptz created_at "생성 시각"
     }
 
     ConversationTag {
         bigint id PK
-        bigint conversation_id FK
-        bigint tag_id FK
-        timestamptz created_at
+        bigint conversation_id FK "FK→Conversation.id; ON DELETE CASCADE"
+        bigint tag_id FK "FK→Tag.id; ON DELETE CASCADE"
+        timestamptz created_at "생성 시각"
     }
 
     Dataset {
         bigint id PK
-        bigint owner_id FK
-        string name
-        string source   "file/crawl/api 등"
-        string uri      "S3 키 등"
-        timestamptz created_at
+        bigint owner_id FK "FK→User.id; ON DELETE CASCADE"
+        string name "데이터셋명"
+        string source "원천: file/crawl/api 등"
+        string uri "원본 위치: S3 키 등"
+        timestamptz created_at "생성 시각"
     }
 
     PreprocessingJob {
         bigint id PK
-        bigint dataset_id FK
-        string status   "queued/running/succeeded/failed"
-        jsonb steps     "전처리 단계 정의"
-        string client_job_id  "멱등키"
-        timestamptz created_at
-        timestamptz started_at
-        timestamptz finished_at
+        bigint dataset_id FK "FK→Dataset.id; ON DELETE CASCADE"
+        string status "queued/running/succeeded/failed"
+        jsonb steps "전처리 단계 정의(JSONB)"
+        string client_job_id "멱등키; UNIQUE(dataset_id, client_job_id) 권장"
+        timestamptz created_at "생성 시각"
+        timestamptz started_at "시작 시각"
+        timestamptz finished_at "종료 시각"
     }
 
     InferenceRun {
         bigint id PK
-        bigint conversation_id FK
-        bigint message_id FK
-        string model
-        integer latency_ms
-        integer prompt_tokens
-        integer completion_tokens
-        string status    "success/error"
-        string error_code
-        timestamptz created_at
+        bigint conversation_id FK "FK→Conversation.id; ON DELETE CASCADE"
+        bigint message_id FK "FK→Message.id; ON DELETE SET NULL"
+        string model "모델명"
+        integer latency_ms "지연(ms)"
+        integer prompt_tokens "프롬프트 토큰"
+        integer completion_tokens "응답 토큰"
+        string status "success/error (MVP 기준)"
+        string error_code "오류 코드(옵션)"
+        timestamptz created_at "생성 시각"
     }
 
     %% 관계
     User ||--o{ Conversation : "1:N"
     Conversation ||--o{ Message : "1:N"
-    Conversation }o--o{ Tag : "M:N"
+
+    Conversation ||--o{ ConversationTag : "1:N"
+    Tag ||--o{ ConversationTag : "1:N"
+
     Conversation ||--o{ InferenceRun : "1:N"
     Message ||--o{ InferenceRun : "1:N"
 
@@ -141,16 +147,19 @@ erDiagram
 # 🗄️ 테이블 명세서 (PostgreSQL)
 
 ## 1. users
-| 컬럼 | 타입 | 제약 | 설명 | 기본값 |
-|---|---|---|---|---|
-| id | BIGSERIAL | PK | 사용자 | - |
-| username | VARCHAR(50) | UNIQUE, NOT NULL | 로그인 아이디 | - |
-| email | VARCHAR(100) | UNIQUE, NOT NULL | 이메일 | - |
-| (Django Auth에서 관리) | VARCHAR(255) | NOT NULL | 해시된 비밀번호 | - |
-| nickname | VARCHAR(100) | NULL | 닉네임 | NULL |
-| image_url | VARCHAR(500) | NULL | 프로필 이미지 URL | NULL |
-| created_at | TIMESTAMPTZ | NOT NULL | 생성 | now() |
-| updated_at | TIMESTAMPTZ | NOT NULL | 수정 | now() |
+| 컬럼                | 타입           | 제약               | 설명                    | 기본값 |
+|-------------------|--------------|------------------|-----------------------|---|
+| id                | BIGSERIAL    | PK               | 사용자                   | - |
+| email             | VARCHAR(100) | UNIQUE, NOT NULL | 로그인 이메일(인증대상)         | - |
+| username          | VARCHAR(100) | NOT NULL         | 가입자 이름 (동명이인->비고유)    | - |
+| password          | VARCHAR(255) | NOT NULL         | 해시된 비밀번호              | - |
+| nickname          | VARCHAR(25)  | NULL             | 닉네임                   | NULL |
+| image_url         | VARCHAR(500) | NULL             | 프로필 이미지 URL           | NULL |
+| phone_number      | VARCHAR(25)  | NULL             | 전화번호 (정규화 : 숫자만)      | NULL |
+| is_active         | BOOLEAN      | NOT NULL         | 계정 활성화 여부             | NULL |
+| email_verified_at | TIMESTAMPTZ  | NULL             | 이메일 인증 시각 (인증 전 NULL) | NULL |
+| created_at        | TIMESTAMPTZ  | NOT NULL         | 생성 시각                 | now() |
+| updated_at        | TIMESTAMPTZ  | NOT NULL         | 수정 시각                 | now() |
 
 **인덱스**
 - idx_users_username(username), idx_users_email(email)
