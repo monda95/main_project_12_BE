@@ -94,13 +94,12 @@ main-project/
 | 요구사항 ID | 요구사항 명 | 구분 | 설명                                            | 중요도 | 비고 |
 |---|---|---|-----------------------------------------------|---|---|
 | DH_RF01001 | 회원가입(자체) | 기능 | 이메일 중복 검사, 비밀번호 유효성 검사                        | 상 | 운영에선 이메일 인증 필수 | - SimpleJWT (Refresh 회전 + 블랙리스트)
-| DH_RF01002 | 로그인/토큰 발급 | 기능 | SimpleJWT (Refresh 회전 + 블랙리스트)), 재발급 지원       | 상 | SimpleSimpleJWT (Refresh 회전 + 블랙리스트)
+| DH_RF01002 | 로그인/토큰 발급 | 기능 | SimpleJWT (Refresh 회전 + 블랙리스트)), 재발급 지원       | 상 | SimpleJWT (Refresh 회전 + 블랙리스트)
 | DH_RF01003 | 로그아웃 | 기능 | 클라이언트 토큰 삭제, (선택) 서버 Refresh 블랙리스트            | 상 | 블랙리스트 앱 사용 가능 |
 | DH_RF01004 | 마이페이지 조회/수정 | 기능 | 닉네임·이미지 등 정보 수정                               | 중 | 개인정보 보호 고려 |
 | DH_RF01005 | 비밀번호 변경 | 기능 | 기존 비밀번호 검증 후 변경                               | 상 | OWASP 권고 준수 |
 | DH_RF02001 | 대화 관리 | 기능 | 대화 생성/조회/수정/삭제                                | 상 | 사용자 소유권 유지 |
 | DH_RF02002 | 메시지 관리 | 기능 | 대화 내 메시지 작성/조회(페이징)                           | 상 | |
-| DH_RF02003 | 태그 관리 | 기능 | 태그 CRUD, 대화↔태그 연결/해제                          | 중 | M:N(ConversationTag) |
 | DH_RF03001 | AI 추론(Gemini) | 기능 | 프롬프트 전달·응답 저장/반환                              | 상 | 옵션(temperature,max_tokens) |
 | DH_RF03002 | **모델 성능 모니터링 데이터 저장** | 기능 | 추론별 latency/status/tokens 저장                  | 중 | `inference_runs` |
 | DH_RF02004 | **데이터 전처리 파이프라인** | 기능 | Dataset 등록·전처리 Job 생성/조회                      | 중 | `datasets`, `preprocessing_jobs` |
@@ -110,7 +109,7 @@ main-project/
 | DH_RQ04IDEMP | 멱등성(전처리 한정) | 비기능 | 전처리 생성에 `client_job_id` 지원                    | 중 | UNIQUE(dataset_id, client_job_id) |
 
 ## 3. 제약 및 참고
-- 인증: **SimpleSimpleJWT (Refresh 회전 + 블랙리스트)).
+- 인증: **SimpleJWT (Refresh 회전 + 블랙리스트)).
 - 문서화: **drf-spectacular** + Swagger UI(`/api/swagger/`).
 - DB: **PostgreSQL**(문서의 모든 타입/제약은 Postgres 기준).
 - 배포: **Docker Compose → EC2**, Readiness/Health 엔드포인트 제공.
@@ -416,7 +415,7 @@ erDiagram
 ```json
 { "refresh": "jwt-refresh-token" }
 ```
-**Response (204 Reset Content)**
+**Response (204 No Content)**
 
 ---
 
@@ -427,7 +426,7 @@ erDiagram
 | `/api/v1/users/me` | `GET`    | 내 정보 조회                | **인증된 사용자** |
 | `/api/v1/users/me` | `PATCH`  | 내 정보 수정 (닉네임, 프로필 이미지) | **인증된 사용자** |
 | `/api/v1/users/me` | `DELETE` | 회원 탈퇴                  | **인증된 사용자** |
-| `/api/v1/users/me/password` | `POST`   | 비밀번호 변경                | **인증된 사용자** |
+| `/api/v1/users/me/password` | `PUT`    | 비밀번호 변경                | **인증된 사용자** |
 
 ### 2.1 내 정보 조회 (`/users/me`)
 **Response (200 OK)**
@@ -627,11 +626,17 @@ erDiagram
 ```
 
 ### 6.4 전처리 작업 목록 — `GET /api/v1/preprocessing-jobs?dataset_id=1&status=running`
-
-```
-**Response (202 Accepted)**
+**Response (200 OK)**
 ```json
-{ "job_id": 101, "status": "queued" }
+[
+  {
+    "id": 101,
+    "dataset_id": 1,
+    "status": "running",
+    "started_at": "2025-09-09T12:01:00Z",
+    "finished_at": null
+  }
+]
 ```
 
 ---
