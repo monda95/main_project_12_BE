@@ -7,12 +7,14 @@ requires-python = ">=3.13"
 dependencies = [
     "django>=5.2.6",
     "djangorestframework>=3.16.1",
-    "psycopg2-binary>=2.9.10",
     "python-dotenv>=1.1.1",
     "drf-spectacular>=0.28.0",
     "requests>=2.32.5",
     "pillow>=11.3.0",
     "gunicorn>=21.2",
+    # PostgreSQL 드라이버 (윈도우 개발환경/도커 운영 모두 대응)
+    "psycopg2-binary>=2.9.10; sys_platform == 'win32'",
+    "psycopg2>=2.9.10; sys_platform != 'win32'",
     "uvicorn>=0.24.0",
     "django-filter>=25.1",
     "djangorestframework-simplejwt>=5.5.1",

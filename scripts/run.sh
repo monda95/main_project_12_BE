@@ -4,7 +4,7 @@ set -e
 echo "🔧 Waiting for Postgres..."
 until pg_isready -h $POSTGRES_HOST -p $POSTGRES_PORT; do
   echo "⏳ Postgres not ready yet..."
-  sleep 2
+  sleep 1
 done
 echo "✅ Postgres is ready!"
 
