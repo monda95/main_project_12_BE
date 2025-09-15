@@ -1,9 +1,7 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16-alpine
-    container_name: app-postgres
+    container_name: postgresSQL
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -15,24 +13,27 @@ services:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h 127.0.0.1"]
-      interval: 5s
-      timeout: 5s
+      interval: 10s
+      timeout: 10s
       retries: 10
 
   web:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: app-web
+    container_name: web
     depends_on:
       db:
         condition: service_healthy
     env_file:
-      - .env
+      - .env.prod
     ports:
       - "8000:8000"
     volumes:
-      - .:/app        # 개발 중 핫리로드. (운영 배포 시 제거 권장)
+      - .:/app:cached       # 소스 코드만 공유
+      - /app/.venv          # 컨테이너 내부 전용 가상환경
+      - ./staticfiles:/app/staticfiles
+      - ./media:/app/media
     restart: unless-stopped
 
 volumes:
