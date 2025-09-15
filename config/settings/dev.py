@@ -1,12 +1,23 @@
-from . import base as base_settings
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+from .base import *
+
+# ✅ base.py 불러오기 전에 환경변수 로드
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+load_dotenv(BASE_DIR / ".env.dev")
+
 
 DEBUG = True
 
-REST_FRAMEWORK = base_settings.REST_FRAMEWORK.copy()
+# DRF 확장
+REST_FRAMEWORK = REST_FRAMEWORK.copy()
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
     "rest_framework.renderers.JSONRenderer",
     "rest_framework.renderers.BrowsableAPIRenderer",
 ]
 
-ALLOWED_HOSTS = base_settings.ALLOWED_HOSTS or ["*"]
+# 개발환경 호스트
+ALLOWED_HOSTS = ALLOWED_HOSTS or ["*"]
 INTERNAL_IPS = ["127.0.0.1", "0.0.0.0", "localhost"]

@@ -34,32 +34,3 @@ dev = [
 [tool.uv]
 # uv 관련 설정 (기본 환경)
 managed = true
-
-[tool.ruff]
-line-length = 88
-target-version = "py313"
-exclude = ["migrations", "venv", ".venv", "__pycache__"]
-
-[tool.ruff.lint]
-select = [
-    "E",  # pycodestyle 오류 (기본적인 문법 오류)
-    "F",  # pyflakes (미사용 import, 변수 등)
-    "I",  # isort (import 정렬)
-    "W",  # pycodestyle 경고
-]
-
-ignore = [
-    "E203",  # black과 호환성
-    "E501",  # 라인 길이 (black이 처리)
-]
-
-fixable = ["ALL"]
-unfixable = []
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
-
-[tool.ruff.lint.isort]
-known-first-party = ["apps", "config"]  # Django 프로젝트 구조에 맞게

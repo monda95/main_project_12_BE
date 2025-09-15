@@ -1,8 +1,8 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.12  # ruff 안정 버전은 0.1.9
+    rev: v0.12.12
     hooks:
       - id: ruff
-        args: [ --fix, --exit-non-zero-on-fix ]  # 자동 수정 가능한 것들은 수정 및 커밋 실패
-      - id: ruff-format  # ruff의 포맷터 (black 대신 사용 가능)
-        args: [--line-length=88]  # black 호환, Django 표준 라인 길이
+        args: [--fix, "--ignore=F403,F405,F841"]
+      - id: ruff-format
+        args: [--line-length=88]

@@ -35,3 +35,61 @@ class SignupSerializer(serializers.ModelSerializer):
         except IntegrityError:
             # DB의 UniqueConstraint(Lower('email')) 위반 시
             raise serializers.ValidationError({"email": "이미 사용 중인 이메일입니다."})
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
+    """
+    사용자 상세 정보 조회를 위한 시리얼라이저입니다.
+    """
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "email",
+            "username",
+            "nickname",
+            "image_url",
+            "phone_number",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    """
+    사용자 정보(닉네임, 프로필 이미지) 수정을 위한 시리얼라이저입니다.
+    """
+
+    class Meta:
+        model = User
+        fields = ["nickname", "image_url"]
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """
+    비밀번호 변경을 위한 시리얼라이저입니다.
+    """
+
+    current_password = serializers.CharField(required=True, write_only=True)
+    new_password = serializers.CharField(required=True, write_only=True, min_length=8)
+
+    def validate_current_password(self, value):
+        user = self.context["request"].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("현재 비밀번호가 일치하지 않습니다.")
+        return value
+
+    def update(self, instance, validated_data):
+        instance.set_password(validated_data["new_password"])
+        instance.save()
+        return instance
+
+
+class RefreshTokenSerializer(serializers.Serializer):
+    """
+    로그아웃 시 refresh 토큰을 받기 위한 시리얼라이저입니다.
+    """
+
+    refresh = serializers.CharField()

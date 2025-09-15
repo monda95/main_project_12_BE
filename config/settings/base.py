@@ -2,14 +2,9 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
-
 
 SECRET_KEY = os.getenv(
     "DJANGO_SECRET_KEY",
@@ -44,7 +39,8 @@ INSTALLED_APPS = [
     # 로컬 앱
     "apps.users",
     "apps.conversations",
-    "apps.analysis",
+    "apps.datasets",
+    "apps.inference",
 ]
 
 MIDDLEWARE = [
@@ -172,10 +168,19 @@ SPECTACULAR_SETTINGS = {
         }
     },
     "SWAGGER_UI_SETTINGS": {"persistAuthorization": True},
+    "TAGS": [
+        {"name": "인증/권한", "description": "사용자 인증 및 권한 관련 API"},
+        {"name": "사용자", "description": "사용자 정보 관리 API"},
+        {"name": "대화/메시지", "description": "대화 및 메시지 관리 API"},
+        {"name": "태그", "description": "태그 관리 API"},
+        {"name": "AI 추론", "description": "Gemini AI 모델 호출 API"},
+        {"name": "데이터 전처리", "description": "데이터셋 및 전처리 작업 관리 API"},
+        {"name": "추론 모니터링", "description": "AI 추론 기록 모니터링 API"},
+        {"name": "유틸리티", "description": "헬스 체크 등 유틸리티 API"},
+    ],
+    # API 경로 접두사를 설정하여 drf-spectacular가 태그를 더 잘 인식하도록
+    "SCHEMA_PATH_PREFIX": "/api/v1/",
 }
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = "ko-kr"
 
@@ -186,16 +191,11 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -206,4 +206,4 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
 }
 
-AUTH_USER_MODEL = "apps.users.User"
+AUTH_USER_MODEL = "users.User"
