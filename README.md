@@ -124,79 +124,80 @@ main-project/
 erDiagram
     User {
         bigint id PK
-        string email "UK (case-insensitive via LOWER()); 로그인 이메일"
-        string username "가입자 이름(표시용, 비고유)"
-        string password "암호 해시 저장"
-        string nickname "닉네임"
-        string image_url "프로필 이미지 URL"
-        string phone_number "정규화: 숫자만(3~25자리)"
-        boolean is_active "계정 활성화; DEFAULT true"
-        timestamptz email_verified_at "이메일 인증 시각(미인증=NULL)"
-        timestamptz created_at "생성 시각"
-        timestamptz updated_at "수정 시각"
-        timestamptz deactivated_at "탈퇴 시각"
+        string email "UNIQUE NOT NULL; LOWER(email) 인덱스"
+        string username "NOT NULL"
+        string password "NOT NULL"
+        string nickname "NULL"
+        string image_url "NULL"
+        string phone_number "NULL"
+        boolean is_active "NOT NULL DEFAULT true"
+        timestamptz email_verified_at "NULL"
+        timestamptz created_at "NOT NULL DEFAULT now()"
+        timestamptz updated_at "NOT NULL DEFAULT now()"
+        timestamptz deactivated_at "NULL"
     }
 
     Conversation {
         bigint id PK
-        bigint owner_id FK "FK→User.id; ON DELETE CASCADE"
-        string title "대화 제목"
-        timestamptz created_at "생성 시각"
-        timestamptz updated_at "수정 시각"
+        bigint owner_id FK "NOT NULL; FK→User.id; ON DELETE CASCADE"
+        string title "NOT NULL"
+        timestamptz created_at "NOT NULL DEFAULT now()"
+        timestamptz updated_at "NOT NULL DEFAULT now()"
     }
 
     Message {
         bigint id PK
-        bigint conversation_id FK "FK→Conversation.id; ON DELETE CASCADE"
-        string role  "역할: user/assistant/system"
-        text content "메시지 내용"
-        timestamptz created_at "생성 시각"
+        bigint conversation_id FK "NOT NULL; FK→Conversation.id; ON DELETE CASCADE"
+        string role "NOT NULL CHECK IN('user','assistant','system')"
+        text content "NOT NULL"
+        timestamptz created_at "NOT NULL DEFAULT now()"
     }
 
     Tag {
         bigint id PK
-        string name UK "태그명(유일; lower(name) 유니크 권장)"
-        timestamptz created_at "생성 시각"
+        string name "UNIQUE NOT NULL (저장 시 lower 변환)"
+        timestamptz created_at "NOT NULL DEFAULT now()"
     }
 
     ConversationTag {
         bigint id PK
-        bigint conversation_id FK "FK→Conversation.id; ON DELETE CASCADE"
-        bigint tag_id FK "FK→Tag.id; ON DELETE CASCADE"
-        timestamptz created_at "생성 시각"
+        bigint conversation_id FK "NOT NULL; FK→Conversation.id; ON DELETE CASCADE"
+        bigint tag_id FK "NOT NULL; FK→Tag.id; ON DELETE CASCADE"
+        timestamptz created_at "NOT NULL DEFAULT now()"
+        UNIQUE "conversation_id, tag_id"
     }
 
     Dataset {
         bigint id PK
-        bigint owner_id FK "FK→User.id; ON DELETE CASCADE"
-        string name "데이터셋명"
-        string source "원천: file/crawl/api 등"
-        string uri "원본 위치: S3 키 등"
-        timestamptz created_at "생성 시각"
+        bigint owner_id FK "NOT NULL; FK→User.id; ON DELETE CASCADE"
+        string name "NOT NULL"
+        string source "NULL"
+        string uri "NULL"
+        timestamptz created_at "NOT NULL DEFAULT now()"
     }
 
     PreprocessingJob {
         bigint id PK
-        bigint dataset_id FK "FK→Dataset.id; ON DELETE CASCADE"
-        string status "queued/running/succeeded/failed"
-        jsonb steps "전처리 단계 정의(JSONB)"
-        string client_job_id "멱등키; UNIQUE(dataset_id, client_job_id) 권장"
-        timestamptz created_at "생성 시각"
-        timestamptz started_at "시작 시각"
-        timestamptz finished_at "종료 시각"
+        bigint dataset_id FK "NOT NULL; FK→Dataset.id; ON DELETE CASCADE"
+        string client_job_id "NULL; UNIQUE(dataset_id, client_job_id) WHERE client_job_id IS NOT NULL"
+        string status "NOT NULL DEFAULT 'queued' CHECK IN('queued','running','succeeded','failed')"
+        jsonb steps "NULL"
+        timestamptz created_at "NOT NULL DEFAULT now()"
+        timestamptz started_at "NULL"
+        timestamptz finished_at "NULL"
     }
 
     InferenceRun {
         bigint id PK
-        bigint conversation_id FK "FK→Conversation.id; ON DELETE CASCADE"
-        bigint message_id FK "FK→Message.id; ON DELETE SET NULL"
-        string model "모델명"
-        integer latency_ms "지연(ms)"
-        integer prompt_tokens "프롬프트 토큰"
-        integer completion_tokens "응답 토큰"
-        string status "success/error (MVP 기준)"
-        string error_code "오류 코드(옵션)"
-        timestamptz created_at "생성 시각"
+        bigint conversation_id FK "NOT NULL; FK→Conversation.id; ON DELETE CASCADE"
+        bigint message_id FK "NULL; FK→Message.id; ON DELETE SET NULL"
+        string model "NOT NULL"
+        integer latency_ms "NOT NULL"
+        integer prompt_tokens "NULL"
+        integer completion_tokens "NULL"
+        string status "NOT NULL DEFAULT 'success' CHECK IN('success','error')"
+        string error_code "NULL"
+        timestamptz created_at "NOT NULL DEFAULT now()"
     }
 
     %% 관계
