@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.sites.shortcuts import get_current_site
+from django.db import transaction
 from django.http import HttpResponse
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from drf_spectacular.utils import extend_schema
@@ -10,7 +10,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.encoding import force_bytes
 
+# from django.core.mail import send_mail
+# from django.conf import settings
 from .serializers import (
     PasswordChangeSerializer,
     RefreshTokenSerializer,
@@ -36,8 +39,7 @@ class SignupView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
-        # 이메일 인증 발송 (테스트용으로 주석처리 예정)
-        self.send_verification_email(user)
+        transaction.on_commit(lambda: self.send_verification_email(user))
 
     def send_verification_email(self, user):
         """
@@ -45,10 +47,12 @@ class SignupView(generics.CreateAPIView):
         터미널에서 링크 클릭으로 처리되므로, 이메일 인증 완료를 가정한 로직
         """
         token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(user.pk.encode())
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
 
         # 인증 링크 생성
-        verification_link = f"{get_current_site(self.request).domain}{reverse('verify_email', kwargs={'uidb64': uid, 'token': token})}"
+        verification_link = self.request.build_absolute_uri(
+            reverse("verify_email", kwargs={"uidb64": uid, "token": token})
+        )
 
         # 실제 이메일 발송 (주석처리 후 테스트로 인증처리 가능)
         # send_mail(
@@ -60,6 +64,8 @@ class SignupView(generics.CreateAPIView):
         # )
 
         print(f"인증 링크: {verification_link} (터미널에서 클릭 시 인증 처리됨)")
+
+        # docker compose logs web 로 로컬에서 docker compose만으로 서버 띄우고 있더라도 확인가능.
 
 
 @extend_schema(tags=["사용자"])
@@ -148,6 +154,11 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     """
 
     def post(self, request, *args, **kwargs):
+        email = (request.data.get("email") or "").strip()
+        # 대소문자 무시하고 사용자 조회
+        user = User.objects.filter(email__iexact=email).first()
+        if user and not user.email_verified_at:
+            return Response({"detail": "이메일 인증이 필요합니다."}, status=400)
         return super().post(request, *args, **kwargs)
 
 
