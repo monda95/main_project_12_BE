@@ -10,12 +10,6 @@ class Conversation(models.Model):
         verbose_name="소유자",
     )
     title = models.CharField(max_length=200, verbose_name="대화 제목")
-    tags = models.ManyToManyField(
-        "Tag",
-        through="ConversationTag",
-        related_name="conversations",
-        verbose_name="태그",
-    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성 시각")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="수정 시각")
 
@@ -59,41 +53,3 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.get_role_display()}: {self.content[:30]}"
-
-
-class Tag(models.Model):
-    name = models.CharField(max_length=50, unique=True, verbose_name="태그명")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성 시각")
-
-    class Meta:
-        db_table = "tags"
-        verbose_name = "태그"
-        verbose_name_plural = "태그 목록"
-
-    def __str__(self):
-        return self.name
-
-    def save(self, *args, **kwargs):
-        self.name = self.name.lower()
-        super().save(*args, **kwargs)
-
-
-class ConversationTag(models.Model):
-    conversation = models.ForeignKey(
-        Conversation, on_delete=models.CASCADE, verbose_name="대화"
-    )
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, verbose_name="태그")
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성 시각")
-
-    class Meta:
-        db_table = "conversation_tags"
-        verbose_name = "대화-태그 연결"
-        verbose_name_plural = "대화-태그 연결 목록"
-        constraints = [
-            models.UniqueConstraint(
-                fields=["conversation", "tag"], name="uq_conversation_tag"
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.conversation} - {self.tag}"

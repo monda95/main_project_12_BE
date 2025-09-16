@@ -1,11 +1,5 @@
-from pathlib import Path
-
-from dotenv import load_dotenv
-
-from .base import *  # noqa: F841
-
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-load_dotenv(BASE_DIR / ".env.prod")
-
+from .base import *  # noqa: F403
 
 DEBUG = False
+ALLOWED_HOSTS = ["43.201.76.173", "[::1]localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS]

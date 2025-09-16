@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Conversation, ConversationTag, Message, Tag
+from .models import Conversation, Message
 
 
 @admin.register(Conversation)
@@ -17,15 +17,3 @@ class MessageAdmin(admin.ModelAdmin):
     list_filter = ("role", "created_at")
     search_fields = ("content", "conversation__title")
     raw_id_fields = ("conversation",)
-
-
-@admin.register(Tag)
-class TagAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "created_at")
-    search_fields = ("name",)
-
-
-@admin.register(ConversationTag)
-class ConversationTagAdmin(admin.ModelAdmin):
-    list_display = ("id", "conversation", "tag", "created_at")
-    raw_id_fields = ("conversation", "tag")
