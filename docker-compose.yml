@@ -26,7 +26,7 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - .env.prod
+      - .env
     ports:
       - "8000:8000"
     volumes:
@@ -38,3 +38,10 @@ services:
 
 volumes:
   pg_data:
+
+#    docker-compose --env-file .env.prod up -d --build  뭔 짓을해도 자꾸 .env 못 읽어올 때 강제로 읽게해버리는 명령어
+#            docker-compose down --remove-orphans
+#
+#            docker system prune -f
+#            docker image prune -f
+#            docker container prune -f

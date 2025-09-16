@@ -13,8 +13,7 @@ dependencies = [
     "pillow>=11.3.0",
     "gunicorn>=21.2",
     # PostgreSQL 드라이버 (윈도우 개발환경/도커 운영 모두 대응)
-    "psycopg2-binary>=2.9.10; sys_platform == 'win32'",
-    "psycopg2>=2.9.10; sys_platform != 'win32'",
+    "psycopg2-binary>=2.9.10",  # psycopg2 대신 psycopg2-binary 사용
     "uvicorn>=0.24.0",
     "django-filter>=25.1",
     "djangorestframework-simplejwt>=5.5.1",

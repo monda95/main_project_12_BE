@@ -1,5 +1,7 @@
 # .dockerignore
+.env
 .env.dev
+.env.prod
 .venv
 __pycache__/
 *.pyc
