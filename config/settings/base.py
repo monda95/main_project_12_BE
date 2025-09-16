@@ -191,3 +191,15 @@ SIMPLE_JWT = {
 }
 
 AUTH_USER_MODEL = "users.User"
+
+# 이메일 백엔드 설정 (개발 중에는 콘솔 출력으로 확인 가능)
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# 실제 이메일 발송을 위해 설정해야 할 부분
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your_email@gmail.com'  # 내 실제 이메일
+# EMAIL_HOST_PASSWORD = 'your_email_password'  # 내 실제 비밀번호 혹은 Gmail에서는 2단계 인증을 설정한 후 앱 비밀번호를 생성하여 사용합니다. 앱 비밀번호는 일회성으로 특정 앱에 대한 비밀번호를 제공
+# DEFAULT_FROM_EMAIL = 'AIadmin@gmail.com'  # 기본 발신자 이메일

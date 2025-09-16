@@ -1,9 +1,15 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.sites.shortcuts import get_current_site
+from django.http import HttpResponse
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from django.urls import reverse
+from django.utils import timezone
 
 from .serializers import (
     PasswordChangeSerializer,
@@ -20,7 +26,6 @@ User = get_user_model()
 class SignupView(generics.CreateAPIView):
     """
     회원가입 API
-
     - 인증 불필요, 누구나 접근가능
     - 새로운 사용자 생성
     """
@@ -28,6 +33,33 @@ class SignupView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = SignupSerializer
     permission_classes = [permissions.AllowAny]
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        # 이메일 인증 발송 (테스트용으로 주석처리 예정)
+        self.send_verification_email(user)
+
+    def send_verification_email(self, user):
+        """
+        이메일 인증을 위한 이메일 발송 로직
+        터미널에서 링크 클릭으로 처리되므로, 이메일 인증 완료를 가정한 로직
+        """
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(user.pk.encode())
+
+        # 인증 링크 생성
+        verification_link = f"{get_current_site(self.request).domain}{reverse('verify_email', kwargs={'uidb64': uid, 'token': token})}"
+
+        # 실제 이메일 발송 (주석처리 후 테스트로 인증처리 가능)
+        # send_mail(
+        #     "이메일 인증",
+        #     f"이메일 인증을 위해 아래 링크를 클릭하세요:\n{verification_link}",
+        #     settings.DEFAULT_FROM_EMAIL,
+        #     [user.email],
+        #     fail_silently=False,
+        # )
+
+        print(f"인증 링크: {verification_link} (터미널에서 클릭 시 인증 처리됨)")
 
 
 @extend_schema(tags=["사용자"])
@@ -127,3 +159,18 @@ class CustomTokenRefreshView(TokenRefreshView):
 
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
+
+
+def verify_email(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = get_user_model().objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, get_user_model().DoesNotExist):
+        return HttpResponse("잘못된 인증 링크입니다.", status=400)
+
+    if default_token_generator.check_token(user, token):
+        user.email_verified_at = timezone.now()
+        user.save()
+        return HttpResponse("이메일 인증이 완료되었습니다.", status=200)
+    else:
+        return HttpResponse("잘못된 인증 링크입니다.", status=400)
