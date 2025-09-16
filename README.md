@@ -53,13 +53,17 @@
 > - 데이터 수명주기: *데이터 전처리* → `POST /api/v1/datasets`, `GET /api/v1/preprocessing-jobs`  
 > - 상세는 아래 **API 명세** 및 **요구사항 표** 참조
 
+<br>
+
+
+
+## 🔧  프로젝트 간단 구조
 ```bash
 main-project/
 ├── apps/
 │   ├── conversations/
 │   │   ├── models.py
 │   │   ├── views.py
-│   │   ├── urls.py
 │   │   └── serializers.py
 │   ├── core/
 │   │   └── permissions.py
@@ -70,11 +74,13 @@ main-project/
 │   ├── inference/
 │   │   ├── models.py
 │   │   ├── views.py
+│   │   ├── serializers.py
 │   │   └── services.py
 │   └── users/
 │       ├── models.py
 │       ├── views.py
-│       └── serializers.py
+│       ├── serializers.py
+│       └── utils.py
 └── config/
     ├── urls.py
     └── settings/
@@ -152,20 +158,6 @@ erDiagram
         timestamptz created_at "NOT NULL DEFAULT now()"
     }
 
-    Tag {
-        bigint id PK
-        string name "UNIQUE NOT NULL (저장 시 lower 변환)"
-        timestamptz created_at "NOT NULL DEFAULT now()"
-    }
-
-    ConversationTag {
-        bigint id PK
-        bigint conversation_id FK "NOT NULL; FK→Conversation.id; ON DELETE CASCADE"
-        bigint tag_id FK "NOT NULL; FK→Tag.id; ON DELETE CASCADE"
-        timestamptz created_at "NOT NULL DEFAULT now()"
-        UNIQUE "conversation_id, tag_id"
-    }
-
     Dataset {
         bigint id PK
         bigint owner_id FK "NOT NULL; FK→User.id; ON DELETE CASCADE"
@@ -202,13 +194,8 @@ erDiagram
     %% 관계
     User ||--o{ Conversation : "1:N"
     Conversation ||--o{ Message : "1:N"
-
-    Conversation ||--o{ ConversationTag : "1:N"
-    Tag ||--o{ ConversationTag : "1:N"
-
     Conversation ||--o{ InferenceRun : "1:N"
     Message ||--o{ InferenceRun : "1:N"
-
     User ||--o{ Dataset : "1:N"
     Dataset ||--o{ PreprocessingJob : "1:N"
 ```
@@ -267,33 +254,7 @@ erDiagram
 
 ---
 
-## 4. tags
-| 컬럼 | 타입 | 제약 | 설명 | 기본값 |
-|---|---|---|---|---|
-| id | BIGSERIAL | PK | 태그 ID | - |
-| name | VARCHAR(50) | UNIQUE, NOT NULL | 태그명 (저장 시 소문자로 변환) | - |
-| created_at | TIMESTAMPTZ | NOT NULL | 생성 시각 | now() |
-
-**인덱스**
-- idx_tags_name(name)
-
----
-
-## 5. conversation_tags
-| 컬럼 | 타입 | 제약 | 설명 | 기본값 |
-|---|---|---|---|---|
-| id | BIGSERIAL | PK | 연결 ID | - |
-| conversation_id | BIGINT | NOT NULL, FK→conversations(id) ON DELETE CASCADE | 대화 | - |
-| tag_id | BIGINT | NOT NULL, FK→tags(id) ON DELETE CASCADE | 태그 | - |
-| created_at | TIMESTAMPTZ | NOT NULL | 생성 시각 | now() |
-
-**인덱스 / 제약**
-- idx_ct_conv(conversation_id), idx_ct_tag(tag_id)
-- UNIQUE(conversation_id, tag_id)
-
----
-
-## 6. datasets
+## 4. datasets
 | 컬럼 | 타입 | 제약 | 설명 | 기본값 |
 |---|---|---|---|---|
 | id | BIGSERIAL | PK | 데이터셋 ID | - |
@@ -308,7 +269,7 @@ erDiagram
 
 ---
 
-## 7. preprocessing_jobs
+## 5. preprocessing_jobs
 | 컬럼 | 타입 | 제약 | 설명 | 기본값 |
 |---|---|---|---|---|
 | id | BIGSERIAL | PK | 전처리 작업 ID | - |
@@ -327,7 +288,7 @@ erDiagram
 
 ---
 
-## 8. inference_runs
+## 6. inference_runs
 | 컬럼 | 타입 | 제약 | 설명 | 기본값 |
 |---|---|---|---|---|
 | id | BIGSERIAL | PK | 추론 실행 ID | - |
@@ -345,15 +306,14 @@ erDiagram
 - fk_infruns_conversation(conversation_id)
 - idx_infruns_created(created_at), idx_infruns_status(status)
 
-
 ---
 
-# 📘 API 명세서  (Django + DRF)
+# 📘 API 명세서 (Django + DRF)
 
 ## 공통
 - **인증**: `Authorization: Bearer <access_token>` (SimpleJWT - Refresh Token Rotation 및 Blacklist 활성화)
 - **응답 형식**: 순수 JSON(래핑 없음) — `{"data": ...}` 형태가 아닌, 리소스/컬렉션 자체를 그대로 반환.
-- **API 문서**: 
+- **API 문서**:
   - `GET /api/schema/` (OpenAPI 스키마)
   - `GET /api/swagger/` (Swagger UI)
 
@@ -366,10 +326,9 @@ erDiagram
 | `/api/v1/auth/signup` | `POST` | 회원가입 | 누구나 |
 | `/api/v1/auth/login` | `POST` | 로그인 (토큰 발급) | 누구나 |
 | `/api/v1/auth/refresh` | `POST` | Access 토큰 재발급 | 누구나 |
-| `/api/v1/auth/logout` | `POST` | 로그아웃 (Refresh 토큰 블랙리스트) | **인증된 사용자** |
+| `/api/v1/auth/logout` | `POST` | 로그아웃 (Refresh 토큰 블랙리스트) | 인증된 사용자 |
 
 ### 1.1 회원가입 — `POST /api/v1/auth/signup`
-**Request Body**
 ```json
 { 
   "email": "user@example.com",
@@ -391,7 +350,6 @@ erDiagram
 ```
 
 ### 1.2 로그인 — `POST /api/v1/auth/login`
-**Request Body**
 ```json
 { "email": "user@example.com", "password": "Str0ngPass!" }
 ```
@@ -401,7 +359,6 @@ erDiagram
 ```
 
 ### 1.3 토큰 재발급 — `POST /api/v1/auth/refresh`
-**Request Body**
 ```json
 { "refresh": "jwt-refresh-token" }
 ```
@@ -411,7 +368,6 @@ erDiagram
 ```
 
 ### 1.4 로그아웃 — `POST /api/v1/auth/logout`
-**Request Body**
 ```json
 { "refresh": "jwt-refresh-token" }
 ```
@@ -421,14 +377,14 @@ erDiagram
 
 ## 2. 사용자
 
-| 엔드포인트 | 메서드      | 설명                     | 권한 |
-|---|----------|------------------------|---|
-| `/api/v1/users/me` | `GET`    | 내 정보 조회                | **인증된 사용자** |
-| `/api/v1/users/me` | `PATCH`  | 내 정보 수정 (닉네임, 프로필 이미지) | **인증된 사용자** |
-| `/api/v1/users/me` | `DELETE` | 회원 탈퇴                  | **인증된 사용자** |
-| `/api/v1/users/me/password` | `PUT`    | 비밀번호 변경                | **인증된 사용자** |
+| 엔드포인트 | 메서드 | 설명 | 권한 |
+|---|---|---|---|
+| `/api/v1/users/me` | `GET` | 내 정보 조회 | 인증된 사용자 |
+| `/api/v1/users/me` | `PATCH` | 내 정보 수정 (닉네임, 프로필 이미지) | 인증된 사용자 |
+| `/api/v1/users/me` | `DELETE` | 회원 탈퇴 | 인증된 사용자 |
+| `/api/v1/users/me/password` | `PUT` | 비밀번호 변경 | 인증된 사용자 |
 
-### 2.1 내 정보 조회 (`/users/me`)
+### 2.1 내 정보 조회
 **Response (200 OK)**
 ```json
 { 
@@ -443,25 +399,19 @@ erDiagram
 }
 ```
 
-### 2.2 내 정보 수정 (`/users/me`)
-**Request Body**
+### 2.2 내 정보 수정
 ```json
 { "nickname": "새로운 닉네임", "image_url": "https://example.com/avatar.png" }
 ```
-**Response (200 OK)**: 수정된 필드를 포함한 전체 사용자 정보
+**Response (200 OK)**: 수정된 전체 사용자 정보
 
-### 2.3 비밀번호 변경 (`/users/me/password`)
-**Request Body**
+### 2.3 비밀번호 변경
 ```json
 { "current_password": "Str0ngPass!", "new_password": "EvenStronger#1" }
 ```
 **Response (204 No Content)**
 
-### 2.4 회원 탈퇴 (/users/me)
-| 엔드포인트 | 메서드 | 설명 | 권한 |
-|---|---|---|---|
-| /api/v1/users/me | DELETE | 회원 탈퇴 (계정 비활성화) | 인증된 사용자 |
-
+### 2.4 회원 탈퇴
 **Response (204 No Content)**
 
 ---
@@ -470,11 +420,11 @@ erDiagram
 
 | 엔드포인트 | 메서드 | 설명 | 권한 |
 |---|---|---|---|
-| `/api/v1/conversations` | `GET`, `POST` | 내 대화 목록 조회, 새 대화 생성 | **인증된 사용자** |
-| `/api/v1/conversations/{id}` | `GET`, `PATCH`, `DELETE` | 특정 대화 조회/수정/삭제 | **소유자** |
-| `/api/v1/conversations/{id}/messages` | `GET`, `POST` | 대화 내 메시지 목록 조회, 추가 | **소유자** |
+| `/api/v1/conversations` | `GET`, `POST` | 내 대화 목록 조회, 새 대화 생성 | 인증된 사용자 |
+| `/api/v1/conversations/{id}` | `GET`, `PATCH`, `DELETE` | 특정 대화 조회/수정/삭제 | 소유자 |
+| `/api/v1/conversations/{id}/messages` | `GET`, `POST` | 대화 내 메시지 목록 조회, 추가 | 소유자 |
 
-### 3.1 대화 목록 조회 — `GET /api/v1/conversations`
+### 3.1 대화 목록 조회
 **Response (200 OK)**
 ```json
 [
@@ -483,8 +433,7 @@ erDiagram
 ]
 ```
 
-### 3.2 대화 생성 — `POST /api/v1/conversations`
-**Request Body**
+### 3.2 대화 생성
 ```json
 { "title": "새로운 대화" }
 ```
@@ -493,11 +442,10 @@ erDiagram
 { "id": 12, "title": "새로운 대화", "owner_id": 1, "created_at": "..." }
 ```
 
-### 3.3 대화 삭제 — `DELETE /api/v1/conversations/{id}`
+### 3.3 대화 삭제
 **Response (204 No Content)**
 
-### 3.4 메시지 목록 조회 — `GET /api/v1/conversations/{id}/messages`
-**Response (200 OK)**: 메시지 목록 (페이지네이션 적용)
+### 3.4 메시지 목록 조회
 ```json
 {
   "count": 120,
@@ -510,8 +458,7 @@ erDiagram
 }
 ```
 
-### 3.5 메시지 추가 — `POST /api/v1/conversations/{id}/messages`
-**Request Body**
+### 3.5 메시지 추가
 ```json
 { "role": "user", "content": "내일 날씨는?" }
 ```
@@ -522,52 +469,13 @@ erDiagram
 
 ---
 
-## 4. 태그
+## 4. AI 추론
 
 | 엔드포인트 | 메서드 | 설명 | 권한 |
 |---|---|---|---|
-| `/api/v1/tags` | `GET`, `POST` | 태그 목록 조회, 새 태그 생성 | **인증된 사용자** |
-| `/api/v1/tags/{id}` | `GET`, `PATCH`, `DELETE` | 특정 태그 조회/수정/삭제 | **인증된 사용자** |
-| `/api/v1/conversations/{id}/tags` | `POST` | 대화에 여러 태그 연결 | **소유자** |
-| `/api/v1/conversations/{id}/tags/{tag_id}` | `DELETE` | 대화에서 특정 태그 연결 해제 | **소유자** |
+| `/api/v1/inference` | `POST` | Gemini 호출 및 응답 생성 | 인증된 사용자 |
 
-### 4.1 태그 생성 — `POST /api/v1/tags`
-**Request Body**
-```json
-{ "name": "my-new-tag" }
-```
-**Response (201 Created)**
-```json
-{ "id": 5, "name": "my-new-tag", "created_at": "..." }
-```
-
-### 4.2 대화에 태그 연결 — `POST /api/v1/conversations/{id}/tags`
-**Request Body**
-```json
-{ "tag_ids": [1, 2, 3] }
-```
-**Response (200 OK)**: 연결된 전체 태그 목록
-```json
-[
-  { "id": 1, "name": "work" },
-  { "id": 2, "name": "idea" },
-  { "id": 3, "name": "project-x" }
-]
-```
-
-### 4.3 대화에서 태그 연결 해제 — `DELETE /api/v1/conversations/{id}/tags/{tag_id}`
-**Response (204 No Content)**
-
----
-
-## 5. AI 추론
-
-| 엔드포인트 | 메서드 | 설명 | 권한 |
-|---|---|---|---|
-| `/api/v1/inference` | `POST` | Gemini 호출 및 응답 생성 | **인증된 사용자** |
-
-### 5.1 Gemini 호출 — `POST /api/v1/inference`
-**Request Body**
+### 4.1 Gemini 호출
 ```json
 {
   "conversation_id": 10,
@@ -587,46 +495,43 @@ erDiagram
 
 ---
 
-## 6. 데이터 전처리 (관리자 기능)
+## 5. 데이터 전처리 (관리자 기능)
 
 | 엔드포인트 | 메서드 | 설명 | 권한 |
 |---|---|---|---|
-| `/api/v1/datasets` | `GET`, `POST` | 데이터셋 목록/생성 | **관리자** |
-| `/api/v1/datasets/{id}` | `GET`, `PATCH`, `DELETE` | 특정 데이터셋 조회/수정/삭제 | **관리자** |
-| `/api/v1/datasets/{id}/preprocess` | `POST` | 데이터셋 전처리 작업 생성 | **관리자** |
-| `/api/v1/preprocessing-jobs` | `GET` | 모든 전처리 작업 목록 조회 | **관리자** |
-| `/api/v1/preprocessing-jobs/{job_id}` | `GET` | 특정 전처리 작업 조회 | **관리자** |
+| `/api/v1/datasets` | `GET`, `POST` | 데이터셋 목록/생성 | 관리자 |
+| `/api/v1/datasets/{id}` | `GET`, `PATCH`, `DELETE` | 특정 데이터셋 조회/수정/삭제 | 관리자 |
+| `/api/v1/datasets/{id}/preprocess` | `POST` | 데이터셋 전처리 작업 생성 | 관리자 |
+| `/api/v1/preprocessing-jobs` | `GET` | 모든 전처리 작업 목록 조회 | 관리자 |
+| `/api/v1/preprocessing-jobs/{job_id}` | `GET` | 특정 전처리 작업 조회 | 관리자 |
 
-### 6.1 데이터셋 등록 — `POST /api/v1/datasets`
+### 5.1 데이터셋 등록
 ```json
 { "name": "news_corpus_v1", "source": "file", "uri": "s3://bucket/raw/news_v1.csv" }
 ```
-**201**
+**Response (201 Created)**
 ```json
 { "id": 1, "name": "news_corpus_v1", "source": "file", "uri": "s3://bucket/raw/news_v1.csv", "created_at": "2025-09-09T12:00:00Z" }
 ```
 
-### 6.2 전처리 작업 생성 — `POST /api/v1/datasets/{id}/preprocess`
-> 멱등키 정책(동일 dataset+client_job_id 재시도=기존 Job 반환),
+### 5.2 전처리 작업 생성
 ```json
 {
   "steps": [{"op":"normalize"},{"op":"dedupe"},{"op":"fillna"},{"op":"tokenize"}],
   "client_job_id": "optional-unique-key-per-dataset"
 }
 ```
-**202**
+**Response (202 Accepted)**
 ```json
 { "job_id": 101, "status": "queued", "idempotent": true }
 ```
 
-### 6.3 전처리 작업 조회 — `GET /api/v1/preprocessing-jobs/{job_id}`
-**200**
+### 5.3 전처리 작업 조회
 ```json
 { "id": 101, "dataset_id": 1, "status": "running", "started_at": "2025-09-09T12:01:00Z", "finished_at": null }
 ```
 
-### 6.4 전처리 작업 목록 — `GET /api/v1/preprocessing-jobs?dataset_id=1&status=running`
-**Response (200 OK)**
+### 5.4 전처리 작업 목록
 ```json
 [
   {
@@ -641,15 +546,14 @@ erDiagram
 
 ---
 
-## 7. 추론 모니터링 (관리자 기능)
+## 6. 추론 모니터링 (관리자 기능)
 
 | 엔드포인트 | 메서드 | 설명 | 권한 |
 |---|---|---|---|
-| `/api/v1/inference-runs` | `GET` | 모든 추론 기록 조회 | **관리자** |
-| `/api/v1/inference-runs/{id}` | `GET` | 특정 추론 기록 조회 | **관리자** |
+| `/api/v1/inference-runs` | `GET` | 모든 추론 기록 조회 | 관리자 |
+| `/api/v1/inference-runs/{id}` | `GET` | 특정 추론 기록 조회 | 관리자 |
 
-### 7.1 추론 기록 목록 조회 — `GET /api/v1/inference-runs`
-**Response (200 OK)**
+### 6.1 추론 기록 목록 조회
 ```json
 [
   {
@@ -665,23 +569,25 @@ erDiagram
   }
 ]
 ```
-### 7.2 상세 — `GET /api/v1/inference-runs/{id}`
+
+### 6.2 추론 기록 상세
+**GET /api/v1/inference-runs/{id}**
 
 ---
 
-## 8. 유틸
+## 7. 유틸
 
 | 엔드포인트 | 메서드 | 설명 | 권한 |
 |---|---|---|---|
 | `/healthz` | `GET` | 앱 가동 확인 | 누구나 |
 | `/readiness` | `GET` | 의존성(DB 등) 점검 | 누구나 |
-### 8.1 Health Check (`/healthz`)
-**Response (200 OK)**
+
+### 7.1 Health Check
 ```
 OK
 ```
 
-### 8.2 Readiness Check (`/readiness`)
+### 7.2 Readiness Check
 **Response (200 OK)**
 ```
 OK
