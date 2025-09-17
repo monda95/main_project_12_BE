@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import User
+from .models import User, OAuthAccount
 
 
 @admin.register(User)
@@ -35,3 +35,19 @@ class CustomUserAdmin(UserAdmin):
 
     # 정렬 순서를 지정합니다.
     ordering = ("-created_at",)
+
+
+@admin.register(OAuthAccount)
+class OAuthAccountAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "user",
+        "provider",
+        "subject",
+        "email",
+        "email_verified",
+        "created_at",
+    )
+    list_filter = ("provider", "email_verified", "created_at")
+    search_fields = ("user__email", "subject", "email")
+    autocomplete_fields = ("user",)

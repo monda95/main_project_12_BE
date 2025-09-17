@@ -1,9 +1,5 @@
 from django.urls import path
-
-# from rest_framework_simplejwt.views import (
-#     TokenObtainPairView,
-#     TokenRefreshView,
-# ) # 이 줄은 더 이상 필요 없음
+from .views import OAuthExchangeView, OAuthLinkView, OAuthUnlinkView
 from . import views
 
 # /api/v1/auth/ 경로 하위에 위치
@@ -14,6 +10,10 @@ urlpatterns = [
     ),  # 프록시 뷰 사용
     path("logout/", views.LogoutView.as_view(), name="logout"),
     path("refresh/", views.CustomTokenRefreshView.as_view(), name="token_refresh"),
-    path("verify/<uidb64>/<token>/", views.verify_email, name="verify_email"),
-    # 프록시 뷰 사용
+    path(
+        "verify/<uidb64>/<token>/", views.verify_email, name="verify_email"
+    ),  # 프록시 뷰 사용
+    path("oauth2/exchange", OAuthExchangeView.as_view(), name="oauth2-exchange"),
+    path("oauth2/link", OAuthLinkView.as_view(), name="oauth2-link"),
+    path("oauth2/link/<str:provider>", OAuthUnlinkView.as_view(), name="oauth2-unlink"),
 ]

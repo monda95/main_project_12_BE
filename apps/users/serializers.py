@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from rest_framework import serializers
@@ -22,7 +23,10 @@ class SignupSerializer(serializers.ModelSerializer):
         ]
 
     def validate_email(self, v):
-        return v.strip().lower()
+        v = (v or "").strip().lower()
+        if not v:
+            raise serializers.ValidationError("이메일은 필수입니다.")
+        return v
 
     def create(self, validated):
         # (선택) 폰넘버 정규화만 아주 가볍게
@@ -103,3 +107,28 @@ class RefreshTokenSerializer(serializers.Serializer):
     """
 
     refresh = serializers.CharField()
+
+
+class OAuthBaseSerializer(serializers.Serializer):
+    provider = serializers.ChoiceField(
+        choices=[(p, p) for p in settings.OAUTH_ALLOWED_PROVIDERS]
+    )
+    code = serializers.CharField()
+    code_verifier = serializers.CharField(required=False, allow_blank=True)
+    redirect_uri = serializers.URLField()
+
+
+class OAuthExchangeSerializer(OAuthBaseSerializer):
+    """인가 코드 교환 → (로그인 or 가입) → JWT 발급"""
+
+
+class OAuthLinkSerializer(OAuthBaseSerializer):
+    """로그인 상태에서 추가 소셜 계정 연결"""
+
+
+class OAuthAccountSerializer(serializers.Serializer):
+    provider = serializers.CharField()
+    subject = serializers.CharField()
+    email = serializers.EmailField(allow_null=True, required=False)
+    email_verified = serializers.BooleanField()
+    created_at = serializers.DateTimeField()
