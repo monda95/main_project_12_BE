@@ -17,16 +17,21 @@ from .services import call_gemini_api  # services에서 임포트
 
 
 @extend_schema(
+    summary="[생성] Gemini 추론 호출",
     request=InferenceRequestSerializer,
     responses=InferenceResponseSerializer,
     tags=["AI 추론"],
-    summary="Gemini 추론 호출",
     operation_id="Inference__create",
 )
 class InferenceView(APIView):
     """
-    Gemini API를 호출해 응답을 생성하고,
-    (user → assistant) 메시지 및 InferenceRun을 저장합니다.
+    Gemini API를 호출하여 AI 추론을 실행하고, 관련된 데이터를 저장합니다.
+
+    - **POST**: 사용자의 프롬프트를 받아 Gemini API로 전달합니다.
+    - API 호출이 성공하면, 사용자 메시지(user)와 AI의 응답(assistant)을 `Message` 객체로 저장합니다.
+    - 또한, API 호출에 대한 상세 정보(지연 시간, 토큰 사용량 등)를 `InferenceRun` 객체로 기록합니다.
+
+    **권한**: 인증된 사용자만 접근 가능합니다.
     """
 
     permission_classes = [permissions.IsAuthenticated]
@@ -100,19 +105,24 @@ class InferenceView(APIView):
 
 @extend_schema_view(
     list=extend_schema(
+        summary="[목록] 추론 실행 기록 조회",
         tags=["추론 모니터링"],
-        summary="추론 실행 목록 조회",
         operation_id="InferenceRun__list",
     ),
     retrieve=extend_schema(
+        summary="[조회] 특정 추론 실행 기록 조회",
         tags=["추론 모니터링"],
-        summary="추론 실행 단건 조회",
         operation_id="InferenceRun__retrieve",
     ),
 )
 class InferenceRunViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    추론 실행 기록(InferenceRun) 조회(관리자 전용)
+    추론 실행 기록(InferenceRun)을 조회하는 API 뷰셋입니다.
+
+    - **list**: 모든 추론 실행 기록 목록을 조회합니다.
+    - **retrieve**: 특정 추론 실행 기록의 상세 정보를 조회합니다.
+
+    **권한**: 관리자만 접근 가능합니다.
     """
 
     queryset = InferenceRun.objects.all().select_related("conversation", "message")

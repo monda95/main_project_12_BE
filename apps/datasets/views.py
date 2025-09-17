@@ -10,17 +10,20 @@ from .serializers import DatasetSerializer, PreprocessingJobSerializer
 
 
 @extend_schema_view(
-    list=extend_schema(tags=["데이터 전처리"]),
-    create=extend_schema(tags=["데이터 전처리"]),
-    retrieve=extend_schema(tags=["데이터 전처리"]),
-    update=extend_schema(tags=["데이터 전처리"]),
-    partial_update=extend_schema(tags=["데이터 전처리"]),
-    destroy=extend_schema(tags=["데이터 전처리"]),
+    list=extend_schema(summary="[목록] 데이터셋 목록 조회", tags=["데이터셋"]),
+    create=extend_schema(summary="[생성] 새 데이터셋 생성", tags=["데이터셋"]),
+    retrieve=extend_schema(summary="[조회] 특정 데이터셋 상세 조회", tags=["데이터셋"]),
+    update=extend_schema(summary="[수정] 특정 데이터셋 수정", tags=["데이터셋"]),
+    partial_update=extend_schema(
+        summary="[부분 수정] 특정 데이터셋 부분 수정", tags=["데이터셋"]
+    ),
+    destroy=extend_schema(summary="[삭제] 특정 데이터셋 삭제", tags=["데이터셋"]),
 )
 class DatasetViewSet(viewsets.ModelViewSet):
     """
-    데이터셋(Dataset) 리소스에 대한 CRUD API 뷰셋입니다。
-    관리자만 접근 가능합니다。
+    데이터셋(Dataset) 리소스에 대한 CRUD API 뷰셋입니다.
+
+    **권한**: 관리자만 접근 가능합니다.
     """
 
     queryset = Dataset.objects.all().select_related("owner")
@@ -33,13 +36,16 @@ class DatasetViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema_view(
-    list=extend_schema(tags=["데이터 전처리"]),
-    retrieve=extend_schema(tags=["데이터 전처리"]),
+    list=extend_schema(summary="[목록] 전처리 작업 목록 조회", tags=["전처리 작업"]),
+    retrieve=extend_schema(
+        summary="[조회] 특정 전처리 작업 상세 조회", tags=["전처리 작업"]
+    ),
 )
 class PreprocessingJobViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    전처리 작업(PreprocessingJob) 리소스에 대한 조회 API 뷰셋입니다。
-    관리자만 접근 가능합니다。
+    전처리 작업(PreprocessingJob) 리소스에 대한 조회 API 뷰셋입니다.
+
+    **권한**: 관리자만 접근 가능합니다.
     """
 
     queryset = PreprocessingJob.objects.all().select_related("dataset")
@@ -47,10 +53,14 @@ class PreprocessingJobViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAdminUser]
 
 
+@extend_schema(summary="[생성] 새 전처리 작업 생성", tags=["전처리 작업"])
 class PreprocessingJobCreateView(generics.CreateAPIView):
     """
-    특정 데이터셋에 대한 전처리 작업을 생성하는 API 뷰입니다。
-    관리자만 접근 가능합니다。
+    특정 데이터셋에 대한 전처리 작업을 생성하는 API 뷰입니다.
+
+    URL의 `dataset_pk`를 통해 대상 데이터셋이 지정됩니다.
+
+    **권한**: 관리자만 접근 가능합니다.
     """
 
     serializer_class = PreprocessingJobSerializer
@@ -62,6 +72,5 @@ class PreprocessingJobCreateView(generics.CreateAPIView):
         dataset = get_object_or_404(Dataset, id=dataset_id)
         serializer.save(dataset=dataset)
 
-    @extend_schema(tags=["데이터 전처리"])  # 이 데코레이터 추가
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
