@@ -89,37 +89,39 @@ main-project/
         └── prod.py
 ```
 
-## 📑 사용자 요구설명서 (개인 프로젝트)
+# 📑 사용자 요구설명서 (개인 프로젝트)
 
 ## 1. 개요
-- 서비스: 인터랙티브 **디지털 휴먼 AI 가상비서(Fluent AI Assistant)**를 위한 **AI 모델 배포용 API 서버**.
-- 대상 환경: **Windows + PyCharm**, **uv** 패키지, **Docker Compose**, **PostgreSQL(AWS RDS 가능)**, **Django + DRF**, **AWS EC2** 배포, **Google Gemini API** 연동.
+- **서비스**: 인터랙티브 **디지털 휴먼 AI 가상비서(Fluent AI Assistant)**를 위한 **AI 모델 배포용 API 서버**
+- **대상 환경**: **Windows + PyCharm**, **uv** 패키지, **Docker Compose**, **PostgreSQL(AWS RDS 가능)**, **Django + DRF**, **AWS EC2** 배포, **Google Gemini API** 연동
 
 ## 2. 요구사항 목록
 
-| 요구사항 ID | 요구사항 명 | 구분 | 설명                                            | 중요도 | 비고 |
-|---|---|---|-----------------------------------------------|---|---|
-| DH_RF01001 | 회원가입(자체) | 기능 | 이메일 중복 검사, 비밀번호 유효성 검사                        | 상 | 운영에선 이메일 인증 필수 | - SimpleJWT (Refresh 회전 + 블랙리스트)
-| DH_RF01002 | 로그인/토큰 발급 | 기능 | SimpleJWT (Refresh 회전 + 블랙리스트)), 재발급 지원       | 상 | SimpleJWT (Refresh 회전 + 블랙리스트)
-| DH_RF01003 | 로그아웃 | 기능 | 클라이언트 토큰 삭제, (선택) 서버 Refresh 블랙리스트            | 상 | 블랙리스트 앱 사용 가능 |
-| DH_RF01004 | 마이페이지 조회/수정 | 기능 | 닉네임·이미지 등 정보 수정                               | 중 | 개인정보 보호 고려 |
-| DH_RF01005 | 비밀번호 변경 | 기능 | 기존 비밀번호 검증 후 변경                               | 상 | OWASP 권고 준수 |
-| DH_RF02001 | 대화 관리 | 기능 | 대화 생성/조회/수정/삭제                                | 상 | 사용자 소유권 유지 |
-| DH_RF02002 | 메시지 관리 | 기능 | 대화 내 메시지 작성/조회(페이징)                           | 상 | |
-| DH_RF03001 | AI 추론(Gemini) | 기능 | 프롬프트 전달·응답 저장/반환                              | 상 | 옵션(temperature,max_tokens) |
-| DH_RF03002 | **모델 성능 모니터링 데이터 저장** | 기능 | 추론별 latency/status/tokens 저장                  | 중 | `inference_runs` |
-| DH_RF02004 | **데이터 전처리 파이프라인** | 기능 | Dataset 등록·전처리 Job 생성/조회                      | 중 | `datasets`, `preprocessing_jobs` |
-| DH_RQ04001 | 보안성 | 비기능 | 모든 API는 HTTPS, SimpleJWT (Refresh 회전 + 블랙리스트) 
-| DH_RQ04002 | 성능 | 비기능 | **평균 응답 ≤ 2초, 동시 30**(t2.micro 기준)            | 중 | |
-| DH_RQ04003 | 개발/배포 | 비기능 | Git 관리, Dev/Prod 차이 최소화                       | 중 | |
-| DH_RQ04IDEMP | 멱등성(전처리 한정) | 비기능 | 전처리 생성에 `client_job_id` 지원                    | 중 | UNIQUE(dataset_id, client_job_id) |
+| 요구사항 ID | 요구사항 명 | 구분 | 설명 | 중요도 | 비고 |
+|---|---|---|---|---|---|
+| DH_RF01001 | 회원가입(자체) | 기능 | 이메일 중복 검사, 비밀번호 유효성 검사 | 상 | 운영에선 이메일 인증 필수 / SimpleJWT (Refresh 회전 + 블랙리스트) |
+| DH_RF01002 | 로그인/토큰 발급 | 기능 | SimpleJWT (Refresh 회전 + 블랙리스트), 재발급 지원 | 상 | |
+| DH_RF01003 | 로그아웃 | 기능 | 클라이언트 토큰 삭제, (선택) 서버 Refresh 블랙리스트 | 상 | 블랙리스트 앱 사용 가능 |
+| DH_RF01004 | 마이페이지 조회/수정 | 기능 | 닉네임·이미지 등 정보 수정 | 중 | 개인정보 보호 고려 |
+| DH_RF01005 | 비밀번호 변경 | 기능 | 기존 비밀번호 검증 후 변경 | 상 | OWASP 권고 준수 |
+| **DH_RF01006** | **소셜 로그인(OAuth2)** | 기능 | Google, GitHub, Kakao, Naver 계정을 통한 로그인/회원가입 지원. 최초 로그인 시 자동 가입 여부(`OAUTH_ALLOW_SIGNUP`), 공급자 이메일 검증 여부(`OAUTH_TRUST_PROVIDER_EMAIL`) | 중 | `/api/v1/oauth2/exchange` |
+| **DH_RF01007** | **소셜 계정 연결/해제** | 기능 | 로그인된 계정에 소셜 계정(OAuth2 Provider)을 추가 연결하거나 해제 가능 | 중 | 최소 1개의 로그인 수단은 유지해야 함 |
+| DH_RF02001 | 대화 관리 | 기능 | 대화 생성/조회/수정/삭제 | 상 | 사용자 소유권 유지 |
+| DH_RF02002 | 메시지 관리 | 기능 | 대화 내 메시지 작성/조회(페이징) | 상 | |
+| DH_RF03001 | AI 추론(Gemini) | 기능 | 프롬프트 전달·응답 저장/반환 | 상 | 옵션(temperature,max_tokens) |
+| DH_RF03002 | 모델 성능 모니터링 데이터 저장 | 기능 | 추론별 latency/status/tokens 저장 | 중 | `inference_runs` |
+| DH_RF02004 | 데이터 전처리 파이프라인 | 기능 | Dataset 등록·전처리 Job 생성/조회 | 중 | `datasets`, `preprocessing_jobs` |
+| DH_RQ04001 | 보안성 | 비기능 | 모든 API는 HTTPS, SimpleJWT (Refresh 회전 + 블랙리스트) | 상 | |
+| DH_RQ04002 | 성능 | 비기능 | **평균 응답 ≤ 2초, 동시 30**(t2.micro 기준) | 중 | |
+| DH_RQ04003 | 개발/배포 | 비기능 | Git 관리, Dev/Prod 차이 최소화 | 중 | |
+| DH_RQ04IDEMP | 멱등성(전처리 한정) | 비기능 | 전처리 생성에 `client_job_id` 지원 | 중 | UNIQUE(dataset_id, client_job_id) |
+| **DH_RQ04004** | **외부 OAuth2 보안** | 비기능 | OAuth2 교환 시 PKCE(S256) 및 state 검증 필수. ID 토큰은 서버에서 서명·aud·iss·exp 확인 | 상 | Google OIDC, GitHub/Kakao/Naver는 Access Token → 사용자 정보 API 호출 |
 
 ## 3. 제약 및 참고
-- 인증: **SimpleJWT (Refresh 회전 + 블랙리스트)).
-- 문서화: **drf-spectacular** + Swagger UI(`/api/swagger/`).
-- DB: **PostgreSQL**(문서의 모든 타입/제약은 Postgres 기준).
-- 배포: **Docker Compose → EC2**, Readiness/Health 엔드포인트 제공.
-
+- **인증**: **SimpleJWT (Refresh 회전 + 블랙리스트)** + **OAuth2 (Google/GitHub/Kakao/Naver)**
+- **문서화**: **drf-spectacular** + Swagger UI(`/api/swagger/`)
+- **DB**: **PostgreSQL** (문서의 모든 타입/제약은 Postgres 기준)
+- **배포**: **Docker Compose → EC2**, Readiness/Health 엔드포인트 제공
 
 ---
 
@@ -129,7 +131,7 @@ main-project/
 erDiagram
     User {
         bigint id PK
-        string email "UNIQUE NOT NULL; LOWER(email) 인덱스"
+        string email "UNIQUE NOT NULL; CHECK email = LOWER(email)"
         string username "NOT NULL"
         string password "NOT NULL"
         string nickname "NULL"
@@ -191,17 +193,29 @@ erDiagram
         timestamptz created_at "NOT NULL DEFAULT now()"
     }
 
-    %% 관계
+    OAuthAccount {
+        bigserial id PK
+        bigint user_id FK "NOT NULL; FK→User.id; ON DELETE CASCADE"
+        varchar provider "NOT NULL CHECK IN('google','github','kakao','naver')"
+        varchar subject "provider user id (sub)"
+        varchar email "NULL"
+        boolean email_verified "NULL"
+        timestamptz token_expires_at "NULL"
+        timestamptz created_at "NOT NULL DEFAULT now()"
+    }
+
+    %% --- 관계 ---
     User ||--o{ Conversation : "1:N"
     Conversation ||--o{ Message : "1:N"
     Conversation ||--o{ InferenceRun : "1:N"
     Message ||--o{ InferenceRun : "1:N"
     User ||--o{ Dataset : "1:N"
     Dataset ||--o{ PreprocessingJob : "1:N"
+    User ||--o{ OAuthAccount : "1:N"
+
 ```
 
 ---
-
 # 🗄️ 테이블 명세서 (PostgreSQL)
 
 ## 1. users
@@ -220,10 +234,13 @@ erDiagram
 | updated_at        | TIMESTAMPTZ  | NOT NULL     | 수정 시각                 | now() |
 | deactivated_at    | TIMESTAMPTZ  | NULL         | 탈퇴 시각                 | NULL  |
 
-**인덱스**
-- `uq_users_email_ci` (LOWER(email))
-- idx_users_username(username), idx_users_email(email)
+**제약(Constraints)**
+- **UNIQUE(email)**  <!-- EmailField(unique=True)로 자동 생성 -->
+- **users_email_is_lower CHECK (email = LOWER(email))**  <!-- 저장값 소문자 강제 -->
 
+**인덱스(Indexes)**
+- **idx_users_created_at (created_at)**
+- **idx_users_deactivated_nonnull (deactivated_at) WHERE deactivated_at IS NOT NULL**
 ---
 
 ## 2. conversations
@@ -235,9 +252,11 @@ erDiagram
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 시각 | now() |
 | updated_at | TIMESTAMPTZ | NOT NULL | 수정 시각 | now() |
 
-**인덱스**
-- idx_conversations_owner(owner_id), idx_conversations_created(created_at)
+**제약(Constraints)**
+- **fk_conversations_owner(owner_id)** — `users(id)` 참조, **ON DELETE CASCADE**
 
+**인덱스(Indexes)**
+- **idx_conv_owner_updated (owner_id, updated_at DESC)**
 ---
 
 ## 3. messages
@@ -249,9 +268,12 @@ erDiagram
 | content | TEXT | NOT NULL | 내용 | - |
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 시각 | now() |
 
-**인덱스**
-- idx_messages_conv(conversation_id), idx_messages_created(created_at), idx_messages_conv_created(conversation_id, created_at)
+**제약(Constraints)**
+- **fk_messages_conversation(conversation_id)** — `conversations(id)` 참조, **ON DELETE CASCADE**
+- **chk_messages_role** — `role ∈ {'user','assistant','system'}`
 
+**인덱스(Indexes)**
+- **idx_msg_conv_created (conversation_id, created_at)**
 ---
 
 ## 4. datasets
@@ -264,8 +286,13 @@ erDiagram
 | uri | VARCHAR(500) | NULL | 원본 위치(S3 키 등) | NULL |
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 시각 | now() |
 
-**인덱스**
-- idx_datasets_owner(owner_id), idx_datasets_name(name), idx_datasets_created(created_at)
+**제약(Constraints)**
+- **fk_datasets_owner(owner_id)** — `users(id)` 참조, **ON DELETE CASCADE**
+
+**인덱스(Indexes)**
+- **idx_datasets_owner (owner_id)**
+- **idx_datasets_name (name)**
+- **idx_datasets_created (created_at)**
 
 ---
 
@@ -274,17 +301,20 @@ erDiagram
 |---|---|---|---|---|
 | id | BIGSERIAL | PK | 전처리 작업 ID | - |
 | dataset_id | BIGINT | NOT NULL, FK→datasets(id) ON DELETE CASCADE | 대상 데이터셋 | - |
-| client_job_id | VARCHAR(64) | NULL | **멱등키(데이터셋별 유일)** | NULL |
+| client_job_id | VARCHAR(64) | NULL | 멱등키(데이터셋별 유일) | NULL |
 | status | VARCHAR(20) | NOT NULL, CHECK IN('queued','running','succeeded','failed') | 상태 | 'queued' |
 | steps | JSONB | NULL | 단계 정의 | NULL |
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 시각 | now() |
 | started_at | TIMESTAMPTZ | NULL | 시작 시각 | NULL |
 | finished_at | TIMESTAMPTZ | NULL | 종료 시각 | NULL |
 
-**인덱스 / 제약**
-- fk_prejobs_dataset(dataset_id)
-- **UNIQUE(dataset_id, client_job_id) WHERE client_job_id IS NOT NULL**
-- idx_prejobs_status_created(status, created_at)
+**제약(Constraints)**  
+- **fk_prejobs_dataset(dataset_id)** — `datasets(id)` 참조, **ON DELETE CASCADE**  
+- **uq_dataset_client_job_id UNIQUE(dataset_id, client_job_id) WHERE client_job_id IS NOT NULL**  
+- **chk_prejobs_status** — `status ∈ {'queued','running','succeeded','failed'}`  
+
+**인덱스(Indexes)**  
+- **idx_prejobs_status_created (status, created_at)**  
 
 ---
 
@@ -302,9 +332,38 @@ erDiagram
 | error_code | VARCHAR(50) | NULL | 오류 코드 | NULL |
 | created_at | TIMESTAMPTZ | NOT NULL | 생성 시각 | now() |
 
-**인덱스**
-- fk_infruns_conversation(conversation_id)
-- idx_infruns_created(created_at), idx_infruns_status(status)
+**제약(Constraints)**  
+- **fk_infruns_conversation(conversation_id)** — `conversations(id)` 참조, **ON DELETE CASCADE**  
+- **fk_infruns_message(message_id)** — `messages(id)` 참조, **ON DELETE SET NULL**  
+- **chk_infruns_status** — `status ∈ {'success','error'}`  
+
+**인덱스(Indexes)**  
+- **idx_infruns_conversation (conversation_id)**  
+- **idx_infruns_created (created_at)**  
+- **idx_infruns_status (status)**  
+
+## 7. oauth_accounts
+| 컬럼            | 타입          | 제약                                                           | 설명                                  | 기본값 |
+|-----------------|---------------|----------------------------------------------------------------|---------------------------------------|--------|
+| id              | BIGSERIAL     | PK                                                             | 소셜 계정 ID                           | -      |
+| user_id         | BIGINT        | NOT NULL, FK→users(id) ON DELETE CASCADE                      | 연결된 사용자                           | -      |
+| provider        | VARCHAR(30)   | NOT NULL                                                      | 공급자(`google`, `github`, `kakao` 등) | -      |
+| subject         | VARCHAR(191)  | NOT NULL                                                      | 공급자 측 사용자 식별자(sub)            | -      |
+| email           | VARCHAR(254)  | NULL                                                          | 공급자 측 이메일(있을 때만)             | NULL   |
+| email_verified  | BOOLEAN       | NOT NULL                                                      | 공급자 측 이메일 검증 여부              | false  |
+| access_token    | TEXT          | NULL                                                          | (선택) 액세스 토큰(필요 시만 저장)       | NULL   |
+| refresh_token   | TEXT          | NULL                                                          | (선택) 리프레시 토큰(필요 시만 저장)     | NULL   |
+| token_expires_at| TIMESTAMPTZ   | NULL                                                          | (선택) 토큰 만료 시각                    | NULL   |
+| created_at      | TIMESTAMPTZ   | NOT NULL                                                      | 생성 시각                                | now()  |
+
+**제약(Constraints)**
+- **fk_oauth_user(user_id)** — `users(id)` 참조, **ON DELETE CASCADE**
+- **uq_oauth_provider_subject UNIQUE(provider, subject)**
+- **chk_oauth_provider** — `provider ∈ {'google','github','kakao','naver'}` *(필요 공급자만 운영에서 확정)*
+
+**인덱스(Indexes)**
+- **idx_oauth_user (user_id)**
+- **idx_oauth_created (created_at)**
 
 ---
 
@@ -375,6 +434,81 @@ erDiagram
 
 ---
 
+---
+
+## 1.5 부가 인증 기능
+
+### 이메일 인증 시스템
+**운영 정책**
+- `AUTH_EMAIL_VERIFICATION_REQUIRED=True` 설정 시 미인증 사용자 로그인 차단
+- 에러 응답: `400 Bad Request` — `{"detail": "이메일 인증이 필요합니다."}`
+- 이메일 주소는 서버에서 자동으로 소문자 정규화 처리
+
+**이메일 인증 링크**
+```
+GET /api/v1/auth/verify/{uidb64}/{token}/
+```
+- 회원가입 시 발송된 인증 이메일의 링크 처리
+- 성공: `200 OK` — "이메일 인증이 완료되었습니다."
+- 실패: `400 Bad Request` — "잘못된 인증 링크입니다."
+
+> **참고**: 브라우저 전용 콜백 URL로 OpenAPI 스키마에서 제외됩니다.
+
+### OAuth2 소셜 로그인
+
+| 엔드포인트 | 메서드 | 설명 | 권한 |
+|---|---|---|---|
+| `/api/v1/oauth2/exchange` | `POST` | 인가 코드 → JWT 토큰 교환 | 누구나 |
+| `/api/v1/oauth2/link` | `POST` | 소셜 계정 연결 | 인증된 사용자 |
+| `/api/v1/oauth2/link/{provider}` | `DELETE` | 소셜 계정 연결 해제 | 인증된 사용자 |
+
+**권장 플로우**: Authorization Code + PKCE
+
+#### 1.5.1 인가 코드 교환 — `POST /api/v1/oauth2/exchange`
+```json
+{
+  "provider": "google",
+  "code": "<authorization_code>",
+  "code_verifier": "<pkce_verifier>",
+  "redirect_uri": "https://app.example.com/oauth/callback"
+}
+```
+**Response (200 OK)**
+```json
+{
+  "access": "<jwt_access_token>",
+  "refresh": "<jwt_refresh_token>",
+  "is_new": false,
+  "user": { "id": 1, "email": "user@example.com" }
+}
+```
+
+#### 1.5.2 소셜 계정 연결 — `POST /api/v1/oauth2/link`
+로그인된 사용자가 추가 소셜 계정을 연결할 때 사용
+```json
+{
+  "provider": "google",
+  "code": "<authorization_code>",
+  "code_verifier": "<pkce_verifier>",
+  "redirect_uri": "https://app.example.com/oauth/callback"
+}
+```
+**Response (204 No Content)**
+
+#### 1.5.3 소셜 계정 해제 — `DELETE /api/v1/oauth2/link/{provider}`
+**Response (204 No Content)**
+> **주의**: 마지막 로그인 수단인 경우 해제를 제한하는 것이 권장됩니다.
+
+**OAuth2 콜백 URL (브라우저 전용)**
+```
+GET /api/v1/auth/oauth2/{provider}/callback
+```
+- 소셜 로그인 공급자의 리다이렉트를 받는 엔드포인트
+- 받은 인가 코드를 클라이언트에서 `/api/v1/oauth2/exchange`로 전달
+- OpenAPI 스키마에서 제외되는 브라우저 전용 콜백
+
+---
+
 ## 2. 사용자
 
 | 엔드포인트 | 메서드 | 설명 | 권한 |
@@ -416,36 +550,47 @@ erDiagram
 
 ---
 
-## 3. 대화/메시지
+# 3. 대화/메시지 API 명세서
 
-| 엔드포인트 | 메서드 | 설명 | 권한 |
-|---|---|---|---|
-| `/api/v1/conversations` | `GET`, `POST` | 내 대화 목록 조회, 새 대화 생성 | 인증된 사용자 |
-| `/api/v1/conversations/{id}` | `GET`, `PATCH`, `DELETE` | 특정 대화 조회/수정/삭제 | 소유자 |
-| `/api/v1/conversations/{id}/messages` | `GET`, `POST` | 대화 내 메시지 목록 조회, 추가 | 소유자 |
-
-### 3.1 대화 목록 조회
+## 3.1 대화 목록 조회
 **Response (200 OK)**
 ```json
 [
-  { "id": 10, "title": "주간 회의록", "owner_id": 1, "created_at": "..." },
-  { "id": 11, "title": "새로운 아이디어", "owner_id": 1, "created_at": "..." }
+  { "id": 10, "title": "주간 회의록", "owner": "user@example.com", "created_at": "..." },
+  { "id": 11, "title": "새로운 아이디어", "owner": "user@example.com", "created_at": "..." }
 ]
 ```
 
-### 3.2 대화 생성
+**Errors**
+- 401 Unauthorized: 인증 실패 시
+---
+
+## 3.2 대화 생성
+**Request**
 ```json
 { "title": "새로운 대화" }
 ```
 **Response (201 Created)**
 ```json
-{ "id": 12, "title": "새로운 대화", "owner_id": 1, "created_at": "..." }
+{ "id": 12, "title": "새로운 대화", "owner": "user@example.com", "created_at": "..." }
 ```
 
-### 3.3 대화 삭제
+**Errors**
+- 400 Bad Request: 잘못된 입력 데이터
+- 401 Unauthorized: 인증 실패 시
+---
+
+## 3.3 대화 삭제
 **Response (204 No Content)**
 
-### 3.4 메시지 목록 조회
+**Errors**
+- 401 Unauthorized: 인증 실패 시
+- 403 Forbidden: 소유자가 아님
+- 404 Not Found: 존재하지 않는 대화
+---
+
+## 3.4 메시지 목록 조회
+**Response (200 OK)**
 ```json
 {
   "count": 120,
@@ -458,14 +603,27 @@ erDiagram
 }
 ```
 
-### 3.5 메시지 추가
+**Errors**
+- 401 Unauthorized: 인증 실패 시
+- 403 Forbidden: 소유자가 아님
+- 404 Not Found: 존재하지 않는 대화
+---
+
+## 3.5 메시지 추가
+**Request**
 ```json
 { "role": "user", "content": "내일 날씨는?" }
 ```
 **Response (201 Created)**
 ```json
-{ "id": 102, "role": "user", "content": "내일 날씨는?", "created_at": "..." }
+{ "id": 102, "conversation": 10, "role": "user", "content": "내일 날씨는?", "created_at": "..." }
 ```
+
+**Errors**
+- 400 Bad Request: 잘못된 입력 데이터
+- 401 Unauthorized: 인증 실패 시
+- 403 Forbidden: 소유자가 아님
+- 404 Not Found: 존재하지 않는 대화
 
 ---
 
@@ -596,3 +754,6 @@ OK
 ```
 Service Unavailable
 ```
+
+
+
