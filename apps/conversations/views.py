@@ -3,9 +3,9 @@ from drf_spectacular.utils import (
     extend_schema,
 )
 from rest_framework import generics, permissions, viewsets
+from django.shortcuts import get_object_or_404
 
 from apps.core.permissions import IsOwner
-
 from .models import Conversation, Message
 from .serializers import (
     ConversationCreateSerializer,
@@ -15,21 +15,34 @@ from .serializers import (
 
 
 @extend_schema_view(
-    list=extend_schema(tags=["대화/메시지"]),
-    create=extend_schema(tags=["대화/메시지"]),
-    retrieve=extend_schema(tags=["대화/메시지"]),
-    update=extend_schema(tags=["대화/메시지"]),
-    partial_update=extend_schema(tags=["대화/메시지"]),
-    destroy=extend_schema(tags=["대화/메시지"]),
+    list=extend_schema(summary="[목록] 대화 목록 조회", tags=["대화"]),
+    create=extend_schema(summary="[생성] 새 대화 생성", tags=["대화"]),
+    retrieve=extend_schema(summary="[조회] 특정 대화 상세 조회", tags=["대화"]),
+    update=extend_schema(summary="[수정] 특정 대화 수정", tags=["대화"]),
+    partial_update=extend_schema(
+        summary="[부분 수정] 특정 대화 부분 수정", tags=["대화"]
+    ),
+    destroy=extend_schema(summary="[삭제] 특정 대화 삭제", tags=["대화"]),
 )
 class ConversationViewSet(viewsets.ModelViewSet):
     """
     대화(Conversation) 리소스에 대한 CRUD API 뷰셋입니다.
-    목록 조회, 생성, 상세 조회, 수정, 삭제를 지원합니다.
+
+    - **list**: 로그인 사용자가 소유한 대화 목록만 조회합니다.
+    - **create**: 새로운 대화를 생성합니다. 생성 시 요청 사용자가 자동으로 소유자로 설정됩니다.
+    - **retrieve**: 특정 대화의 상세 정보를 조회합니다 (소유자만 가능).
+    - **update**: 특정 대화의 정보를 수정합니다 (소유자만 가능).
+    - **partial_update**: 특정 대화의 정보를 부분적으로 수정합니다 (소유자만 가능).
+    - **destroy**: 특정 대화를 삭제합니다 (소유자만 가능).
     """
 
-    queryset = Conversation.objects.all().select_related("owner")
     permission_classes = [permissions.IsAuthenticated, IsOwner]
+
+    def get_queryset(self):
+        # 로그인 사용자 소유 대화만 반환 → 다른 유저 대화 접근 차단
+        return Conversation.objects.filter(owner=self.request.user).select_related(
+            "owner"
+        )
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -41,28 +54,30 @@ class ConversationViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
 
-@extend_schema(tags=["대화/메시지"])
+@extend_schema(summary="[목록/생성] 메시지 목록 조회 및 생성", tags=["메시지"])
 class MessageListCreateView(generics.ListCreateAPIView):
     """
-    특정 대화(Conversation)에 속한 메시지 목록을 조회하거나 새 메시지를 추가합니다.
+    특정 대화(Conversation)에 속한 메시지를 관리하는 API 뷰
+    - GET: 해당 대화의 메시지 목록 (소유자만)
+    - POST: 유저 입력 메시지 추가 (role 자동 'user')
     """
 
     serializer_class = MessageSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwner]
 
     def get_queryset(self):
-        # URL에서 conversation_id를 가져와 해당 대화의 메시지만 필터링
         conversation_id = self.kwargs["conversation_pk"]
+        conversation = get_object_or_404(Conversation, id=conversation_id)
+        self.check_object_permissions(self.request, conversation)
         return (
-            Message.objects.filter(conversation__id=conversation_id)
+            Message.objects.filter(conversation=conversation)
             .select_related("conversation")
             .order_by("created_at")
         )
 
     def perform_create(self, serializer):
-        # 메시지 생성 시 해당 대화에 연결
         conversation_id = self.kwargs["conversation_pk"]
-        conversation = Conversation.objects.get(id=conversation_id)
-        # 권한 검사: 메시지를 생성하려는 대화의 소유자가 현재 사용자인지 확인
-        self.check_object_permissions(self.request, conversation)  # IsOwner 권한 검사
+        conversation = get_object_or_404(Conversation, id=conversation_id)
+        self.check_object_permissions(self.request, conversation)
+        # role=user는 serializer에서 자동 지정
         serializer.save(conversation=conversation)

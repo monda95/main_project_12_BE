@@ -27,15 +27,19 @@ class ConversationCreateSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     """
-    메시지 목록 조회 및 생성을 위한 시리얼라이저입니다.
+    메시지 목록 조회 및 생성을 위한 시리얼라이저
+    - 클라이언트는 content만 입력
+    - role은 자동으로 'user'로 강제됨
     """
 
-    # conversation 필드는 URL에서 결정되므로, 읽기 전용으로 설정합니다.
     conversation = serializers.ReadOnlyField(source="conversation.id")
 
     class Meta:
         model = Message
         fields = ["id", "conversation", "role", "content", "created_at"]
-        read_only_fields = [
-            "conversation"
-        ]  # 생성 시 conversation은 request.data가 아닌 URL에서 가져옴
+        read_only_fields = ["conversation", "role"]
+
+    def create(self, validated_data):
+        # role을 강제로 user로 지정
+        validated_data["role"] = Message.Role.USER
+        return super().create(validated_data)
