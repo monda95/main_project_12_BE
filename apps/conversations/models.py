@@ -17,10 +17,14 @@ class Conversation(models.Model):
         db_table = "conversations"
         verbose_name = "대화"
         verbose_name_plural = "대화 목록"
+        # 최신 갱신순 목록/검색 성능 향상: (owner, -updated_at) 복합 인덱스
         indexes = [
-            models.Index(fields=["owner"]),
-            models.Index(fields=["created_at"]),
+            models.Index(
+                fields=["owner", "-updated_at"], name="idx_conv_owner_updated"
+            ),
         ]
+        # 기본 정렬: 최신 갱신순
+        ordering = ["-updated_at", "-id"]
 
     def __str__(self):
         return f"[{self.owner}] {self.title}"
@@ -46,10 +50,14 @@ class Message(models.Model):
         db_table = "messages"
         verbose_name = "메시지"
         verbose_name_plural = "메시지 목록"
+        # 대화별 시간순 페이지네이션 핵심 인덱스
         indexes = [
-            models.Index(fields=["conversation", "created_at"]),
+            models.Index(
+                fields=["conversation", "created_at"], name="idx_msg_conv_created"
+            ),
         ]
-        ordering = ["created_at"]
+        # 기본 정렬: 시간순 + 동시타임스탬프 안정화용 id
+        ordering = ["created_at", "id"]
 
     def __str__(self):
         return f"{self.get_role_display()}: {self.content[:30]}"

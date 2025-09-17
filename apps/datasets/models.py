@@ -25,6 +25,7 @@ class Dataset(models.Model):
         indexes = [
             models.Index(fields=["owner"]),
             models.Index(fields=["name"]),
+            models.Index(fields=["created_at"], name="idx_datasets_created"),
         ]
 
     def __str__(self):
@@ -71,7 +72,9 @@ class PreprocessingJob(models.Model):
         ]
         indexes = [
             models.Index(fields=["dataset"]),
-            models.Index(fields=["status", "created_at"]),
+            models.Index(
+                fields=["status", "created_at"], name="idx_prejobs_status_created"
+            ),
         ]
 
     def __str__(self):

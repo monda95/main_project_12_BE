@@ -44,9 +44,9 @@ class InferenceRun(models.Model):
         verbose_name = "추론 실행"
         verbose_name_plural = "추론 실행 목록"
         indexes = [
-            models.Index(fields=["conversation"]),
-            models.Index(fields=["created_at"]),
-            models.Index(fields=["status"]),
+            models.Index(fields=["conversation"], name="idx_infruns_conversation"),
+            models.Index(fields=["created_at"], name="idx_infruns_created"),
+            models.Index(fields=["status"], name="idx_infruns_status"),
         ]
         ordering = ["-created_at"]
 
