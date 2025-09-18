@@ -63,12 +63,17 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     """
-    사용자 정보(닉네임, 프로필 이미지) 수정을 위한 시리얼라이저입니다.
+    사용자 정보(이름, 닉네임, 프로필 이미지, 전화번호) 수정을 위한 시리얼라이저입니다.
     """
 
     class Meta:
         model = User
-        fields = ["nickname", "image_url"]
+        fields = [
+            "username",
+            "nickname",
+            "image_url",
+            "phone_number",
+        ]  # 추후 실명인증, 휴대폰 인증을 위한 필드추가
 
 
 class PasswordChangeSerializer(serializers.Serializer):
