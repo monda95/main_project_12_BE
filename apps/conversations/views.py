@@ -31,12 +31,12 @@ class ConversationViewSet(viewsets.ModelViewSet):
     - **list**: 로그인 사용자가 소유한 대화 목록만 조회합니다.
     - **create**: 새로운 대화를 생성합니다. 생성 시 요청 사용자가 자동으로 소유자로 설정됩니다.
     - **retrieve**: 특정 대화의 상세 정보를 조회합니다 (소유자만 가능).
-    - **update**: 특정 대화의 정보를 수정합니다 (소유자만 가능).
     - **partial_update**: 특정 대화의 정보를 부분적으로 수정합니다 (소유자만 가능).
     - **destroy**: 특정 대화를 삭제합니다 (소유자만 가능).
     """
 
     permission_classes = [permissions.IsAuthenticated, IsOwner]
+    http_method_names = ["get", "post", "patch", "delete"]  # PUT 제외
 
     def get_queryset(self):
         # 로그인 사용자 소유 대화만 반환 → 다른 유저 대화 접근 차단

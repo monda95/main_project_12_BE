@@ -79,12 +79,13 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     내 정보 관리 API (/users/me/)
 
     - **GET**: 내 정보 조회를 처리합니다.
-    - **PUT/PATCH**: 내 정보 수정을 처리합니다.
+    - **PATCH**: 내 정보 수정을 처리합니다. (부분 수정만으로도 수정허용)
     - **DELETE**: 회원 탈퇴를 처리합니다. (Soft Delete)
     """
 
     queryset = User.objects.all()
     permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["get", "patch", "delete"]  # PUT 제외
 
     def get_object(self):
         return self.request.user

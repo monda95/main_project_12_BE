@@ -29,6 +29,7 @@ class DatasetViewSet(viewsets.ModelViewSet):
     queryset = Dataset.objects.all().select_related("owner")
     serializer_class = DatasetSerializer
     permission_classes = [permissions.IsAdminUser]
+    http_method_names = ["get", "post", "patch", "delete"]  # PUT 제외
 
     def perform_create(self, serializer):
         # 생성 시 요청을 보낸 사용자를 owner로 자동 설정
