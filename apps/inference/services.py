@@ -1,7 +1,10 @@
 # apps/inference/services.py
 import time
 import requests
+import logging
 from django.conf import settings
+
+logger = logging.getLogger(__name__)  # apps.inference.services 로거
 
 # DB 제약과 일치시키기: error_code ≤ 128, error_message는 TextField지만 운영 안전을 위해 상한 유지
 ERROR_CODE_MAX = 128
@@ -28,7 +31,7 @@ def call_gemini_api(prompt_content: str, options: dict = None) -> dict:
     # 1. GEMINI_API_KEY 확인
     api_key = settings.GEMINI_API_KEY
     if not api_key:
-        # 설정 오류는 코드와 메시지 분리
+        logger.error("GEMINI_API_KEY is not set")
         return {
             "ai_content": "설정 오류",
             "latency_ms": 0,
@@ -42,10 +45,7 @@ def call_gemini_api(prompt_content: str, options: dict = None) -> dict:
         }
 
     # 2. Gemini API URL
-    gemini_api_url = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-flash:generateContent?key={api_key}"
-    )
+    gemini_api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
 
     # 3. 요청 본문 구성 (payload)
@@ -63,16 +63,14 @@ def call_gemini_api(prompt_content: str, options: dict = None) -> dict:
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
+            logger.exception("Gemini API HTTPError")
             end_time = time.time()
             latency_ms = int((end_time - start_time) * 1000)
             status_code = response.status_code
-            # 짧은 코드 / 긴 메시지
             error_code = f"HTTP_{status_code}"
-            # 응답 본문 원문을 최대한 살리되 상한 적용
             body_text = None
             try:
                 j = response.json()
-                # 구글 계열 에러는 보통 { "error": { "code": ..., "message": "...", ... } }
                 body_text = j.get("error", {}).get("message") or str(j)
             except Exception:
                 body_text = response.text or str(e)
@@ -90,9 +88,7 @@ def call_gemini_api(prompt_content: str, options: dict = None) -> dict:
         end_time = time.time()
         latency_ms = int((end_time - start_time) * 1000)
 
-        # 5. 응답 파싱
         data = response.json()
-
         ai_content = (
             data.get("candidates", [{}])[0]
             .get("content", {})
@@ -100,7 +96,6 @@ def call_gemini_api(prompt_content: str, options: dict = None) -> dict:
             .get("text", "")
         ) or "API 응답을 받지 못했습니다."
 
-        # 6. 토큰 사용량 파싱
         usage = data.get("usageMetadata", {}) or {}
         prompt_tokens = usage.get("prompt_token_count")
         completion_tokens = usage.get("candidates_token_count")
@@ -116,16 +111,30 @@ def call_gemini_api(prompt_content: str, options: dict = None) -> dict:
         }
 
     except requests.exceptions.RequestException as e:
-        # 네트워크/타임아웃 등
+        logger.exception("Gemini API RequestException")
         end_time = time.time()
         latency_ms = int((end_time - start_time) * 1000)
-        error_code = e.__class__.__name__  # 예: ConnectTimeout, ConnectionError
+        error_code = e.__class__.__name__
         return {
             "ai_content": "API 호출 중 오류 발생",
             "latency_ms": latency_ms,
-            "prompt_tokens": None,  # API 호출 실패 시 토큰 정보는 알 수 없음
-            "completion_tokens": None,  # API 호출 실패 시 토큰 정보는 알 수 없음
+            "prompt_tokens": None,
+            "completion_tokens": None,
             "status": "error",
             "error_code": _truncate(error_code, ERROR_CODE_MAX),
+            "error_message": _truncate(str(e), ERROR_MESSAGE_MAX),
+        }
+
+    except Exception as e:
+        logger.exception("Gemini API Unknown Exception")
+        end_time = time.time()
+        latency_ms = int((end_time - start_time) * 1000)
+        return {
+            "ai_content": "알 수 없는 오류 발생",
+            "latency_ms": latency_ms,
+            "prompt_tokens": None,
+            "completion_tokens": None,
+            "status": "error",
+            "error_code": _truncate(e.__class__.__name__, ERROR_CODE_MAX),
             "error_message": _truncate(str(e), ERROR_MESSAGE_MAX),
         }

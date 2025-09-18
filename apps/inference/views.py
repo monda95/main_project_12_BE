@@ -14,7 +14,7 @@ from .serializers import (
 )
 from .services import call_gemini_api  # services에서 임포트
 
-MODEL_NAME = "gemini-flash"  # 모델명 상수화
+MODEL_NAME = "gemini-2.5-flash"  # 모델명 상수화
 
 
 @extend_schema(

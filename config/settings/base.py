@@ -15,7 +15,13 @@ DEBUG = (
 
 # === CORS 개발용: 모든 출처 허용 ===
 CORS_ALLOW_ALL_ORIGINS = True
-
+CORS_ALLOW_CREDENTIALS = (
+    True  # Swagger 요청에서 X-CSRFTOKEN 제거로 CSRF토큰으로 인한 Failed to fetch 회피
+)
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+]
 # === 보안 키 ===
 SECRET_KEY = os.getenv(
     "DJANGO_SECRET_KEY",
@@ -268,15 +274,39 @@ if not DEBUG:
 
 # === 로깅(S-프로파일: 콘솔 전용) ===
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,  # Django 기본 로거 유지
-    "handlers": {"console": {"class": "logging.StreamHandler"}},  # 단일 콘솔 핸들러
+    "handlers": {
+        # 콘솔 출력 핸들러 (개발/도커 로그 확인용)
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
     "root": {
+        # 루트 로거 (기본 로그 처리)
         "handlers": ["console"],
-        "level": LOG_LEVEL,
-    },  # 필요 시 수준만 환경변수로 조정
+        "level": LOG_LEVEL,  # 환경변수로 조정 가능 (기본 INFO)
+    },
+    "loggers": {
+        # inference 서비스 모듈 전용 로거
+        # Gemini API 호출 에러/성공을 구분해 콘솔에 찍기 위해 별도 설정
+        "apps.inference.services": {
+            "handlers": ["console"],
+            "level": "DEBUG",  # DEBUG 이상 전부 출력
+            "propagate": True,  # root까지 전파
+        },
+        # Django 기본 request 로거
+        # 400/403/404/500 등 클라이언트/서버 에러를 콘솔에 찍어줌
+        "django.request": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
 }
+
 
 # === OAuth2 ===
 OAUTH_ALLOWED_PROVIDERS = [
