@@ -58,5 +58,6 @@ class InferenceRunSerializer(serializers.ModelSerializer):
             "completion_tokens",
             "status",
             "error_code",
+            "error_message",
             "created_at",
         ]

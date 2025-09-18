@@ -1,4 +1,3 @@
-# apps/inference/views.py
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets
@@ -14,6 +13,8 @@ from .serializers import (
     InferenceRunSerializer,
 )
 from .services import call_gemini_api  # services에서 임포트
+
+MODEL_NAME = "gemini-flash"  # 모델명 상수화
 
 
 @extend_schema(
@@ -45,7 +46,7 @@ class InferenceView(APIView):
         # 유효한 데이터 추출
         conversation_id = req_ser.validated_data["conversation_id"]
         prompt_content: str = req_ser.validated_data["prompt"]
-        options: dict = req_ser.validated_data.get("options", {})
+        options: dict = req_ser.validated_data.get("options", {}) or {}
 
         # 1) 소유자 기준으로 대화 조회
         conversation = get_object_or_404(
@@ -61,14 +62,15 @@ class InferenceView(APIView):
             content=prompt_content,
         )
 
-        # 3) Gemini API 호출
+        # 3) Gemini 호출
         gemini = call_gemini_api(prompt_content, options)
         ai_content = gemini.get("ai_content") or "API 응답을 받지 못했습니다."
-        latency_ms = gemini.get("latency_ms")
+        latency_ms = gemini.get("latency_ms") or 0
         prompt_tokens = gemini.get("prompt_tokens")
         completion_tokens = gemini.get("completion_tokens")
         status_str = gemini.get("status")
         error_code = gemini.get("error_code")
+        error_message = gemini.get("error_message")  # 신규 필드 추가 내용
 
         # 4) AI 응답 메시지 저장
         ai_msg = Message.objects.create(
@@ -77,26 +79,36 @@ class InferenceView(APIView):
             content=ai_content,
         )
 
-        # 5) 추론 실행 로그 저장
+        # 5) 추론 실행 로그 저장 (error_message 포함)
         InferenceRun.objects.create(
             conversation=conversation,
             message=ai_msg,
-            model="gemini-flash",  # 실제 호출 모델명으로 맞추세요
+            model=MODEL_NAME,
             latency_ms=latency_ms,
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
             status=status_str,
             error_code=error_code,
+            error_message=error_message,
         )
 
-        # 6) 응답 직렬화
+        # 6) 응답용 usage 정규화(권장안) — 실패 시만 0으로 변환 → 클라이언트는 항상 정수라고 가정 가능
+
+        resp_prompt_tokens = (
+            (prompt_tokens or 0) if status_str == "error" else prompt_tokens
+        )
+        resp_completion_tokens = (
+            (completion_tokens or 0) if status_str == "error" else completion_tokens
+        )
+
+        # 7) 응답 직렬화
         resp = {
             "message_id": ai_msg.id,
             "role": ai_msg.role,
             "content": ai_msg.content,
             "usage": {
-                "prompt_tokens": prompt_tokens,
-                "completion_tokens": completion_tokens,
+                "prompt_tokens": resp_prompt_tokens,
+                "completion_tokens": resp_completion_tokens,
             },
         }
         out_ser = InferenceResponseSerializer(resp)
