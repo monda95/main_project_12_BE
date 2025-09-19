@@ -79,11 +79,11 @@ erDiagram
         timestamptz created_at "NOT NULL (auto_now_add)"
     }
 
-    %% --- 관계(1:N) ---
-    User ||--o{ Conversation : "owns"
-    Conversation ||--o{ Message : "contains"
-    Conversation ||--o{ InferenceRun : "logs"
-    Message ||--o{ InferenceRun : "is_result_of"
-    User ||--o{ Dataset : "owns"
-    Dataset ||--o{ PreprocessingJob : "has"
-    User ||--o{ OAuthAccount : "has"
+    %% --- 관계 ---
+    User ||--o{ Conversation : "1:N"
+    Conversation ||--o{ Message : "1:N"
+    Conversation ||--o{ InferenceRun : "1:N"
+    Message ||--o{ InferenceRun : "1:N"
+    User ||--o{ Dataset : "1:N"
+    Dataset ||--o{ PreprocessingJob : "1:N"
+    User ||--o{ OAuthAccount : "1:N"

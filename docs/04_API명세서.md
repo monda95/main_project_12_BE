@@ -304,15 +304,39 @@ GET /api/v1/auth/oauth2/{provider}/callback
 ```
 
 ### 5.2 전처리 작업 생성
+- **멱등성**: 서버가 요청 내용(`steps`)을 기반으로 해시값을 생성하여 멱등성을 자동으로 보장합니다. 동일한 내용으로 반복 요청 시, 새 작업을 생성하지 않고 기존 작업 정보를 `200 OK`로 반환합니다.
+
+**Request**
 ```json
 {
-  "steps": [{"op":"normalize"},{"op":"dedupe"},{"op":"fillna"},{"op":"tokenize"}],
-  "client_job_id": "optional-unique-key-per-dataset"
+  "steps": [{"op":"normalize"},{"op":"dedupe"},{"op":"fillna"},{"op":"tokenize"}]
 }
 ```
-**Response (202 Accepted)**
+**Response (201 Created - 신규 생성 시)**
 ```json
-{ "job_id": 101, "status": "queued", "idempotent": true }
+{
+    "id": 102,
+    "dataset": 1,
+    "client_job_id": "a1b2c3d4e5f6...",
+    "status": "queued",
+    "steps": [{"op":"normalize"}, {"op":"dedupe"}],
+    "created_at": "2025-09-19T14:00:00Z",
+    "started_at": null,
+    "finished_at": null
+}
+```
+**Response (200 OK - 중복 요청 시)**
+```json
+{
+    "id": 101,
+    "dataset": 1,
+    "client_job_id": "a1b2c3d4e5f6...",
+    "status": "running",
+    "steps": [{"op":"normalize"}, {"op":"dedupe"}],
+    "created_at": "2025-09-19T13:00:00Z",
+    "started_at": "2025-09-19T13:01:00Z",
+    "finished_at": null
+}
 ```
 
 ### 5.3 전처리 작업 조회
@@ -343,37 +367,44 @@ GET /api/v1/auth/oauth2/{provider}/callback
 
 ### 6.1 추론 기록 목록 조회 (예시)
 ```json
-[
-  {
-    "id": 1,
-    "conversation": "주간 회의록", 
-    "message": "요약: ...",
-    "model": "gemini-flash",
-    "latency_ms": 420,
-    "prompt_tokens": 123,
-    "completion_tokens": 456,
-    "status": "success",
-    "error_code": null,
-    "error_message": null,
-    "created_at": "2025-09-18T05:00:00Z"
-  }
-]
+{
+  "id": 0,
+  "owner_email": "string",
+  "conversation": "string",
+  "message": "string",
+  "model": "string",
+  "latency_ms": 2147483647,
+  "prompt_tokens": 2147483647,
+  "completion_tokens": 2147483647,
+  "status": "success",
+  "error_code": "string",
+  "error_message": "string",
+  "created_at": "2025-09-19T04:33:49.208Z"
+}
 ```
 
 ### 6.2 추론 기록 상세 (예시)
 ```json
 {
-  "id": 1,
-  "conversation": "주간 회의록", 
-  "message": "요약: ...",
-  "model": "gemini-flash",
-  "latency_ms": 420,
-  "prompt_tokens": 123,
-  "completion_tokens": 456,
-  "status": "error",
-  "error_code": "HTTP_503",
-  "error_message": "upstream timeout ...",
-  "created_at": "2025-09-18T05:00:00Z"
+  "count": 123,
+  "next": "http://api.example.org/accounts/?page=4",
+  "previous": "http://api.example.org/accounts/?page=2",
+  "results": [
+    {
+      "id": 0,
+      "owner_email": "string",
+      "conversation": "string",
+      "message": "string",
+      "model": "string",
+      "latency_ms": 2147483647,
+      "prompt_tokens": 2147483647,
+      "completion_tokens": 2147483647,
+      "status": "success",
+      "error_code": "string",
+      "error_message": "string",
+      "created_at": "2025-09-19T04:33:20.359Z"
+    }
+  ]
 }
 ```
 
