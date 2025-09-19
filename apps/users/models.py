@@ -101,10 +101,7 @@ class User(AbstractUser):
 
 class OAuthAccount(models.Model):
     class Provider(models.TextChoices):
-        GOOGLE = "google", "구글"
         GITHUB = "github", "깃허브"
-        KAKAO = "kakao", "카카오"
-        NAVER = "naver", "네이버"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -143,7 +140,7 @@ class OAuthAccount(models.Model):
                 name="uq_oauth_provider_subject",
             ),
             models.CheckConstraint(
-                check=Q(provider__in=["google", "github", "kakao", "naver"]),
+                check=Q(provider__in=["github"]),
                 name="chk_oauth_provider",
             ),  # 참조 오류가 귀찮아서, for, lambda 방식보다 직접 적어넣는 하드코딩으로 쉽지만 유지보수는 더 귀찮은 길을 채택
         ]

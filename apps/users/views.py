@@ -221,6 +221,7 @@ class OAuthExchangeView(generics.GenericAPIView):
         s = self.get_serializer(data=request.data)
         s.is_valid(raise_exception=True)
         try:
+            # ✅ state 포함 전달
             user, is_new, _ = complete_oauth_flow(login_user=None, **s.validated_data)
         except OAuthError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -255,6 +256,7 @@ class OAuthLinkView(generics.GenericAPIView):
                 {"detail": "이미 연결된 공급자입니다."}, status=status.HTTP_409_CONFLICT
             )
         try:
+            # ✅ state 포함 전달
             _, _, _ = complete_oauth_flow(login_user=request.user, **s.validated_data)
         except OAuthError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)

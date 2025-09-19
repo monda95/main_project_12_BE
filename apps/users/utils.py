@@ -3,6 +3,7 @@ from typing import Dict, Optional, Tuple
 from django.conf import settings
 from django.utils import timezone
 from .models import OAuthAccount, User
+from django.core.cache import cache
 
 
 def normalize_phone(raw: str | None) -> str | None:
@@ -39,7 +40,7 @@ class OAuthError(Exception):
 
 
 def exchange_code_for_claims(
-    *, provider: str, code: str, code_verifier: str, redirect_uri: str
+    *, provider: str, code: str, code_verifier: str, redirect_uri: str, state: str
 ) -> Dict:
     """
     TODO: 실제 공급자 교환 구현.
@@ -51,6 +52,11 @@ def exchange_code_for_claims(
       - refresh_token (Optional[str])
       - expires_at (Optional[datetime])
     """
+    # state 검증
+    stored_state = cache.get(f"oauth2_state:{state}")
+    if not stored_state:
+        raise OAuthError("invalid or expired state")
+    cache.delete(f"oauth2_state:{state}")  # 일회용 사용 후 제거
     # --- 아래는 개발 편의를 위한 더미/예시 ---
     # 실제 구현 시 requests로 토큰 교환 → id_token 검증 → userinfo 조회
     if provider not in settings.OAUTH_ALLOWED_PROVIDERS:
@@ -79,6 +85,7 @@ def complete_oauth_flow(
     code: str,
     code_verifier: str,
     redirect_uri: str,
+    state: str,  # state 인자 추가
     login_user: Optional[User] = None,
 ) -> Tuple[User, bool, OAuthAccount]:
     """
@@ -91,6 +98,7 @@ def complete_oauth_flow(
         code=code,
         code_verifier=code_verifier,
         redirect_uri=redirect_uri,
+        state=state,  # ✅ 수정: state 전달
     )
     subject = claims["subject"]
     email = (claims.get("email") or "").strip().lower() or None

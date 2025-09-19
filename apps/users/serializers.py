@@ -121,6 +121,7 @@ class OAuthBaseSerializer(serializers.Serializer):
     code = serializers.CharField()
     code_verifier = serializers.CharField(required=False, allow_blank=True)
     redirect_uri = serializers.URLField()
+    state = serializers.CharField(required=True)  # CSRF 방어를 위한 state 필드 추가
 
 
 class OAuthExchangeSerializer(OAuthBaseSerializer):

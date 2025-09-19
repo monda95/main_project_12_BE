@@ -18,10 +18,17 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = (
     True  # Swagger 요청에서 X-CSRFTOKEN 제거로 CSRF토큰으로 인한 Failed to fetch 회피
 )
+# CSRF_TRUSTED_ORIGINS = [
+#     "http://127.0.0.1:8000",
+#     "http://localhost:8000",
+# ] # ❌ 기존 하드코딩 (주석 처리)
+
+# 수정: .env 기반으로 관리
 CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:8000",
-    "http://localhost:8000",
+    o.strip() for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
 ]
+# ↑ 운영 배포 시 필수: 실제 접근 도메인/오리진을 환경변수로 주입(프록시/도메인 구성에 맞게 갱신)
+
 # === 보안 키 ===
 SECRET_KEY = os.getenv(
     "DJANGO_SECRET_KEY",
@@ -35,10 +42,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 ALLOWED_HOSTS = [
     h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()
 ]
-# CSRF_TRUSTED_ORIGINS = [
-#     o.strip() for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
-# ]
-# ↑ 운영 배포 시 필수: 실제 접근 도메인/오리진을 환경변수로 주입(프록시/도메인 구성에 맞게 갱신)
+
 
 # === 앱 ===
 INSTALLED_APPS = [
@@ -311,9 +315,7 @@ LOGGING = {
 # === OAuth2 ===
 OAUTH_ALLOWED_PROVIDERS = [
     p.strip()
-    for p in os.getenv("OAUTH_ALLOWED_PROVIDERS", "google,github,kakao,naver").split(
-        ","
-    )
+    for p in os.getenv("OAUTH_ALLOWED_PROVIDERS", "github").split(",")
     if p.strip()
 ]
 OAUTH_ALLOW_SIGNUP = (
@@ -324,25 +326,10 @@ OAUTH_TRUST_PROVIDER_EMAIL = (
 )  # 공급자 email_verified 신뢰
 
 OAUTH_CLIENTS = {
-    "google": {
-        "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
-        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
-        "redirect_uri": os.getenv("GOOGLE_REDIRECT_URI", ""),
-    },
     "github": {
         "client_id": os.getenv("GITHUB_CLIENT_ID", ""),
         "client_secret": os.getenv("GITHUB_CLIENT_SECRET", ""),
         "redirect_uri": os.getenv("GITHUB_REDIRECT_URI", ""),
-    },
-    "kakao": {
-        "client_id": os.getenv("KAKAO_CLIENT_ID", ""),
-        "client_secret": os.getenv("KAKAO_CLIENT_SECRET", ""),
-        "redirect_uri": os.getenv("KAKAO_REDIRECT_URI", ""),
-    },
-    "naver": {
-        "client_id": os.getenv("NAVER_CLIENT_ID", ""),
-        "client_secret": os.getenv("NAVER_CLIENT_SECRET", ""),
-        "redirect_uri": os.getenv("NAVER_REDIRECT_URI", ""),
     },
 }
 
