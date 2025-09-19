@@ -1,5 +1,4 @@
 from rest_framework import serializers
-
 from .models import Dataset, PreprocessingJob
 
 
@@ -22,13 +21,8 @@ class DatasetSerializer(serializers.ModelSerializer):
 
 
 class PreprocessingJobSerializer(serializers.ModelSerializer):
-    """
-    전처리 작업(PreprocessingJob) 목록 조회, 생성, 상세 조회를 위한 시리얼라이저입니다.
-    """
-
-    dataset = serializers.PrimaryKeyRelatedField(
-        queryset=Dataset.objects.all()
-    )  # 데이터셋 ID로 연결
+    # dataset은 URL 경로로만 지정되며, 입력(body)에서는 받지 않음
+    dataset = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = PreprocessingJob
@@ -42,9 +36,26 @@ class PreprocessingJobSerializer(serializers.ModelSerializer):
             "started_at",
             "finished_at",
         ]
-        read_only_fields = ["status", "created_at", "started_at", "finished_at"]
+        read_only_fields = [
+            "dataset",
+            "client_job_id",
+            "status",
+            "created_at",
+            "started_at",
+            "finished_at",
+        ]
 
     def create(self, validated_data):
-        # 전처리 작업 생성 시 status는 'queued'로 시작
-        validated_data["status"] = "queued"
+        dataset = validated_data.get("dataset")
+        owner = dataset.owner if dataset else None
+        steps = validated_data.get("steps") or {}  # None/빈값 안전 처리
+
+        # 멱등키 자동 생성
+        validated_data["client_job_id"] = PreprocessingJob.generate_client_job_id(
+            dataset.id if dataset else None,
+            owner.id if owner else None,
+            steps,
+        )
+        # 기본 상태는 queued
+        validated_data["status"] = PreprocessingJob.Status.QUEUED
         return super().create(validated_data)

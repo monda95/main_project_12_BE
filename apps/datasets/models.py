@@ -1,3 +1,6 @@
+import hashlib
+import json
+
 from django.conf import settings
 from django.db import models
 
@@ -9,7 +12,7 @@ class Dataset(models.Model):
         related_name="datasets",
         verbose_name="소유자",
     )
-    name = models.CharField(max_length=100, verbose_name="데이터셋명")
+    name = models.CharField(max_length=100, verbose_name="데이터셋 이름")
     source = models.CharField(
         max_length=100, null=True, blank=True, verbose_name="데이터 원천"
     )
@@ -46,7 +49,10 @@ class PreprocessingJob(models.Model):
         verbose_name="데이터셋",
     )
     client_job_id = models.CharField(
-        max_length=64, null=True, blank=True, verbose_name="클라이언트 제공 ID (멱등키)"
+        max_length=64,
+        null=True,
+        blank=True,
+        verbose_name="요청 기반 해시 ID(자동생성 멱등키)",
     )
     status = models.CharField(
         max_length=20,
@@ -64,6 +70,7 @@ class PreprocessingJob(models.Model):
         verbose_name = "전처리 작업"
         verbose_name_plural = "전처리 작업 목록"
         constraints = [
+            # client_job_id 가 NULL이 아닐 때만 (dataset, client_job_id) 유니크
             models.UniqueConstraint(
                 fields=["dataset", "client_job_id"],
                 condition=models.Q(client_job_id__isnull=False),
@@ -79,3 +86,18 @@ class PreprocessingJob(models.Model):
 
     def __str__(self):
         return f"Job {self.id} for {self.dataset.name} ({self.status})"
+
+    @staticmethod
+    def generate_client_job_id(dataset_id, owner_id, steps):
+        """요청 Body + dataset_id + owner_id 기반 멱등키 해시 생성"""
+        norm_steps = steps or {}
+        raw = json.dumps(
+            {
+                "dataset_id": dataset_id,
+                "owner_id": owner_id,
+                "steps": norm_steps,
+            },
+            sort_keys=True,  # 키 순서 정규화
+            separators=(",", ":"),  # 공백 제거 → 안정적 직렬화
+        )
+        return hashlib.sha256(raw.encode()).hexdigest()  # 64자 hex
