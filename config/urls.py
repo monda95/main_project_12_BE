@@ -5,6 +5,7 @@ from drf_spectacular.utils import extend_schema
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from apps.inference.views import InferenceView
 
 
 @extend_schema(tags=["유틸리티"])
@@ -70,5 +71,6 @@ urlpatterns = [
     path("api/v1/users/", include("apps.users.urls")),  # 사용자 정보 관련 API
     path("api/v1/conversations/", include("apps.conversations.urls")),  # 대화 관련 API
     path("api/v1/datasets/", include("apps.datasets.urls")),  # 데이터셋 관련 API
-    path("api/v1/inference/", include("apps.inference.urls")),  # 추론 관련 API
+    path("api/v1/inference/", InferenceView.as_view(), name="inference-create"),
+    path("api/v1/inference-runs/", include("apps.inference.urls")),
 ]
