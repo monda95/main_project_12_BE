@@ -41,6 +41,9 @@ class InferenceRunSerializer(serializers.ModelSerializer):
     추론 실행 기록 조회를 위한 시리얼라이저입니다.
     """
 
+    owner_email = serializers.CharField(
+        source="conversation.owner.email", read_only=True
+    )  # 소유자 이메일 추가
     conversation = serializers.ReadOnlyField(
         source="conversation.title"
     )  # 대화 제목 표시
@@ -50,6 +53,7 @@ class InferenceRunSerializer(serializers.ModelSerializer):
         model = InferenceRun
         fields = [
             "id",
+            "owner_email",  # 필드 목록에 추가
             "conversation",
             "message",
             "model",
