@@ -1,3 +1,4 @@
+```
 erDiagram
     User {
         bigint id PK
@@ -87,3 +88,4 @@ erDiagram
     User ||--o{ Dataset : "1:N"
     Dataset ||--o{ PreprocessingJob : "1:N"
     User ||--o{ OAuthAccount : "1:N"
+```
