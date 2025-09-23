@@ -47,7 +47,7 @@ class TestUserAPI:
             },
         )
         assert response.status_code == 400
-        assert response.json()["email"][0] == "이미 사용 중인 이메일입니다."
+        assert response.json()["email"][0] == "사용자의 이메일은/는 이미 존재합니다."
 
     def test_login_success_and_get_tokens(self):
         """로그인 성공 및 토큰 발급 테스트"""

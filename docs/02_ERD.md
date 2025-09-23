@@ -1,89 +1,93 @@
+# ERD
+
+```mermaid
 erDiagram
     User {
         bigint id PK
-        string email "varchar(254) UNIQUE NOT NULL CHECK (email = LOWER(email))"
-        string username "varchar(100) NOT NULL"
-        string password "varchar(128) NOT NULL"
-        string nickname "varchar(25), NULL"
-        string image_url "varchar(500), NULL"
-        string phone_number "varchar(25), NULL"
-        boolean is_active "NOT NULL DEFAULT true"
-        timestamptz email_verified_at "NULL"
-        timestamptz created_at "NOT NULL (auto_now_add)"
-        timestamptz updated_at "NOT NULL (auto_now)"
-        timestamptz deactivated_at "NULL"
-    }
-
-    OAuthAccount {
-        bigint id PK
-        bigint user_id FK "NOT NULL; FK→User.id; ON DELETE CASCADE"
-        string provider "varchar(30) NOT NULL CHECK (provider IN ('google','github','kakao','naver'))"
-        string subject "varchar(191) NOT NULL"
-        string email "varchar(254), NULL"
-        boolean email_verified "NOT NULL DEFAULT false"
-        text access_token "NULL"
-        text refresh_token "NULL"
-        timestamptz token_expires_at "NULL"
-        timestamptz created_at "NOT NULL (auto_now_add)"
-        -- UNIQUE(provider, subject)
+        string email "UK (case-insensitive via LOWER()); 로그인 이메일"
+        string username "가입자 이름(표시용, 비고유)"
+        string password "암호 해시 저장"
+        string nickname "닉네임"
+        string image_url "프로필 이미지 URL"
+        string phone_number "정규화: 숫자만(3~25자리)"
+        boolean is_active "계정 활성화; DEFAULT true"
+        timestamptz email_verified_at "이메일 인증 시각(미인증=NULL)"
+        timestamptz created_at "생성 시각"
+        timestamptz updated_at "수정 시각"
+        timestamptz deactivated_at "탈퇴 시각"
     }
 
     Conversation {
         bigint id PK
-        bigint owner_id FK "NOT NULL; FK→User.id; ON DELETE CASCADE"
-        string title "varchar(200) NOT NULL"
-        timestamptz created_at "NOT NULL (auto_now_add)"
-        timestamptz updated_at "NOT NULL (auto_now)"
+        bigint owner_id FK "FK→User.id; ON DELETE CASCADE"
+        string title "대화 제목"
+        timestamptz created_at "생성 시각"
+        timestamptz updated_at "수정 시각"
     }
 
     Message {
         bigint id PK
-        bigint conversation_id FK "NOT NULL; FK→Conversation.id; ON DELETE CASCADE"
-        string role "varchar(10) NOT NULL CHECK (role IN ('user','assistant','system'))" 
-        text content "NOT NULL"
-        timestamptz created_at "NOT NULL (auto_now_add)"
-    }
-
-    Dataset {
-        bigint id PK
-        bigint owner_id FK "NOT NULL; FK→User.id; ON DELETE CASCADE"
-        string name "varchar(100) NOT NULL"
-        string source "varchar(100), NULL"
-        string uri "varchar(500), NULL"
-        timestamptz created_at "NOT NULL (auto_now_add)"
-    }
-
-    PreprocessingJob {
-        bigint id PK
-        bigint dataset_id FK "NOT NULL; FK→Dataset.id; ON DELETE CASCADE"
-        string client_job_id "varchar(64), NULL (멱등키)"
-        string status "varchar(20) NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','running','succeeded','failed'))"
-        jsonb steps "NULL"
-        timestamptz created_at "NOT NULL (auto_now_add)"
-        timestamptz started_at "NULL"
-        timestamptz finished_at "NULL"
-        -- UNIQUE(dataset_id, client_job_id) WHERE client_job_id IS NOT NULL
+        bigint conversation_id FK "FK→Conversation.id; ON DELETE CASCADE"
+        string role "user/assistant/system"
+        text content "메시지 내용"
+        timestamptz created_at "생성 시각"
     }
 
     InferenceRun {
         bigint id PK
-        bigint conversation_id FK "NOT NULL; FK→Conversation.id; ON DELETE CASCADE"
-        bigint message_id FK "NULL; FK→Message.id; ON DELETE SET NULL"
-        string model "varchar(100) NOT NULL"
-        integer latency_ms "NOT NULL"
-        integer prompt_tokens "NULL"
-        integer completion_tokens "NULL"
-        string status "varchar(20) NOT NULL DEFAULT 'success' CHECK (status IN ('success','error'))"
-        string error_code "varchar(128), NULL"
-        text error_message "NULL"
-        timestamptz created_at "NOT NULL (auto_now_add)"
+        bigint conversation_id FK "FK→Conversation.id; ON DELETE CASCADE"
+        string model "모델명 (예: gemini-2.5-flash)"
+        integer latency_ms "지연 시간(ms)"
+        integer prompt_tokens "프롬프트 토큰 수"
+        integer completion_tokens "응답 토큰 수"
+        string status "success/error"
+        string error_code "에러 코드 (≤128자)"
+        text error_message "에러 메시지 (상한 8KB)"
+        boolean check_pass "Self-Check 통과 여부"
+        boolean retry_used "Self-Check 재시도 여부"
+        jsonb violations "Self-Check 규칙 위반 내역"
+        timestamptz created_at "생성 시각"
     }
 
-    %% --- 관계 ---
-    User ||--o{ Conversation : "1:N"
-    Conversation ||--o{ Message : "1:N"
-    Conversation ||--o{ InferenceRun : "1:N"
-    Message ||--o{ InferenceRun : "1:N"
-    User ||--o{ Dataset : "1:N"
-    Dataset ||--o{ PreprocessingJob : "1:N"
-    User ||--o{ OAuthAccount : "1:N"
+    SearchLog {
+        bigint id PK
+        bigint user_id FK "FK→User.id; NULL 허용 (익명)"
+        text query "검색 질의 원문"
+        text normalized_query "정규화된 검색 질의 (소문자)"
+        integer result_count "검색 결과 개수"
+        timestamptz created_at "생성 시각"
+    }
+
+    %% 관계 정의
+    User ||--o{ Conversation : "소유"
+    Conversation ||--o{ Message : "포함"
+    Conversation ||--o{ InferenceRun : "추론 기록"
+    User ||--o{ SearchLog : "검색 기록"
+    User ||--o{ OAuthAccount : "소셜 계정 연결"
+
+    %% 인기 검색어 = SearchLog 집계 (MV/배치), 별도 테이블 없음
+    PopularQueriesMV {
+        text query
+        int count
+        timestamptz last_seen
+    }
+    
+    %% 추천 질문 = query 기반 Gemini/배치 결과 (MV/배치)
+    RecommendedQuestionsMV {
+        text query
+        json suggestions
+        timestamptz created_at
+    }
+    
+    %% 선택(향후 확장) — 현재 스코프(01, 03)에는 포함되지 않음
+    %% Ad {
+    %%     bigint id PK
+    %%     string position
+    %%     string image_url
+    %%     string link_url
+    %%     boolean active
+    %%     timestamptz created_at
+    %% }
+
+```
+

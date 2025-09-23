@@ -12,9 +12,7 @@ class CustomUserAdmin(UserAdmin):
 
     # UserAdmin의 기본 필드 구성을 그대로 사용하면서, 커스텀 필드를 추가합니다.
     # User 모델의 fieldsets를 확장합니다.
-    fieldsets = UserAdmin.fieldsets + (
-        ("추가 정보", {"fields": ("nickname", "image_url", "phone_number")}),
-    )
+    fieldsets = UserAdmin.fieldsets + (("추가 정보", {"fields": ("nickname",)}),)
 
     # 관리자 페이지 목록에 보일 필드를 지정합니다.
     list_display = (

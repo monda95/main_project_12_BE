@@ -1,9 +1,7 @@
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from rest_framework import serializers
 
-from .utils import normalize_phone
 
 User = get_user_model()
 
@@ -18,8 +16,6 @@ class SignupSerializer(serializers.ModelSerializer):
             "password",
             "username",
             "nickname",
-            "image_url",
-            "phone_number",
         ]
 
     def validate_email(self, v):
@@ -29,10 +25,6 @@ class SignupSerializer(serializers.ModelSerializer):
         return v
 
     def create(self, validated):
-        # (선택) 폰넘버 정규화만 아주 가볍게
-        if validated.get("phone_number"):
-            validated["phone_number"] = normalize_phone(validated["phone_number"])
-
         try:
             # 핵심 로직(이메일 소문자화/비번 해시)은 Manager가 수행
             return User.objects.create_user(**validated)
@@ -54,7 +46,6 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "username",
             "nickname",
             "image_url",
-            "phone_number",
             "created_at",
             "updated_at",
         ]
@@ -63,7 +54,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
 class UserUpdateSerializer(serializers.ModelSerializer):
     """
-    사용자 정보(이름, 닉네임, 프로필 이미지, 전화번호) 수정을 위한 시리얼라이저입니다.
+    사용자 정보(이름, 닉네임) 수정을 위한 시리얼라이저입니다.
     """
 
     class Meta:
@@ -72,7 +63,6 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             "username",
             "nickname",
             "image_url",
-            "phone_number",
         ]  # 추후 실명인증, 휴대폰 인증을 위한 필드추가
 
 
@@ -112,28 +102,3 @@ class RefreshTokenSerializer(serializers.Serializer):
     """
 
     refresh = serializers.CharField()
-
-
-class OAuthBaseSerializer(serializers.Serializer):
-    provider = serializers.ChoiceField(
-        choices=[(p, p) for p in settings.OAUTH_ALLOWED_PROVIDERS]
-    )
-    code = serializers.CharField()
-    code_verifier = serializers.CharField(required=False, allow_blank=True)
-    redirect_uri = serializers.URLField()
-
-
-class OAuthExchangeSerializer(OAuthBaseSerializer):
-    """인가 코드 교환 → (로그인 or 가입) → JWT 발급"""
-
-
-class OAuthLinkSerializer(OAuthBaseSerializer):
-    """로그인 상태에서 추가 소셜 계정 연결"""
-
-
-class OAuthAccountSerializer(serializers.Serializer):
-    provider = serializers.CharField()
-    subject = serializers.CharField()
-    email = serializers.EmailField(allow_null=True, required=False)
-    email_verified = serializers.BooleanField()
-    created_at = serializers.DateTimeField()

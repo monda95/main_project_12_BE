@@ -6,14 +6,10 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.routers import DefaultRouter  # DefaultRouter 임포트
-from apps.datasets.views import (
-    DatasetViewSet,
-    PreprocessingJobViewSet,
-)  # ViewSet 임포트
 from apps.inference.views import InferenceView
 
 
-@extend_schema(tags=["유틸리티"])
+@extend_schema(exclude=True)
 class HealthzView(APIView):
     """
     Health Check (Liveness Probe)
@@ -32,7 +28,7 @@ class HealthzView(APIView):
         return Response({"status": "OK"}, status=200)
 
 
-@extend_schema(tags=["유틸리티"])
+@extend_schema(exclude=True)
 class ReadinessView(APIView):
     """
     Readiness Check (Readiness Probe)
@@ -62,10 +58,6 @@ class ReadinessView(APIView):
 
 # 라우터 생성 및 등록
 router_v1 = DefaultRouter()
-router_v1.register(r"datasets", DatasetViewSet, basename="dataset")
-router_v1.register(
-    r"preprocessing-jobs", PreprocessingJobViewSet, basename="preprocessing-job"
-)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -82,13 +74,8 @@ urlpatterns = [
     path("api/v1/auth/", include("apps.users.auth_urls")),  # 인증 관련 API
     path("api/v1/users/", include("apps.users.urls")),  # 사용자 정보 관련 API
     path("api/v1/conversations/", include("apps.conversations.urls")),  # 대화 관련 API
-    # datasets 관련 URL 재구성
-    path(
-        "api/v1/", include(router_v1.urls)
-    ),  # /api/v1/datasets, /api/v1/preprocessing-jobs
-    path(
-        "api/v1/datasets/", include("apps.datasets.urls")
-    ),  # /api/v1/datasets/<pk>/preprocess/
     path("api/v1/inference/", InferenceView.as_view(), name="inference-create"),
     path("api/v1/inference-runs/", include("apps.inference.urls")),
-]
+    path("api/v1/search/", include("apps.search.urls")),  # 검색/히스토리 API
+    path("api/v1/stats/", include("apps.stats.urls")),
+]  # 통계 API

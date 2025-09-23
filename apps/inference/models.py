@@ -12,14 +12,6 @@ class InferenceRun(models.Model):
         related_name="inference_runs",
         verbose_name="대화",
     )
-    message = models.ForeignKey(
-        "conversations.Message",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="inference_runs",
-        verbose_name="관련 메시지",
-    )
     model = models.CharField(max_length=100, verbose_name="사용 모델")
     latency_ms = models.IntegerField(verbose_name="지연 시간(ms)")
     prompt_tokens = models.IntegerField(
@@ -35,9 +27,16 @@ class InferenceRun(models.Model):
         verbose_name="상태",
     )
     error_code = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name="오류 코드"
+        max_length=50, null=True, blank=True, verbose_name="오류 코드"
     )
     error_message = models.TextField(null=True, blank=True)
+    check_pass = models.BooleanField(
+        null=True, blank=True, verbose_name="Self-Check 통과 여부"
+    )
+    retry_used = models.BooleanField(
+        null=True, blank=True, verbose_name="Self-Check 재시도 여부"
+    )
+    violations = models.JSONField(null=True, blank=True, verbose_name="규칙 위반 목록")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성 시각")
 
     class Meta:

@@ -18,10 +18,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = (
     True  # Swagger 요청에서 X-CSRFTOKEN 제거로 CSRF토큰으로 인한 Failed to fetch 회피
 )
-CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:8000",
-    "http://localhost:8000",
-]
+# CSRF_TRUSTED_ORIGINS = [
+#     "http://127.0.0.1:8000",
+#     "http://localhost:8000",
+# ]
 # === 보안 키 ===
 SECRET_KEY = os.getenv(
     "DJANGO_SECRET_KEY",
@@ -56,11 +56,13 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "django_filters",
     "corsheaders",
+    "django_celery_beat",
     # Local apps
     "apps.users",
     "apps.conversations",
-    "apps.datasets",
     "apps.inference",
+    "apps.search",
+    "apps.stats",
 ]
 
 # === 미들웨어 ===
@@ -166,7 +168,8 @@ if not DEBUG:
 
 # === 스키마/Swagger(drf-spectacular) ===
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Fluent AI Assistant API",
+    "TITLE": "Smart Nourish Assistant API",
+    "DESCRIPTION": "음식·영양 정보 특화 AI 가상비서 API 문서",
     "VERSION": "1.0.0",
     "SECURITY": [{"bearerAuth": []}],  # Swagger 전역 보안 스키마(JWT) 선언
     "COMPONENTS": {
@@ -177,32 +180,21 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_SETTINGS": {"persistAuthorization": True},
     "TAGS": [
         {
-            "name": "인증/권한",
-            "description": "회원가입, 로그인/로그아웃, 토큰 관리 등 사용자 인증 및 권한 관련 API",
+            "name": "Auth & Users",
+            "description": "회원가입, 로그인/로그아웃, 내 정보 조회/수정, 탈퇴 등 사용자 계정 관련 API",
         },
         {
-            "name": "사용자",
-            "description": "내 정보 조회/수정, 탈퇴 등 사용자 정보 관리 API",
+            "name": "Conversations",
+            "description": "대화 생성, 메시지 기록, 대화 관리 API",
         },
         {
-            "name": "대화",
-            "description": "대화(채팅방) 생성, 조회, 삭제 등 대화 리소스 관리 API",
-        },
-        {"name": "메시지", "description": "특정 대화에 속한 메시지 생성 및 조회 API"},
-        {
-            "name": "AI 추론",
-            "description": "Gemini AI 모델을 호출하여 추론을 실행하는 API",
+            "name": "AI Inference",
+            "description": "Gemini AI 기반 추론 API 및 실행 로그 관리, 운영자 용 모니터링",
         },
         {
-            "name": "추론 모니터링",
-            "description": "(관리자) AI 추론 실행 기록 모니터링 API",
+            "name": "Search & Stats",
+            "description": "검색 로그, 인기 검색어, 추천 질문 및 통계 API",
         },
-        {"name": "데이터셋", "description": "(관리자) 학습 데이터셋 리소스 관리 API"},
-        {
-            "name": "전처리 작업",
-            "description": "(관리자) 데이터셋에 대한 전처리 작업 관리 API",
-        },
-        {"name": "유틸리티", "description": "헬스 체크 등 유틸리티 API"},
     ],
     "SCHEMA_PATH_PREFIX": "/api/v1/",
 }
@@ -324,26 +316,26 @@ OAUTH_TRUST_PROVIDER_EMAIL = (
 )  # 공급자 email_verified 신뢰
 
 OAUTH_CLIENTS = {
-    "google": {
-        "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
-        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
-        "redirect_uri": os.getenv("GOOGLE_REDIRECT_URI", ""),
-    },
+    # "google": {
+    #     "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
+    #     "client_secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
+    #     "redirect_uri": os.getenv("GOOGLE_REDIRECT_URI", ""),
+    # },
     "github": {
         "client_id": os.getenv("GITHUB_CLIENT_ID", ""),
         "client_secret": os.getenv("GITHUB_CLIENT_SECRET", ""),
         "redirect_uri": os.getenv("GITHUB_REDIRECT_URI", ""),
     },
-    "kakao": {
-        "client_id": os.getenv("KAKAO_CLIENT_ID", ""),
-        "client_secret": os.getenv("KAKAO_CLIENT_SECRET", ""),
-        "redirect_uri": os.getenv("KAKAO_REDIRECT_URI", ""),
-    },
-    "naver": {
-        "client_id": os.getenv("NAVER_CLIENT_ID", ""),
-        "client_secret": os.getenv("NAVER_CLIENT_SECRET", ""),
-        "redirect_uri": os.getenv("NAVER_REDIRECT_URI", ""),
-    },
+    # "kakao": {
+    #     "client_id": os.getenv("KAKAO_CLIENT_ID", ""),
+    #     "client_secret": os.getenv("KAKAO_CLIENT_SECRET", ""),
+    #     "redirect_uri": os.getenv("KAKAO_REDIRECT_URI", ""),
+    # },
+    # "naver": {
+    #     "client_id": os.getenv("NAVER_CLIENT_ID", ""),
+    #     "client_secret": os.getenv("NAVER_CLIENT_SECRET", ""),
+    #     "redirect_uri": os.getenv("NAVER_REDIRECT_URI", ""),
+    # },
 }
 
 # Swagger 제외 경로(브라우저 콜백)
@@ -352,3 +344,12 @@ SPECTACULAR_SETTINGS["EXCLUDE_PATHS"] = SPECTACULAR_SETTINGS.get(
 ) + [
     r"^/api/v1/auth/verify/",
 ]
+
+# 배포 때 활성화
+# from celery.schedules import crontab
+# CELERY_BEAT_SCHEDULE = {
+#     "refresh-popular-queries-mv": {
+#         "task": "core.tasks.refresh_popular_queries_mv",
+#         "schedule": crontab(minute=0, hour="*/12"),  # 12시간마다 실행
+#     },
+# }

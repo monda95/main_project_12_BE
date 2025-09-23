@@ -8,6 +8,8 @@ class Conversation(models.Model):
         on_delete=models.CASCADE,
         related_name="conversations",
         verbose_name="소유자",
+        null=True,
+        blank=True,
     )
     title = models.CharField(max_length=200, verbose_name="대화 제목")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성 시각")
@@ -33,8 +35,7 @@ class Conversation(models.Model):
 class Message(models.Model):
     class Role(models.TextChoices):
         USER = "user", "사용자"
-        ASSISTANT = "assistant", "어시스턴트"
-        SYSTEM = "system", "시스템"
+        AI = "ai", "AI"
 
     conversation = models.ForeignKey(
         Conversation,

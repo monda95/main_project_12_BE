@@ -39,23 +39,28 @@ class User(AbstractUser):
     """
 
     # AbstractUser의 username 필드는 그대로 사용(필요시 unique 완화는 별도 마이그레이션에서 처리)
-    email = models.EmailField(unique=True, max_length=254, verbose_name="이메일")
+    email = models.EmailField(
+        unique=True, max_length=254, null=True, blank=True, verbose_name="이메일"
+    )
+    password = models.CharField(
+        max_length=128, null=True, blank=True, verbose_name="비밀번호"
+    )
     username = models.CharField(max_length=100, unique=False, verbose_name="사용자명")
     nickname = models.CharField(
-        max_length=25, blank=True, null=True, verbose_name="닉네임"
+        max_length=50, blank=True, null=True, verbose_name="닉네임"
     )
     image_url = models.URLField(
         max_length=500, blank=True, null=True, verbose_name="프로필 이미지"
     )
-    phone_number = models.CharField(
-        max_length=25, blank=True, null=True, verbose_name="전화번호"
+    role = models.CharField(
+        max_length=20,
+        choices=[("guest", "손님"), ("user", "사용자"), ("admin", "관리자")],
+        default="guest",
+        verbose_name="역할",
     )
 
     email_verified_at = models.DateTimeField(
         blank=True, null=True, verbose_name="이메일 인증 시각"
-    )
-    deactivated_at = models.DateTimeField(
-        blank=True, null=True, verbose_name="탈퇴일시"
     )
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성 시각")
@@ -82,11 +87,6 @@ class User(AbstractUser):
 
         indexes = [
             models.Index(fields=["created_at"], name="idx_users_created_at"),
-            models.Index(
-                fields=["deactivated_at"],
-                name="idx_users_deactivated_nonnull",
-                condition=Q(deactivated_at__isnull=False),
-            ),
         ]
 
     def save(self, *args, **kwargs):
@@ -101,10 +101,7 @@ class User(AbstractUser):
 
 class OAuthAccount(models.Model):
     class Provider(models.TextChoices):
-        GOOGLE = "google", "구글"
         GITHUB = "github", "깃허브"
-        KAKAO = "kakao", "카카오"
-        NAVER = "naver", "네이버"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -143,7 +140,7 @@ class OAuthAccount(models.Model):
                 name="uq_oauth_provider_subject",
             ),
             models.CheckConstraint(
-                check=Q(provider__in=["google", "github", "kakao", "naver"]),
+                condition=Q(provider__in=["github"]),
                 name="chk_oauth_provider",
             ),  # 참조 오류가 귀찮아서, for, lambda 방식보다 직접 적어넣는 하드코딩으로 쉽지만 유지보수는 더 귀찮은 길을 채택
         ]

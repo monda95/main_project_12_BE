@@ -32,7 +32,7 @@ class InferenceResponseSerializer(serializers.Serializer):
 
     message_id = serializers.IntegerField(help_text="생성된 메시지 ID")
     role = serializers.CharField(help_text="메시지 역할 (assistant)")
-    content = serializers.CharField(help_text="AI 응답 내용")
+    content = serializers.JSONField(help_text="AI 응답 내용 (구조화된 JSON)")
     usage = UsageSerializer(help_text="API 사용량 정보")
 
 
@@ -47,7 +47,6 @@ class InferenceRunSerializer(serializers.ModelSerializer):
     conversation = serializers.ReadOnlyField(
         source="conversation.title"
     )  # 대화 제목 표시
-    message = serializers.ReadOnlyField(source="message.content")  # 메시지 내용 표시
 
     class Meta:
         model = InferenceRun
@@ -55,7 +54,6 @@ class InferenceRunSerializer(serializers.ModelSerializer):
             "id",
             "owner_email",  # 필드 목록에 추가
             "conversation",
-            "message",
             "model",
             "latency_ms",
             "prompt_tokens",

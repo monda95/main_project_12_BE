@@ -45,3 +45,12 @@ volumes:
 #            docker system prune -f
 #            docker image prune -f
 #            docker container prune -f
+
+#  web 컨테이너 안에서 gunicorn + celery worker/beat를 subprocess로 통합 실행 : t2.micro 환경 고려한 것
+# restart 아래로 추가하면 됨 or run.sh에서 관리하기.
+#    command: >
+#      sh -c "
+#        gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers=3 &
+#        celery -A config worker -l info --concurrency=2 &
+#        celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+#      "
