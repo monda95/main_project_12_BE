@@ -20,6 +20,8 @@ class CustomUserAdmin(UserAdmin):
         "email",
         "username",
         "nickname",
+        "role",
+        "email_verified_at",
         "is_staff",
         "is_active",
         "created_at",

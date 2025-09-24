@@ -4,7 +4,14 @@ from .models import SearchLog, PopularQuery, RecommendedQuestion
 
 @admin.register(SearchLog)
 class SearchLogAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "query", "result_count", "created_at")
+    list_display = (
+        "id",
+        "user",
+        "query",
+        "normalized_query",
+        "result_count",
+        "created_at",
+    )
     list_filter = ("created_at",)
     search_fields = ("user__email", "query")
     raw_id_fields = ("user",)
