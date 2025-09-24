@@ -2,6 +2,7 @@ import time
 import requests
 import logging
 import json
+import re
 
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
@@ -28,6 +29,89 @@ def _truncate(s: str | None, limit: int) -> str | None:
 class InferenceService:
     """Gemini API 호출 및 Inference 파이프라인"""
 
+    # Nutrient helper
+    @staticmethod
+    def _parse_nutrient(value) -> float | None:
+        "'10g', '120 kcal' 같은 문자열에서 숫자만 파싱합니다."
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            match = re.search(r"[\d.]+", value)
+            if match:
+                try:
+                    return float(match.group())
+                except (ValueError, TypeError):
+                    return None
+        return None
+
+    # Self-check logic
+    @staticmethod
+    def _self_check(ai_content: str) -> dict:
+        """
+        LLM 1차 응답을 검사하는 Self-Check 로직입니다.
+        - 형식: JSON 파싱, 5대 섹션(영양/알레르기/보관/가공법/출처) 존재 여부
+        - 내용: 칼로리 상충, 출처 내용 누락 등
+        """
+        violations = []
+        required_sections = ["nutrition", "allergy", "storage", "processing", "source"]
+
+        try:
+            data = json.loads(ai_content)
+            if not isinstance(data, dict):
+                raise TypeError("응답이 JSON 객체 형식이 아닙니다.")
+
+            # 필수 섹션 검사
+            for section in required_sections:
+                if section not in data:
+                    violations.append(
+                        {
+                            "code": "MISSING_SECTION",
+                            "detail": f"'{section}' 섹션이 누락되었습니다.",
+                        }
+                    )
+
+            # 출처 검사
+            if not data.get("source") or not str(data["source"]).strip():
+                violations.append(
+                    {
+                        "code": "MISSING_SOURCE",
+                        "detail": "'source' 섹션의 내용이 비어있습니다.",
+                    }
+                )
+
+            # 칼로리 계산 검증
+            nutrition = data.get("nutrition")
+            if isinstance(nutrition, dict):
+                calories = InferenceService._parse_nutrient(nutrition.get("calories"))
+                carbs = InferenceService._parse_nutrient(nutrition.get("carbohydrates"))
+                protein = InferenceService._parse_nutrient(nutrition.get("protein"))
+                fat = InferenceService._parse_nutrient(nutrition.get("fat"))
+
+                if all(v is not None for v in [calories, carbs, protein, fat]):
+                    calculated_calories = (carbs * 4) + (protein * 4) + (fat * 9)
+                    if abs(calories - calculated_calories) > (calories * 0.15):
+                        violations.append(
+                            {
+                                "code": "CALORIE_CONFLICT",
+                                "detail": f"명시된 칼로리({calories}kcal)와 계산된 칼로리({calculated_calories:.1f}kcal)가 15% 이상 차이납니다.",
+                            }
+                        )
+
+        except (json.JSONDecodeError, TypeError) as e:
+            violations.append(
+                {
+                    "code": "INVALID_FORMAT",
+                    "detail": f"응답이 유효한 JSON이 아닙니다. {e}",
+                }
+            )
+
+        # Self-check 결과 로그 남김
+        if violations:
+            logger.warning(f"Self-check violations: {violations}")
+
+        return {"check_pass": not violations, "violations": violations}
+
+    # Gemini API Call
     @staticmethod
     def call_gemini_api(prompt_content: str, options: dict = None) -> dict:
         if options is None:
@@ -35,6 +119,7 @@ class InferenceService:
 
         api_key = settings.GEMINI_API_KEY
         if not api_key:
+            logger.error("GEMINI_API_KEY is not set in the environment.")
             return {
                 "ai_content": "설정 오류",
                 "latency_ms": 0,
@@ -48,7 +133,7 @@ class InferenceService:
             }
 
         url = (
-            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"https://generativelanguage.googleapis.com/v1/models/"
             f"{settings.GEMINI_MODEL_NAME}:generateContent?key={api_key}"
         )
         headers = {"Content-Type": "application/json"}
@@ -76,7 +161,9 @@ class InferenceService:
             return {
                 "ai_content": ai_content,
                 "latency_ms": latency_ms,
-                "prompt_tokens": usage.get("prompt_token_count"),
+                "prompt_tokens": usage.get(
+                    "prompt_token_count"
+                ),  # ✅ 일관된 snake_case
                 "completion_tokens": usage.get("candidates_token_count"),
                 "status": "success",
                 "error_code": None,
@@ -92,6 +179,8 @@ class InferenceService:
                 )
             except Exception:
                 body_text = e.response.text or str(e)
+
+            logger.error(f"Gemini API HTTPError: {status_code} - {body_text}")
             return {
                 "ai_content": "API 호출 중 오류 발생",
                 "latency_ms": int((time.time() - start_time) * 1000),
@@ -103,6 +192,7 @@ class InferenceService:
             }
 
         except requests.exceptions.RequestException as e:
+            logger.error(f"Gemini API RequestException: {e}")
             return {
                 "ai_content": "API 호출 중 오류 발생",
                 "latency_ms": int((time.time() - start_time) * 1000),
@@ -113,6 +203,7 @@ class InferenceService:
                 "error_message": _truncate(str(e), ERROR_MESSAGE_MAX),
             }
 
+    # Full pipeline
     @staticmethod
     @transaction.atomic
     def run_inference(
@@ -121,7 +212,6 @@ class InferenceService:
         user: User | None,
         options: dict = None,
     ) -> dict:
-        """전체 파이프라인 실행"""
         if options is None:
             options = {}
 
@@ -150,42 +240,79 @@ class InferenceService:
         Message.objects.create(conversation=conversation, role="user", content=prompt)
 
         # 4. Gemini API 호출
-        gemini = InferenceService.call_gemini_api(prompt, options)
+        gemini_result = InferenceService.call_gemini_api(prompt, options)
 
-        ai_content = gemini.get("ai_content") or "API 응답을 받지 못했습니다."
-        if isinstance(ai_content, dict):
-            ai_content = json.dumps(ai_content, ensure_ascii=False)
+        # 5. Self-check + 필요시 재시도
+        retry_used = False
+        if gemini_result["status"] == "success":
+            check_result = InferenceService._self_check(gemini_result["ai_content"])
+            if not check_result["check_pass"]:
+                retry_used = True
+                correction_prompt = (
+                    f"Previous Answer (failed validation):\n{gemini_result['ai_content']}\n\n"
+                    f"Validation Errors: {json.dumps(check_result['violations'], ensure_ascii=False)}\n\n"
+                    f"Original_Prompt: {prompt}\n\n"
+                    f"Instructions: Please regenerate the answer. "
+                    f"It MUST be a valid JSON object containing all required sections: "
+                    f"'nutrition', 'allergy', 'storage', 'processing', and 'source'. "
+                    f"The 'source' must not be empty."
+                )
+                gemini_result = InferenceService.call_gemini_api(
+                    correction_prompt, options
+                )
+                if gemini_result["status"] == "success":
+                    check_result = InferenceService._self_check(
+                        gemini_result["ai_content"]
+                    )
+        else:
+            check_result = {
+                "check_pass": False,
+                "violations": [
+                    {
+                        "code": "API_CALL_FAILED",
+                        "detail": gemini_result.get("error_message"),
+                    }
+                ],
+            }
 
-        # 5. AI 메시지 저장
+        # 6. AI 메시지 저장
+        ai_content = gemini_result.get("ai_content") or "API 응답을 받지 못했습니다."
         ai_msg = Message.objects.create(
             conversation=conversation, role="assistant", content=ai_content
         )
 
-        # 6. 실행 로그 저장 (추가 필드 포함)
+        # 7. 실행 로그 저장
         InferenceRun.objects.create(
             conversation=conversation,
             model=settings.GEMINI_MODEL_NAME,
-            latency_ms=gemini.get("latency_ms") or 0,
-            prompt_tokens=gemini.get("prompt_tokens") or 0,
-            completion_tokens=gemini.get("completion_tokens") or 0,
-            status=gemini.get("status"),
-            error_code=_truncate(gemini.get("error_code"), ERROR_CODE_MAX),
-            error_message=_truncate(gemini.get("error_message"), ERROR_MESSAGE_MAX),
-            check_pass=gemini.get("check_pass"),
-            retry_used=gemini.get("retry_used"),
-            violations=gemini.get("violations"),
+            latency_ms=gemini_result.get("latency_ms") or 0,
+            prompt_tokens=gemini_result.get("prompt_tokens") or 0,
+            completion_tokens=gemini_result.get("completion_tokens") or 0,
+            status=gemini_result.get("status"),
+            error_code=_truncate(gemini_result.get("error_code"), ERROR_CODE_MAX),
+            error_message=_truncate(
+                gemini_result.get("error_message"), ERROR_MESSAGE_MAX
+            ),
+            check_pass=check_result.get("check_pass"),
+            retry_used=retry_used,
+            violations=check_result.get("violations"),
         )
 
-        # 7. 최종 결과 반환
+        # 8. 최종 결과 반환
         return {
             "message_id": ai_msg.id,
             "role": ai_msg.role,
             "content": ai_msg.content,
             "usage": {
-                "prompt_tokens": gemini.get("prompt_tokens") or 0,
-                "completion_tokens": gemini.get("completion_tokens") or 0,
+                "prompt_tokens": gemini_result.get("prompt_tokens") or 0,
+                "completion_tokens": gemini_result.get("completion_tokens") or 0,
             },
-            "status": gemini.get("status"),
-            "error_code": gemini.get("error_code"),
-            "error_message": gemini.get("error_message"),
+            "status": gemini_result.get("status"),
+            "error_code": gemini_result.get("error_code"),
+            "error_message": gemini_result.get("error_message"),
+            "self_check": {
+                "check_pass": check_result.get("check_pass"),
+                "retry_used": retry_used,
+                "violations": check_result.get("violations"),
+            },
         }
