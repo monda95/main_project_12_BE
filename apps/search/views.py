@@ -3,15 +3,51 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
-from apps.search.models import SearchLog
-from apps.inference.services import (
-    InferenceService,
-)  # Gemini 호출 유틸 (Self-Check 포함)
+from rest_framework import status
 
+from apps.search.models import SearchLog
+from apps.inference.services import InferenceService
+from apps.inference.serializers import (
+    InferenceRequestSerializer,
+    InferenceResponseSerializer,
+)
 from .serializers import (
     AutocompleteResponseSerializer,
     RecommendedSearchesResponseSerializer,
 )
+
+
+@extend_schema(
+    tags=["Search & Stats"],
+    summary="범용 검색 (Inference 위임)",
+    request=InferenceRequestSerializer,
+    responses=InferenceResponseSerializer,
+)
+class SearchView(APIView):
+    """
+    사용자의 검색 요청(prompt)을 받아 InferenceService를 통해 AI 추론을 실행합니다.
+    이 API는 사실상 InferenceView의 프록시(대리인) 역할을 수행하며,
+    Self-Check, 로깅, 재시도 등 모든 핵심 로직을 재사용합니다.
+    """
+
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        req_ser = InferenceRequestSerializer(data=request.data)
+        req_ser.is_valid(raise_exception=True)
+
+        result = InferenceService.run_inference(
+            conversation_id=req_ser.validated_data.get("conversation_id"),
+            prompt=req_ser.validated_data["prompt"],
+            user=request.user,
+            options=req_ser.validated_data.get("options", {}),
+        )
+
+        if result.get("status") == "error":
+            return Response(result, status=status.HTTP_502_BAD_GATEWAY)
+
+        out_ser = InferenceResponseSerializer(result)
+        return Response(out_ser.data, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(
@@ -45,7 +81,7 @@ class AutocompleteView(APIView):
 
 @extend_schema(
     tags=["Search & Stats"],
-    summary="추천 질문 생성",
+    summary="최근 검색어 목록",
     responses=RecommendedSearchesResponseSerializer,
 )
 class RecentSearchesView(ListAPIView):
