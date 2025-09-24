@@ -88,6 +88,10 @@ erDiagram
     %%     boolean active
     %%     timestamptz created_at
     %% }
+    
+    %% MVP 단계에서는 Food 테이블을 두지 않음 추후 확장 시 도입 예정
+ 
 
 ```
+
 
