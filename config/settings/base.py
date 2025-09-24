@@ -30,6 +30,7 @@ SECRET_KEY = os.getenv(
 
 # === 외부 API 키 ===
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-flash")
 
 # === 호스트/CSRF ===
 ALLOWED_HOSTS = [
@@ -156,8 +157,8 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": os.getenv("THROTTLE_RATE_ANON", "20/min"),
-        "user": os.getenv("THROTTLE_RATE_USER", "60/min"),
+        "anon": os.getenv("THROTTLE_RATE_ANON", "20/min"),  # 익명 사용자 분당 20회
+        "user": os.getenv("THROTTLE_RATE_USER", "60/min"),  # 인증 사용자 분당 60회
     },
 }
 if not DEBUG:
@@ -303,9 +304,7 @@ LOGGING = {
 # === OAuth2 ===
 OAUTH_ALLOWED_PROVIDERS = [
     p.strip()
-    for p in os.getenv("OAUTH_ALLOWED_PROVIDERS", "google,github,kakao,naver").split(
-        ","
-    )
+    for p in os.getenv("OAUTH_ALLOWED_PROVIDERS", "github").split(",")
     if p.strip()
 ]
 OAUTH_ALLOW_SIGNUP = (

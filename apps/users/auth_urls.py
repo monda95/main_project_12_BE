@@ -12,4 +12,7 @@ urlpatterns = [
     path(
         "verify/<uidb64>/<token>/", views.verify_email, name="verify_email"
     ),  # 프록시 뷰 사용
+    # GitHub OAuth
+    path("oauth2/github/callback/", views.github_callback, name="github_callback"),
+    path("oauth2/github/exchange/", views.github_exchange, name="github_exchange"),
 ]

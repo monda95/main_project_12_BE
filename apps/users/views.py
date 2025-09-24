@@ -1,3 +1,4 @@
+import requests
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.db import transaction
@@ -11,7 +12,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
-
+from django.http import JsonResponse
+from django.conf import settings
 
 # from django.core.mail import send_mail
 # from django.conf import settings
@@ -208,3 +210,69 @@ def verify_email(request, uidb64, token):
         return HttpResponse("이메일 인증이 완료되었습니다.", status=200)
     else:
         return HttpResponse("잘못된 인증 링크입니다.", status=400)
+
+
+def github_callback(request):
+    code = request.GET.get("code")
+    if not code:
+        return JsonResponse({"error": "missing code"}, status=400)
+
+    # GitHub 토큰 교환 요청
+    token_url = "https://github.com/login/oauth/access_token"
+    data = {
+        "client_id": settings.OAUTH["github"]["client_id"],
+        "client_secret": settings.OAUTH["github"]["client_secret"],
+        "code": code,
+        "redirect_uri": settings.OAUTH["github"]["redirect_uri"],
+    }
+    headers = {"Accept": "application/json"}
+    resp = requests.post(token_url, data=data, headers=headers)
+    token_data = resp.json()
+
+    return JsonResponse(token_data)
+
+
+def github_exchange(request):
+    """
+    프론트엔드에서 전달받은 code를 기반으로 GitHub 토큰 교환 → 사용자 생성/로그인 처리.
+    """
+    code = request.GET.get("code")
+    if not code:
+        return JsonResponse({"error": "missing code"}, status=400)
+
+    token_url = "https://github.com/login/oauth/access_token"
+    data = {
+        "client_id": settings.OAUTH["github"]["client_id"],
+        "client_secret": settings.OAUTH["github"]["client_secret"],
+        "code": code,
+        "redirect_uri": settings.OAUTH["github"]["redirect_uri"],
+    }
+    headers = {"Accept": "application/json"}
+    resp = requests.post(token_url, data=data, headers=headers)
+    token_data = resp.json()
+
+    # GitHub 유저 정보 가져오기
+    user_info = requests.get(
+        "https://api.github.com/user",
+        headers={"Authorization": f"Bearer {token_data.get('access_token')}"},
+    ).json()
+
+    email = user_info.get("email") or f"{user_info['id']}@github.local"
+    user, created = User.objects.get_or_create(
+        email=email,
+        defaults={
+            "nickname": user_info.get("login"),
+            "email_verified_at": timezone.now(),
+            "role": "user",
+        },
+    )
+
+    # JWT 발급
+    refresh = RefreshToken.for_user(user)
+    return JsonResponse(
+        {
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "user": {"id": user.id, "email": user.email, "nickname": user.nickname},
+        }
+    )
