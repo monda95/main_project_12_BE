@@ -19,9 +19,10 @@ class SearchLogAdmin(admin.ModelAdmin):
 
 @admin.register(PopularQuery)
 class PopularQueryAdmin(admin.ModelAdmin):
-    list_display = ("query", "count", "updated_at")
-    ordering = ("-count",)
-    readonly_fields = ("query", "count", "updated_at")
+    list_display = ("query", "cnt", "last_seen")
+    readonly_fields = ("query", "cnt", "last_seen")
+    ordering = ("-cnt",)
+    search_fields = ("query",)
 
 
 @admin.register(RecommendedQuestion)

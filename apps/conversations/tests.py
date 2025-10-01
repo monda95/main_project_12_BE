@@ -88,3 +88,12 @@ class TestConversationAPI:
             {"content": "Intruder!"},
         )
         assert response.status_code == 403  # IsOwner permission
+
+    def test_create_message_with_ai_role_fails(self):
+        """사용자가 'ai' 역할로 메시지 생성 시도 시 실패 테스트"""
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.post(
+            f"/api/v1/conversations/{self.conversation1.id}/messages/",
+            {"content": "I am an AI!", "role": "ai"},
+        )
+        assert response.status_code == 400

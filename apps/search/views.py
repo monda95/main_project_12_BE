@@ -1,8 +1,9 @@
+from drf_spectacular.types import OpenApiTypes
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
 
 from apps.search.models import SearchLog
@@ -48,6 +49,40 @@ class SearchView(APIView):
 
         out_ser = InferenceResponseSerializer(result)
         return Response(out_ser.data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary="범용 검색 (GET)",
+        parameters=[
+            OpenApiParameter(
+                name="query",
+                description="검색 질의",
+                required=True,
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,  # type: ignore[arg-type]
+            )
+        ],
+        responses=InferenceResponseSerializer,
+    )
+    def get(self, request, *args, **kwargs):
+        query = request.query_params.get("query", "").strip()
+        if not query:
+            return Response(
+                {"detail": "Query parameter 'query' is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        result = InferenceService.run_inference(
+            conversation_id=None,
+            prompt=query,
+            user=request.user,
+            options={},
+        )
+
+        if result.get("status") == "error":
+            return Response(result, status=status.HTTP_502_BAD_GATEWAY)
+
+        out_ser = InferenceResponseSerializer(result)
+        return Response(out_ser.data, status=status.HTTP_200_OK)
 
 
 @extend_schema(

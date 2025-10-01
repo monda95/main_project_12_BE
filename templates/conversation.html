@@ -1,10 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% load static %}
 
-</body>
-</html>
+{% block title %}대화 - Nourisher{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-4xl p-8 bg-white rounded-xl shadow-lg flex flex-col h-full">
+    <h2 class="text-3xl font-bold text-gray-900 mb-6">대화</h2>
+
+    <!-- 대화 메시지 영역 -->
+    <div id="chat-box"
+         class="flex-1 overflow-y-auto border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50 space-y-4"
+         data-conversation-id="{{ conversation.id|default:'' }}"
+         data-csrf="{{ csrf_token }}">
+        {% for message in messages %}
+            <div class="chat-message {% if message.role == 'user' %}user{% else %}assistant{% endif %}">
+                <div class="chat-bubble">
+                    <div class="chat-role">
+                        {% if message.role == 'user' %}
+                            사용자
+                        {% else %}
+                            Nourisher AI
+                        {% endif %}
+                    </div>
+                    <div class="chat-content">
+                        {{ message.content|linebreaksbr }}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+        {% endfor %}
+    </div>
+
+    <!-- 메시지 입력 영역 -->
+    <div class="flex">
+        <input id="chat-input" type="text" placeholder="메시지를 입력하세요..."
+               class="flex-1 px-4 py-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+        <button id="chat-send" class="px-6 py-3 bg-indigo-500 text-white rounded-r-lg hover:bg-indigo-600 transition">
+            전송
+        </button>
+    </div>
+</div>
+
+<!-- JS 분리 -->
+<script src="{% static 'js/chat.js' %}"></script>
+{% endblock %}

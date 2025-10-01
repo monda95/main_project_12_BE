@@ -63,6 +63,10 @@ class User(AbstractUser):
         blank=True, null=True, verbose_name="이메일 인증 시각"
     )
 
+    deactivated_at = models.DateTimeField(
+        blank=True, null=True, verbose_name="탈퇴 시각"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성 시각")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="수정 시각")
 

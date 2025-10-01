@@ -48,16 +48,16 @@ class RecommendedQuestion(models.Model):
 
 
 class PopularQuery(models.Model):
-    query = models.CharField(max_length=255, unique=True, verbose_name="검색어")
-    count = models.PositiveIntegerField(default=0, verbose_name="검색 횟수")
-    updated_at = models.DateTimeField(auto_now=True, verbose_name="갱신 시각")
+    query = models.TextField(primary_key=True, verbose_name="정규화된 검색어")
+    cnt = models.BigIntegerField(verbose_name="검색 횟수")
+    last_seen = models.DateTimeField(verbose_name="마지막 검색 시각")
 
     class Meta:
-        managed = False  # Django가 DDL 관리하지 않음 (MV는 직접 관리)
+        managed = False
         db_table = "popular_queries_mv"
         verbose_name = "인기 검색어"
         verbose_name_plural = "인기 검색어 목록"
-        ordering = ["-count"]
+        ordering = ["-cnt"]
 
     def __str__(self):
-        return f"{self.query} ({self.count}회)"
+        return f"{self.query} ({self.cnt}회)"

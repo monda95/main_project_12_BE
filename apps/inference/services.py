@@ -29,6 +29,18 @@ def _truncate(s: str | None, limit: int) -> str | None:
 class InferenceService:
     """Gemini API 호출 및 Inference 파이프라인"""
 
+    # Prompt 보정 로직
+    @staticmethod
+    def _refine_prompt(prompt: str) -> str:
+        """
+        짧은 입력(단어 하나)일 경우 자동으로 보정.
+        예: '버터' -> '버터 100g의 영양 정보를 알려줘'
+        """
+        tokens = prompt.strip().split()
+        if len(tokens) == 1:  # 단어 하나만 입력된 경우
+            return f"{prompt} 100g의 영양 정보를 알려줘"
+        return prompt
+
     # Nutrient helper
     @staticmethod
     def _parse_nutrient(value) -> float | None:
@@ -155,15 +167,16 @@ class InferenceService:
                 .get("content", {})
                 .get("parts", [{}])[0]
                 .get("text", "")
-            ) or "API 응답을 받지 못했습니다."
+                or "API 응답을 받지 못했습니다."
+            )
 
             usage = data.get("usageMetadata", {}) or {}
             return {
                 "ai_content": ai_content,
                 "latency_ms": latency_ms,
                 "prompt_tokens": usage.get(
-                    "prompt_token_count"
-                ),  # ✅ 일관된 snake_case
+                    "prompt_token_count"  # ✅ 일관된 snake_case
+                ),
                 "completion_tokens": usage.get("candidates_token_count"),
                 "status": "success",
                 "error_code": None,
@@ -205,6 +218,18 @@ class InferenceService:
 
     # Full pipeline
     @staticmethod
+    def _clean_ai_response(text: str) -> str:
+        """
+        모델이 반환한 응답에서 불필요한 Markdown(````json ... ````) 등을 제거.
+        """
+        if not text:
+            return text
+        # ```json, ``` 제거
+        cleaned = re.sub(r"^```[a-zA-Z]*\n?", "", text.strip())
+        cleaned = re.sub(r"\n?```$", "", cleaned)
+        return cleaned.strip()
+
+    @staticmethod
     @transaction.atomic
     def run_inference(
         conversation_id: int | None,
@@ -214,6 +239,25 @@ class InferenceService:
     ) -> dict:
         if options is None:
             options = {}
+
+        # 🔥 프롬프트 보정
+        refined_prompt = InferenceService._refine_prompt(prompt)
+
+        # 📌 JSON-only 강제 지시 추가
+        refined_prompt = (
+            f"{refined_prompt}\n\n"
+            "당신의 답변은 반드시 **JSON 객체 하나**만 반환해야 합니다.\n"
+            "아래 스키마를 반드시 포함하세요 (값은 알맞게 채우십시오):\n\n"
+            "{\n"
+            '  "nutrition": { "calories": "...", "protein": "...", "fat": "...", "carbohydrates": "..." },\n'
+            '  "allergy": "...",\n'
+            '  "storage": "...",\n'
+            '  "processing": "...",\n'
+            '  "source": "..."\n'
+            "}\n\n"
+            "⚠️ 주의: 마크다운, 주석, 설명, 백틱(```) 절대 포함하지 마세요.\n"
+            "⚠️ 반드시 올바른 JSON 형식만 출력하세요."
+        )
 
         # 1. 대화 조회 or 생성
         if conversation_id:
@@ -225,42 +269,49 @@ class InferenceService:
         else:
             conversation = Conversation.objects.create(
                 owner=user if user and user.is_authenticated else None,
-                title=_truncate(prompt, 200),
+                title=_truncate(refined_prompt, 200),
             )
 
         # 2. 검색 로그 기록
         SearchLog.objects.create(
             user=user if user and user.is_authenticated else None,
-            query=prompt,
-            normalized_query=prompt.lower(),
+            query=refined_prompt,
+            normalized_query=refined_prompt.lower(),
             result_count=0,
         )
 
-        # 3. 사용자 메시지 저장
+        # 3. 사용자 메시지 저장 (원본 그대로)
         Message.objects.create(conversation=conversation, role="user", content=prompt)
 
         # 4. Gemini API 호출
-        gemini_result = InferenceService.call_gemini_api(prompt, options)
+        gemini_result = InferenceService.call_gemini_api(refined_prompt, options)
 
         # 5. Self-check + 필요시 재시도
         retry_used = False
         if gemini_result["status"] == "success":
-            check_result = InferenceService._self_check(gemini_result["ai_content"])
+            # ✨ 후처리 먼저 적용
+            cleaned_content = InferenceService._clean_ai_response(
+                gemini_result["ai_content"]
+            )
+            gemini_result["ai_content"] = cleaned_content
+
+            check_result = InferenceService._self_check(cleaned_content)
             if not check_result["check_pass"]:
                 retry_used = True
                 correction_prompt = (
-                    f"Previous Answer (failed validation):\n{gemini_result['ai_content']}\n\n"
+                    f"Previous Answer (failed validation):\n{cleaned_content}\n\n"
                     f"Validation Errors: {json.dumps(check_result['violations'], ensure_ascii=False)}\n\n"
                     f"Original_Prompt: {prompt}\n\n"
-                    f"Instructions: Please regenerate the answer. "
-                    f"It MUST be a valid JSON object containing all required sections: "
-                    f"'nutrition', 'allergy', 'storage', 'processing', and 'source'. "
-                    f"The 'source' must not be empty."
+                    f"Instructions: Please regenerate the answer strictly as JSON "
+                    f"with all required sections: nutrition, allergy, storage, processing, source."
                 )
                 gemini_result = InferenceService.call_gemini_api(
                     correction_prompt, options
                 )
                 if gemini_result["status"] == "success":
+                    gemini_result["ai_content"] = InferenceService._clean_ai_response(
+                        gemini_result["ai_content"]
+                    )
                     check_result = InferenceService._self_check(
                         gemini_result["ai_content"]
                     )
@@ -271,14 +322,23 @@ class InferenceService:
                     {
                         "code": "API_CALL_FAILED",
                         "detail": gemini_result.get("error_message"),
-                    }
+                    },
                 ],
             }
 
-        # 6. AI 메시지 저장
+        # 6. AI 메시지 저장 + JSON 보장 처리
         ai_content = gemini_result.get("ai_content") or "API 응답을 받지 못했습니다."
+        try:
+            parsed_content = json.loads(ai_content)  # JSON 파싱 시도
+        except Exception:
+            parsed_content = {"raw_text": ai_content}
+
         ai_msg = Message.objects.create(
-            conversation=conversation, role="assistant", content=ai_content
+            conversation=conversation,
+            role="assistant",
+            content=json.dumps(
+                parsed_content, ensure_ascii=False
+            ),  # DB에는 문자열로 저장
         )
 
         # 7. 실행 로그 저장
@@ -298,11 +358,11 @@ class InferenceService:
             violations=check_result.get("violations"),
         )
 
-        # 8. 최종 결과 반환
+        # 8. 최종 결과 반환 (dict 보장)
         return {
             "message_id": ai_msg.id,
             "role": ai_msg.role,
-            "content": ai_msg.content,
+            "content": parsed_content,  # ✅ dict로 반환
             "usage": {
                 "prompt_tokens": gemini_result.get("prompt_tokens") or 0,
                 "completion_tokens": gemini_result.get("completion_tokens") or 0,

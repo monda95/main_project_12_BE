@@ -12,7 +12,6 @@ def exchange_code_for_claims(
     *, provider: str, code: str, code_verifier: str, redirect_uri: str
 ) -> Dict:
     """
-    TODO: 실제 공급자 교환 구현.
     반드시 반환해야 하는 공통 키:
       - subject (str) : 공급자 사용자 ID
       - email (Optional[str])

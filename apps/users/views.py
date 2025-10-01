@@ -220,14 +220,18 @@ def github_callback(request):
     # GitHub 토큰 교환 요청
     token_url = "https://github.com/login/oauth/access_token"
     data = {
-        "client_id": settings.OAUTH["github"]["client_id"],
-        "client_secret": settings.OAUTH["github"]["client_secret"],
+        "client_id": settings.OAUTH_CLIENTS["github"]["client_id"],
+        "client_secret": settings.OAUTH_CLIENTS["github"]["client_secret"],
         "code": code,
-        "redirect_uri": settings.OAUTH["github"]["redirect_uri"],
+        "redirect_uri": settings.OAUTH_CLIENTS["github"]["redirect_uri"],
     }
     headers = {"Accept": "application/json"}
     resp = requests.post(token_url, data=data, headers=headers)
     token_data = resp.json()
+
+    # GitHub 토큰 교환 실패 시 에러 처리
+    if "error" in token_data:
+        return JsonResponse(token_data, status=400)
 
     return JsonResponse(token_data)
 
@@ -242,20 +246,27 @@ def github_exchange(request):
 
     token_url = "https://github.com/login/oauth/access_token"
     data = {
-        "client_id": settings.OAUTH["github"]["client_id"],
-        "client_secret": settings.OAUTH["github"]["client_secret"],
+        "client_id": settings.OAUTH_CLIENTS["github"]["client_id"],
+        "client_secret": settings.OAUTH_CLIENTS["github"]["client_secret"],
         "code": code,
-        "redirect_uri": settings.OAUTH["github"]["redirect_uri"],
+        "redirect_uri": settings.OAUTH_CLIENTS["github"]["redirect_uri"],
     }
     headers = {"Accept": "application/json"}
     resp = requests.post(token_url, data=data, headers=headers)
     token_data = resp.json()
 
+    # GitHub 토큰 교환 실패 시 에러 처리
+    if "error" in token_data:
+        return JsonResponse(token_data, status=400)
+
     # GitHub 유저 정보 가져오기
-    user_info = requests.get(
+    user_info_resp = requests.get(
         "https://api.github.com/user",
         headers={"Authorization": f"Bearer {token_data.get('access_token')}"},
-    ).json()
+    )
+    if user_info_resp.status_code != 200:
+        return JsonResponse(user_info_resp.json(), status=user_info_resp.status_code)
+    user_info = user_info_resp.json()
 
     email = user_info.get("email") or f"{user_info['id']}@github.local"
     user, created = User.objects.get_or_create(

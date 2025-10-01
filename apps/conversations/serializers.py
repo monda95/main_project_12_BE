@@ -24,6 +24,12 @@ class ConversationCreateSerializer(serializers.ModelSerializer):
         model = Conversation
         fields = ["title"]
 
+    def create(self, validated_data):
+        request = self.context.get("request")
+        owner = request.user if request and request.user.is_authenticated else None
+        validated_data["owner"] = owner
+        return super().create(validated_data)
+
 
 class MessageSerializer(serializers.ModelSerializer):
     """
@@ -38,6 +44,13 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = ["id", "conversation", "role", "content", "created_at"]
         read_only_fields = ["conversation", "role"]
+
+    def validate(self, data):
+        if "role" in self.initial_data:
+            raise serializers.ValidationError(
+                {"role": "이 필드를 설정할 권한이 없습니다."}
+            )
+        return data
 
     def create(self, validated_data):
         # role을 강제로 user로 지정

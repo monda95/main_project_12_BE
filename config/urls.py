@@ -77,5 +77,6 @@ urlpatterns = [
     path("api/v1/inference/", InferenceView.as_view(), name="inference-create"),
     path("api/v1/inference-runs/", include("apps.inference.urls")),
     path("api/v1/search/", include("apps.search.urls")),  # 검색/히스토리 API
-    path("api/v1/stats/", include("apps.stats.urls")),
-]  # 통계 API
+    path("api/v1/stats/", include("apps.stats.urls")),  # 통계 API
+    path("", include("apps.users.pages_urls")),  # templates URL 매핑
+]
