@@ -16,19 +16,22 @@
       <h1 class="text-2xl font-bold text-indigo-600">Nourisher</h1>
       <nav class="flex gap-4">
         {% if user.is_authenticated %}
-          <button class="px-4 py-2 rounded-xl bg-indigo-500 text-white shadow hover:bg-indigo-600 transition">
-            로그아웃
-          </button>
+          <form method="post" action="{% url 'logout' %}" class="contents">
+            {% csrf_token %}
+            <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-500 text-white shadow hover:bg-indigo-600 transition">
+              로그아웃
+            </button>
+          </form>
         {% else %}
-          <button class="px-4 py-2 rounded-xl bg-white border border-gray-300 shadow hover:shadow-md transition">
+          <a href="{% url 'login-page' %}" class="px-4 py-2 rounded-xl bg-white border border-gray-300 shadow hover:shadow-md transition">
             로그인
-          </button>
-          <button class="px-4 py-2 rounded-xl bg-indigo-500 text-white shadow hover:bg-indigo-600 transition">
+          </a>
+          <a href="{% url 'signup-page' %}" class="px-4 py-2 rounded-xl bg-indigo-500 text-white shadow hover:bg-indigo-600 transition">
             회원가입
-          </button>
-          <button class="px-4 py-2 rounded-xl bg-gray-800 text-white shadow hover:bg-gray-900 transition">
+          </a>
+          <a href="{% url 'github_exchange' %}" class="px-4 py-2 rounded-xl bg-gray-800 text-white shadow hover:bg-gray-900 transition">
             GitHub OAuth
-          </button>
+          </a>
         {% endif %}
       </nav>
     </div>
