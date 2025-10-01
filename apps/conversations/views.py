@@ -152,10 +152,33 @@ class ConversationPageView(View):
 
     def get(self, request, *args, **kwargs):
         query = request.GET.get("query", "").strip()
+        conversation_id_param = request.GET.get("conversation_id")
         conversation = None
         messages = []
 
-        if query:
+        if conversation_id_param:
+            try:
+                conversation_id_int = int(conversation_id_param)
+            except (TypeError, ValueError):
+                conversation_id_int = None
+
+            if conversation_id_int is not None:
+                conversation = get_object_or_404(Conversation, id=conversation_id_int)
+
+                if request.user.is_authenticated:
+                    if conversation.owner_id != request.user.id:
+                        raise PermissionDenied("이 대화에 접근할 권한이 없습니다.")
+                else:
+                    conv_ids = request.session.get("anonymous_conversations", [])
+                    if conversation.id not in conv_ids:
+                        raise PermissionDenied("이 대화에 접근할 권한이 없습니다.")
+
+                messages = list(
+                    Message.objects.filter(conversation=conversation)
+                    .order_by("created_at")
+                )
+
+        elif query:
             # 1. 대화 생성
             if request.user.is_authenticated:
                 conversation = Conversation.objects.create(
