@@ -140,15 +140,11 @@ erDiagram
 
     PopularQueriesMV {
         string query
-        integer count
+        bigint cnt
         timestamptz updated_at
     }
 
-    RecommendedQuestionsMV {
-        text query
-        json suggestions
-        timestamptz created_at
-    }
+    %% 추천 질문 = 최근 검색어 기반 Gemini 실시간 호출 (별도 테이블 없음)
 
     %% 관계 정의
     User ||--o{ Conversation : owns
