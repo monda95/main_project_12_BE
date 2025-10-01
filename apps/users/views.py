@@ -1,9 +1,12 @@
 import requests
-from django.contrib.auth import get_user_model
+from django import forms
+from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.tokens import default_token_generator
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.http import HttpResponse
+from django.shortcuts import redirect, render
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.views import View
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -26,6 +29,98 @@ from .serializers import (
 )
 
 User = get_user_model()
+
+
+class LoginForm(forms.Form):
+    email = forms.EmailField(label="이메일")
+    password = forms.CharField(label="비밀번호", widget=forms.PasswordInput)
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email", "")
+        return email.strip().lower()
+
+
+class SignupForm(forms.Form):
+    email = forms.EmailField(label="이메일")
+    password = forms.CharField(
+        label="비밀번호", widget=forms.PasswordInput, min_length=8
+    )
+    password_confirm = forms.CharField(
+        label="비밀번호 확인", widget=forms.PasswordInput, min_length=8
+    )
+
+    def clean_email(self):
+        email = (self.cleaned_data.get("email") or "").strip().lower()
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("이미 사용 중인 이메일입니다.")
+        return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        password_confirm = cleaned_data.get("password_confirm")
+        if password and password_confirm and password != password_confirm:
+            self.add_error("password_confirm", "비밀번호가 일치하지 않습니다.")
+        return cleaned_data
+
+    def save(self):
+        email = self.cleaned_data["email"]
+        password = self.cleaned_data["password"]
+        username = email
+        return User.objects.create_user(
+            email=email,
+            password=password,
+            username=username,
+        )
+
+
+class LoginPageView(View):
+    template_name = "login.html"
+    form_class = LoginForm
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        return render(request, self.template_name, {"form": form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data["email"]
+            password = form.cleaned_data["password"]
+            user = authenticate(request, email=email, password=password)
+            if user is None:
+                form.add_error(None, "이메일 또는 비밀번호가 올바르지 않습니다.")
+            elif not user.is_active:
+                form.add_error(None, "비활성화된 계정입니다. 관리자에게 문의하세요.")
+            elif (
+                getattr(settings, "AUTH_EMAIL_VERIFICATION_REQUIRED", False)
+                and not getattr(user, "email_verified_at", None)
+            ):
+                form.add_error(None, "이메일 인증이 필요합니다.")
+            else:
+                login(request, user)
+                return redirect("dashboard-page")
+        return render(request, self.template_name, {"form": form})
+
+
+class SignupPageView(View):
+    template_name = "signup.html"
+    form_class = SignupForm
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        return render(request, self.template_name, {"form": form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            try:
+                form.save()
+            except IntegrityError:
+                form.add_error("email", "이미 사용 중인 이메일입니다.")
+            else:
+                return redirect("login-page")
+        return render(request, self.template_name, {"form": form})
 
 
 @extend_schema(summary="[생성] 회원가입", tags=["Auth & Users"])
