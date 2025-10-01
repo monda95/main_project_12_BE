@@ -68,16 +68,11 @@ erDiagram
     %% 인기 검색어 = SearchLog 집계 (MV/배치), 별도 테이블 없음
     PopularQueriesMV {
         text query
-        int count
+        bigint cnt
         timestamptz last_seen
     }
-    
-    %% 추천 질문 = query 기반 Gemini/배치 결과 (MV/배치)
-    RecommendedQuestionsMV {
-        text query
-        json suggestions
-        timestamptz created_at
-    }
+
+    %% 추천 질문 = 최근 검색어 기반 Gemini 실시간 호출 (별도 테이블 없음)
     
     %% 선택(향후 확장) — 현재 스코프(01, 03)에는 포함되지 않음
     %% Ad {
