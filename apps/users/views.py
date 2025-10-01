@@ -3,7 +3,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.db import transaction
 from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.views.generic import TemplateView
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
@@ -17,6 +19,7 @@ from django.conf import settings
 
 # from django.core.mail import send_mail
 # from django.conf import settings
+from .forms import SignupForm
 from .serializers import (
     PasswordChangeSerializer,
     RefreshTokenSerializer,
@@ -26,6 +29,19 @@ from .serializers import (
 )
 
 User = get_user_model()
+
+
+def send_verification_email(request, user):
+    """이메일 인증을 위한 이메일 발송 로직"""
+    token = default_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+    verification_link = request.build_absolute_uri(
+        reverse("verify_email", kwargs={"uidb64": uid, "token": token})
+    )
+
+    # 실제 이메일 발송 로직은 주석 처리되어 있습니다.
+    print(f"인증 링크: {verification_link} (터미널에서 클릭 시 인증 처리됨)")
 
 
 @extend_schema(summary="[생성] 회원가입", tags=["Auth & Users"])
@@ -43,33 +59,52 @@ class SignupView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
-        transaction.on_commit(lambda: self.send_verification_email(user))
-
-    def send_verification_email(self, user):
-        """
-        이메일 인증을 위한 이메일 발송 로직
-        터미널에서 링크 클릭으로 처리되므로, 이메일 인증 완료를 가정한 로직
-        """
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-
-        # 인증 링크 생성
-        verification_link = self.request.build_absolute_uri(
-            reverse("verify_email", kwargs={"uidb64": uid, "token": token})
+        transaction.on_commit(
+            lambda: send_verification_email(self.request, user)
         )
 
-        # 실제 이메일 발송 (주석처리 후 테스트로 인증처리 가능)
-        # send_mail(
-        #     "이메일 인증",
-        #     f"이메일 인증을 위해 아래 링크를 클릭하세요:\n{verification_link}",
-        #     settings.DEFAULT_FROM_EMAIL,
-        #     [user.email],
-        #     fail_silently=False,
-        # )
 
-        print(f"인증 링크: {verification_link} (터미널에서 클릭 시 인증 처리됨)")
+class SignupPageView(TemplateView):
+    template_name = "signup.html"
 
-        # docker compose logs web 로 로컬에서 docker compose만으로 서버 띄우고 있더라도 확인가능.
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.setdefault("form", kwargs.get("form", SignupForm()))
+        return context
+
+    def get(self, request, *args, **kwargs):
+        form = SignupForm()
+        return self.render_to_response(self.get_context_data(form=form))
+
+    def post(self, request, *args, **kwargs):
+        form = SignupForm(request.POST)
+        if form.is_valid():
+            serializer = SignupSerializer(data=form.build_serializer_payload())
+            if serializer.is_valid():
+                user = serializer.save()
+                transaction.on_commit(
+                    lambda: send_verification_email(request, user)
+                )
+                return redirect("login-page")
+            self._bind_serializer_errors_to_form(serializer, form)
+        return self.render_to_response(self.get_context_data(form=form))
+
+    @staticmethod
+    def _bind_serializer_errors_to_form(serializer, form):
+        error_dict = serializer.errors
+        for field, errors in error_dict.items():
+            if not isinstance(errors, (list, tuple)):
+                errors = [errors]
+
+            if field == serializer.non_field_errors_key:
+                target_field = None
+            elif field in form.fields:
+                target_field = field
+            else:
+                target_field = None
+
+            for error in errors:
+                form.add_error(target_field, error)
 
 
 @extend_schema(summary="[조회/수정/탈퇴] 내 정보 관리", tags=["Auth & Users"])

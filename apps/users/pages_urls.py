@@ -3,6 +3,7 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from apps.conversations.views import ConversationPageView
+from apps.users.views import SignupPageView
 
 from apps.search.models import PopularQuery, RecommendedQuestion
 
@@ -26,9 +27,7 @@ class MainPageView(TemplateView):
 urlpatterns = [
     path("", MainPageView.as_view(), name="main-page"),
     path("login/", TemplateView.as_view(template_name="login.html"), name="login-page"),
-    path(
-        "signup/", TemplateView.as_view(template_name="signup.html"), name="signup-page"
-    ),
+    path("signup/", SignupPageView.as_view(), name="signup-page"),
     path(
         "dashboard/",
         TemplateView.as_view(template_name="dashboard.html"),

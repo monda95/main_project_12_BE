@@ -292,6 +292,50 @@ class TemplateRenderTests(TestCase):
         self.assertContains(resp, "대화")
 
 
+class SignupPageViewTests(TestCase):
+    def setUp(self):
+        self.url = reverse("signup-page")
+
+    @patch("apps.users.views.send_verification_email")
+    @patch("apps.users.views.transaction.on_commit")
+    def test_signup_page_post_success(self, mock_on_commit, mock_send_email):
+        mock_on_commit.side_effect = lambda func: func()
+
+        payload = {
+            "email": "pageuser@example.com",
+            "password": "password123",
+            "password_confirm": "password123",
+        }
+
+        response = self.client.post(self.url, payload)
+
+        self.assertRedirects(response, reverse("login-page"))
+        self.assertTrue(User.objects.filter(email=payload["email"]).exists())
+        mock_on_commit.assert_called_once()
+        mock_send_email.assert_called_once()
+        created_user = User.objects.get(email=payload["email"])
+        _, called_user = mock_send_email.call_args[0]
+        self.assertEqual(called_user, created_user)
+
+    def test_signup_page_post_duplicate_email_shows_error(self):
+        User.objects.create_user(
+            email="duplicate@example.com",
+            password="password123",
+            username="dupuser",
+        )
+
+        payload = {
+            "email": "duplicate@example.com",
+            "password": "password123",
+            "password_confirm": "password123",
+        }
+
+        response = self.client.post(self.url, payload)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "이미 사용 중인 이메일입니다.")
+
+
 class EmailVerificationTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
