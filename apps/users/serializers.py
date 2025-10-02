@@ -8,6 +8,13 @@ User = get_user_model()
 
 class SignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
+    username = serializers.CharField(max_length=100)
+    nickname = serializers.CharField(
+        max_length=50, required=False, allow_blank=True, allow_null=True
+    )
+    image_url = serializers.URLField(
+        required=False, allow_blank=True, allow_null=True, max_length=500
+    )
 
     class Meta:
         model = User
@@ -23,6 +30,22 @@ class SignupSerializer(serializers.ModelSerializer):
         if not v:
             raise serializers.ValidationError("이메일은 필수입니다.")
         return v
+
+    def validate_username(self, v):
+        v = (v or "").strip()
+        if not v:
+            raise serializers.ValidationError("사용자명은 필수입니다.")
+        return v
+
+    def validate_nickname(self, v):
+        if v is None:
+            return None
+        return str(v).strip()
+
+    def validate_image_url(self, v):
+        if v in (None, ""):
+            return None
+        return v.strip()
 
     def create(self, validated):
         try:

@@ -4,7 +4,7 @@ body {
 }
 
 .headline-font {
-  font-family: 'Poppins', 'Noto Sans KR', sans-serif;
+  font-family: 'Poppins', 'Noto Sans KR', sans-serif !important;
 }
 
 .header-banner {
