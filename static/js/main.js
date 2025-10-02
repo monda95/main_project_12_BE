@@ -67,11 +67,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const status = label.querySelector("[data-default-label]");
         const isActive = value === preference;
 
+        label.classList.toggle("is-active", isActive);
+
         if (option) {
           option.classList.toggle("active", isActive);
         }
 
         if (status) {
+          status.classList.toggle("is-active", isActive);
           const activeText = status.dataset.activeLabel || "ACTIVE";
           const defaultText = status.dataset.defaultLabel || status.textContent;
           status.textContent = isActive ? activeText : defaultText;
@@ -181,24 +184,3 @@ document.addEventListener("DOMContentLoaded", () => {
     const query = searchInput.value.trim();
     if (query) startConversation(query);
   });
-
-  searchInput.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      startConversation(searchInput.value.trim());
-    }
-  });
-
-  // 채팅 append 함수 (chat.js에서 쓰는 것과 동일하게 유지)
-  function appendMessage(role, content) {
-    const wrapper = document.createElement("div");
-    wrapper.classList.add("chat-message", role);
-    wrapper.innerHTML = `
-      <div class="chat-bubble">
-        <div class="chat-role">${role === "user" ? "사용자" : "Nourisher AI"}</div>
-        <div class="chat-content">${content}</div>
-      </div>`;
-    chatBox.appendChild(wrapper);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
-});

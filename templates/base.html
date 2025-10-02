@@ -17,7 +17,9 @@
   <!-- Header -->
   <header class="w-full shadow-md theme-surface fixed top-0 z-10">
     <div class="relative max-w-6xl mx-auto px-6 py-10 header-banner flex flex-col items-center text-center">
-      <h1 class="text-3xl font-bold headline-font" data-theme-title>Nourisher</h1>
+      <a href="{% url 'main-page' %}" class="text-3xl font-bold headline-font focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-lg inline-block" data-theme-title>
+        Nourisher
+      </a>
       <div class="mt-8 flex w-full flex-col gap-3 items-stretch md:mt-0 md:absolute md:bottom-8 md:right-6 md:w-auto md:items-end">
         <div class="relative group" data-theme-menu>
           <button type="button" class="flex items-center gap-2 rounded-full border px-4 py-2 shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 theme-control-btn" data-theme-trigger>
@@ -27,7 +29,7 @@
               <span data-theme-current-text>기본 모드</span>
             </span>
           </button>
-          <div class="absolute right-0 mt-2 w-56 rounded-2xl border shadow-xl backdrop-blur theme-dropdown invisible opacity-0 -translate-y-2 transition-all duration-200 ease-out group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0">
+          <div class="absolute right-0 mt-2.5 w-56 rounded-2xl border shadow-xl backdrop-blur theme-dropdown invisible opacity-0 -translate-y-2 transition-all duration-200 ease-out group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0">
             <form class="px-4 py-3 space-y-4" aria-label="테마 선택" data-theme-form>
               <div>
                 <p class="text-[10px] uppercase tracking-[0.35em]">사용자설정</p>
