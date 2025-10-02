@@ -12,74 +12,72 @@
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col" data-theme="light">
 
   <!-- Header -->
-  <header class="w-full shadow-md bg-white/80 backdrop-blur-sm fixed top-0 z-10">
-    <div class="max-w-6xl mx-auto px-6 py-6 header-banner">
-      <div class="flex flex-col items-center gap-6">
-        <h1 class="text-3xl font-bold text-indigo-600 headline-font text-center">Nourisher</h1>
-        <div class="flex w-full flex-col items-end gap-3">
-          <div class="relative group">
-            <button type="button" class="px-4 py-2 rounded-full border border-gray-200 bg-white/80 text-gray-700 shadow-sm hover:shadow-md transition flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
-              <span class="text-xs uppercase tracking-[0.35em] text-gray-400">사용자 설정</span>
-              <span class="flex items-center gap-1 text-sm font-medium text-gray-700">
-                <span class="inline-flex h-2 w-2 rounded-full bg-indigo-500"></span>
-                다크 모드
-              </span>
-            </button>
-            <div class="absolute right-0 mt-2 w-56 rounded-2xl border border-gray-100 bg-white/95 shadow-xl backdrop-blur invisible opacity-0 -translate-y-2 transition-all duration-200 ease-out group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0">
-              <form class="px-4 py-3 space-y-4" aria-label="테마 선택">
-                <div>
-                  <p class="text-[10px] uppercase tracking-[0.35em] text-gray-400">사용자설정</p>
-                  <p class="text-xs text-gray-500">원하는 UI 모드를 선택하세요.</p>
-                </div>
-                <div class="flex flex-col gap-2">
-                  <label for="theme-system" class="cursor-pointer">
-                    <input type="radio" name="theme" value="system" id="theme-system" class="sr-only peer">
-                    <div class="flex items-center justify-between rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-600 bg-white/80 transition hover:border-indigo-300 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-600 peer-checked:[&>span:last-child]:text-indigo-400">
-                      <span class="font-medium text-gray-600">사용자설정</span>
-                      <span class="text-[10px] font-semibold tracking-[0.3em] text-gray-400 transition-colors">SYSTEM</span>
-                    </div>
-                  </label>
-                  <label for="theme-light" class="cursor-pointer">
-                    <input type="radio" name="theme" value="light" id="theme-light" class="sr-only peer">
-                    <div class="flex items-center justify-between rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-600 bg-white/80 transition hover:border-indigo-300 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-600 peer-checked:[&>span:last-child]:text-indigo-400">
-                      <span class="font-medium text-gray-600">기본</span>
-                      <span class="text-[10px] font-semibold tracking-[0.3em] text-gray-400 transition-colors">LIGHT</span>
-                    </div>
-                  </label>
-                  <label for="theme-dark" class="cursor-pointer">
-                    <input type="radio" name="theme" value="dark" id="theme-dark" class="sr-only peer" checked>
-                    <div class="flex items-center justify-between rounded-xl border border-indigo-500 bg-indigo-600/90 px-3 py-2 text-sm font-semibold text-white shadow-inner transition hover:shadow-lg peer-checked:bg-indigo-600">
-                      <span class="font-semibold text-white">다크</span>
-                      <span class="text-[10px] tracking-[0.35em] text-indigo-100">ACTIVE</span>
-                    </div>
-                  </label>
-                </div>
-              </form>
-            </div>
+  <header class="w-full shadow-md theme-surface fixed top-0 z-10">
+    <div class="relative max-w-6xl mx-auto px-6 py-10 header-banner flex flex-col items-center text-center">
+      <h1 class="text-3xl font-bold headline-font" data-theme-title>Nourisher</h1>
+      <div class="mt-8 flex w-full flex-col gap-3 items-stretch md:mt-0 md:absolute md:bottom-8 md:right-6 md:w-auto md:items-end">
+        <div class="relative group" data-theme-menu>
+          <button type="button" class="flex items-center gap-2 rounded-full border px-4 py-2 shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 theme-control-btn" data-theme-trigger>
+            <span class="text-xs uppercase tracking-[0.35em] theme-trigger-caption" data-theme-trigger-label>사용자 설정</span>
+            <span class="flex items-center gap-2 text-sm font-medium" data-theme-label>
+              <span class="inline-flex h-2 w-2 rounded-full" data-theme-indicator></span>
+              <span data-theme-current-text>기본 모드</span>
+            </span>
+          </button>
+          <div class="absolute right-0 mt-2 w-56 rounded-2xl border shadow-xl backdrop-blur theme-dropdown invisible opacity-0 -translate-y-2 transition-all duration-200 ease-out group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0">
+            <form class="px-4 py-3 space-y-4" aria-label="테마 선택" data-theme-form>
+              <div>
+                <p class="text-[10px] uppercase tracking-[0.35em]">사용자설정</p>
+                <p class="text-xs">원하는 UI 모드를 선택하세요.</p>
+              </div>
+              <div class="flex flex-col gap-2">
+                <label for="theme-system" class="cursor-pointer" data-theme-option="system">
+                  <input type="radio" name="theme" value="system" id="theme-system" class="sr-only peer">
+                  <div class="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition theme-option">
+                    <span class="font-medium">사용자설정</span>
+                    <span class="text-[10px] font-semibold tracking-[0.3em]" data-default-label="SYSTEM" data-active-label="ACTIVE">SYSTEM</span>
+                  </div>
+                </label>
+                <label for="theme-light" class="cursor-pointer" data-theme-option="light">
+                  <input type="radio" name="theme" value="light" id="theme-light" class="sr-only peer" checked>
+                  <div class="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition theme-option">
+                    <span class="font-medium">기본</span>
+                    <span class="text-[10px] font-semibold tracking-[0.3em]" data-default-label="LIGHT" data-active-label="ACTIVE">LIGHT</span>
+                  </div>
+                </label>
+                <label for="theme-dark" class="cursor-pointer" data-theme-option="dark">
+                  <input type="radio" name="theme" value="dark" id="theme-dark" class="sr-only peer">
+                  <div class="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition theme-option">
+                    <span class="font-medium">다크</span>
+                    <span class="text-[10px] font-semibold tracking-[0.3em]" data-default-label="DARK" data-active-label="ACTIVE">DARK</span>
+                  </div>
+                </label>
+              </div>
+            </form>
           </div>
-          <nav class="flex flex-wrap justify-end gap-3">
+        </div>
+        <nav class="flex flex-wrap justify-end gap-3 theme-action-group">
           {% if user.is_authenticated %}
             <form method="post" action="{% url 'logout' %}" class="contents">
               {% csrf_token %}
-              <button type="submit" class="px-4 py-2 rounded-xl bg-indigo-500 text-white shadow hover:bg-indigo-600 transition">
+              <button type="submit" class="px-4 py-2 rounded-xl shadow transition theme-primary-btn">
                 로그아웃
               </button>
             </form>
           {% else %}
-            <a href="{% url 'login-page' %}" class="px-4 py-2 rounded-xl bg-white border border-gray-300 shadow hover:shadow-md transition">
+            <a href="{% url 'login-page' %}" class="px-4 py-2 rounded-xl shadow transition theme-secondary-btn">
               로그인
             </a>
-            <a href="{% url 'signup-page' %}" class="px-4 py-2 rounded-xl bg-indigo-500 text-white shadow hover:bg-indigo-600 transition">
+            <a href="{% url 'signup-page' %}" class="px-4 py-2 rounded-xl shadow transition theme-primary-btn">
               회원가입
             </a>
           {% endif %}
         </nav>
       </div>
     </div>
-  </div>
   </header>
 
   <!-- Main -->

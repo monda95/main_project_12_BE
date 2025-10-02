@@ -1,10 +1,49 @@
+:root {
+  --background-gradient: linear-gradient(135deg, #eef2ff 0%, #fdf2f8 100%);
+  --surface-color: rgba(255, 255, 255, 0.9);
+  --surface-border: rgba(209, 213, 219, 0.6);
+  --surface-text: #1f2937;
+  --surface-subtle: #4b5563;
+  --indicator-active: #6366f1;
+  --indicator-inactive: #d1d5db;
+  --button-primary-bg: #6366f1;
+  --button-primary-color: #ffffff;
+  --button-primary-hover: #4f46e5;
+  --button-secondary-bg: rgba(255, 255, 255, 0.95);
+  --button-secondary-color: #1f2937;
+  --button-secondary-border: rgba(209, 213, 219, 0.8);
+  --button-secondary-hover: rgba(243, 244, 246, 0.95);
+  --shadow-soft: 0 20px 45px -18px rgba(79, 70, 229, 0.35);
+}
+
 body {
   font-family: 'Noto Sans KR', sans-serif;
-  transition: background 0.3s ease-in-out;
+  transition: background 0.35s ease-in-out, color 0.35s ease-in-out;
+  background: var(--background-gradient);
+  color: var(--surface-text);
+}
+
+body[data-theme='dark'] {
+  --background-gradient: linear-gradient(140deg, #0f172a 0%, #1f2937 40%, #312e81 100%);
+  --surface-color: rgba(30, 41, 59, 0.88);
+  --surface-border: rgba(99, 102, 241, 0.35);
+  --surface-text: #e2e8f0;
+  --surface-subtle: #cbd5f5;
+  --indicator-active: #a5b4fc;
+  --indicator-inactive: #475569;
+  --button-primary-bg: #4f46e5;
+  --button-primary-color: #e0e7ff;
+  --button-primary-hover: #4338ca;
+  --button-secondary-bg: rgba(15, 23, 42, 0.7);
+  --button-secondary-color: #e2e8f0;
+  --button-secondary-border: rgba(148, 163, 184, 0.45);
+  --button-secondary-hover: rgba(30, 41, 59, 0.88);
+  --shadow-soft: 0 24px 50px -15px rgba(15, 23, 42, 0.55);
 }
 
 .headline-font {
   font-family: 'Poppins', 'Noto Sans KR', sans-serif !important;
+  color: var(--indicator-active) !important;
 }
 
 .header-banner {
@@ -12,8 +51,119 @@ body {
   padding-bottom: 2.75rem;
 }
 
+.theme-surface {
+  background: var(--surface-color);
+  border-bottom: 1px solid var(--surface-border);
+  backdrop-filter: blur(16px);
+}
+
+.theme-control-btn {
+  background: var(--surface-color);
+  border-color: var(--surface-border);
+  color: var(--surface-text);
+}
+
+.theme-trigger-caption {
+  color: var(--surface-subtle);
+  letter-spacing: 0.35em;
+}
+
+[data-theme-label] span:last-child {
+  color: var(--surface-text);
+}
+
+.theme-control-btn:hover {
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
+}
+
+.theme-dropdown {
+  background: var(--surface-color);
+  border-color: var(--surface-border);
+  color: var(--surface-text);
+  box-shadow: 0 24px 45px -20px rgba(15, 23, 42, 0.18);
+}
+
+.theme-dropdown p {
+  color: var(--surface-subtle);
+}
+
+.theme-option {
+  background: var(--surface-color);
+  border-color: var(--surface-border);
+  color: var(--surface-text);
+}
+
+.theme-option span {
+  color: inherit;
+}
+
+.theme-option:hover {
+  border-color: var(--indicator-active);
+  transform: translateY(-1px);
+}
+
+.theme-option.active {
+  border-color: var(--indicator-active);
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--indicator-active);
+}
+
+[data-theme-option]:focus-within .theme-option {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+body[data-theme='dark'] .theme-dropdown {
+  box-shadow: 0 28px 55px -22px rgba(15, 23, 42, 0.65);
+}
+
+body[data-theme='dark'] .theme-option {
+  background: rgba(17, 24, 39, 0.65);
+}
+
+body[data-theme='dark'] .theme-option.active {
+  background: rgba(99, 102, 241, 0.28);
+  color: var(--button-primary-color);
+}
+
+.theme-action-group a,
+.theme-action-group button {
+  min-width: 6.5rem;
+}
+
+.theme-primary-btn {
+  background: var(--button-primary-bg);
+  color: var(--button-primary-color);
+}
+
+.theme-primary-btn:hover,
+.theme-primary-btn:focus-visible {
+  background: var(--button-primary-hover);
+}
+
+.theme-secondary-btn {
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-color);
+  border: 1px solid var(--button-secondary-border);
+}
+
+.theme-secondary-btn:hover,
+.theme-secondary-btn:focus-visible {
+  background: var(--button-secondary-hover);
+}
+
+[data-theme-indicator] {
+  background: var(--indicator-active);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+[data-theme-menu]:hover [data-theme-indicator] {
+  box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.2);
+}
+
 button {
-  transition: all 0.2s ease-in-out;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 button:hover {
