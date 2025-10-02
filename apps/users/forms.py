@@ -1,6 +1,17 @@
 from django import forms
 
 
+class LoginForm(forms.Form):
+    email = forms.EmailField(label="이메일")
+    password = forms.CharField(
+        label="비밀번호", widget=forms.PasswordInput, strip=False
+    )
+
+    def clean_email(self):
+        email = (self.cleaned_data.get("email") or "").strip().lower()
+        return email
+
+
 class SignupForm(forms.Form):
     email = forms.EmailField(label="이메일")
     password = forms.CharField(
@@ -28,7 +39,9 @@ class SignupForm(forms.Form):
             raise ValueError("유효한 폼 데이터가 필요합니다.")
 
         email = self.cleaned_data["email"]
-        username = (self.cleaned_data.get("nickname") or "").strip() or email.split("@")[0]
+        username = (self.cleaned_data.get("nickname") or "").strip() or email.split(
+            "@"
+        )[0]
 
         payload = {
             "email": email,

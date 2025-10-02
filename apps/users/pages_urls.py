@@ -1,4 +1,3 @@
-# apps/users/pages_urls.py
 import logging
 
 from django.db.utils import OperationalError, ProgrammingError
@@ -6,7 +5,7 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from apps.conversations.views import ConversationPageView
-from apps.users.views import SignupPageView
+from apps.users.views import LoginPageView, SignupPageView
 
 from apps.search.models import PopularQuery, RecommendedQuestion
 
@@ -42,7 +41,7 @@ class MainPageView(TemplateView):
 
 urlpatterns = [
     path("", MainPageView.as_view(), name="main-page"),
-    path("login/", TemplateView.as_view(template_name="login.html"), name="login-page"),
+    path("login/", LoginPageView.as_view(), name="login-page"),
     path("signup/", SignupPageView.as_view(), name="signup-page"),
     path(
         "dashboard/",
