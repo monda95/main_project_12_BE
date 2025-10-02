@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+
   function escapeHtml(value) {
     if (value === null || value === undefined) return "";
     return String(value)
@@ -119,6 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
+    removeEmptyState();
     chatBox.appendChild(wrapper);
     chatBox.scrollTop = chatBox.scrollHeight;
   }

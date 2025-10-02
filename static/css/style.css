@@ -92,6 +92,9 @@ body[data-theme='dark'] {
   background: var(--surface-color);
   border-color: var(--surface-border);
   color: var(--surface-text);
+  --theme-option-accent-default: var(--indicator-active);
+  --theme-option-ring-default: rgba(99, 102, 241, 0.2);
+  --theme-option-fill-default: rgba(99, 102, 241, 0.12);
 }
 
 .theme-option span {
@@ -107,19 +110,22 @@ body[data-theme='dark'] {
 }
 
 .theme-option:hover {
-  border-color: var(--indicator-active);
+  border-color: var(--theme-option-accent, var(--theme-option-accent-default));
   transform: translateY(-1px);
 }
 
 .theme-option.active {
-  border-color: var(--indicator-active);
-  background: rgba(99, 102, 241, 0.12);
-  color: var(--indicator-active);
+  border-color: var(--theme-option-accent, var(--theme-option-accent-default));
+  background: var(--theme-option-fill, var(--theme-option-fill-default));
+  color: var(--theme-option-accent, var(--theme-option-accent-default));
+  box-shadow: 0 0 0 2px var(--theme-option-ring, var(--theme-option-ring-default));
 }
 
 [data-theme-option] .theme-option {
   position: relative;
   overflow: hidden;
+  --theme-option-ring-default: rgba(99, 102, 241, 0.2);
+  --theme-option-fill-default: rgba(99, 102, 241, 0.12);
 }
 
 [data-theme-option] .theme-option::after {
@@ -127,7 +133,11 @@ body[data-theme='dark'] {
   position: absolute;
   inset: -40%;
   opacity: 0;
-  background: radial-gradient(120% 120% at 50% 50%, rgba(99, 102, 241, 0.16) 0%, rgba(99, 102, 241, 0) 70%);
+  background: radial-gradient(
+    120% 120% at 50% 50%,
+    var(--theme-option-fill, var(--theme-option-fill-default)) 0%,
+    transparent 70%
+  );
   transform: scale(0.85);
   transition: opacity 0.35s ease, transform 0.35s ease;
   z-index: -1;
@@ -138,25 +148,51 @@ body[data-theme='dark'] {
   transform: scale(1);
 }
 
+[data-theme-option='system'] .theme-option {
+  --theme-option-accent-default: var(--indicator-active);
+  --theme-option-ring-default: rgba(99, 102, 241, 0.2);
+  --theme-option-fill-default: rgba(99, 102, 241, 0.12);
+}
+
+[data-theme-option='light'] .theme-option {
+  --theme-option-accent-default: #f97316;
+  --theme-option-ring-default: rgba(249, 115, 22, 0.25);
+  --theme-option-fill-default: rgba(249, 115, 22, 0.12);
+}
+
+[data-theme-option='dark'] .theme-option {
+  --theme-option-accent-default: #a855f7;
+  --theme-option-ring-default: rgba(168, 85, 247, 0.25);
+  --theme-option-fill-default: rgba(168, 85, 247, 0.2);
+}
+
 [data-theme-option='dark'] .theme-option.active {
-  color: #c7d2fe;
-  background: linear-gradient(120deg, rgba(79, 70, 229, 0.35), rgba(168, 85, 247, 0.45));
-  box-shadow: 0 16px 40px -18px rgba(76, 29, 149, 0.55), 0 0 0 2px rgba(168, 85, 247, 0.3);
+  color: #ede9fe;
+  background: linear-gradient(
+    120deg,
+    rgba(76, 29, 149, 0.55),
+    var(--theme-option-fill, var(--theme-option-fill-default))
+  );
+  box-shadow: 0 16px 40px -18px rgba(76, 29, 149, 0.55), 0 0 0 2px var(--theme-option-ring, var(--theme-option-ring-default));
 }
 
 [data-theme-option='dark'] .theme-option.active::after {
   opacity: 1;
-  background: radial-gradient(130% 130% at 50% 50%, rgba(168, 85, 247, 0.45) 0%, rgba(15, 23, 42, 0) 70%);
+  background: radial-gradient(
+    130% 130% at 50% 50%,
+    var(--theme-option-fill, var(--theme-option-fill-default)) 0%,
+    rgba(15, 23, 42, 0) 70%
+  );
   animation: theme-option-glow 2.8s ease-in-out infinite;
 }
 
 [data-theme-option].is-active [data-active-label] {
-  color: var(--indicator-active);
+  color: var(--theme-option-accent, var(--theme-option-accent-default, var(--indicator-active)));
   letter-spacing: 0.32em;
 }
 
 [data-theme-option='dark'].is-active [data-active-label] {
-  color: #ede9fe;
+  color: var(--theme-option-accent, var(--theme-option-accent-default));
   letter-spacing: 0.38em;
 }
 
@@ -173,7 +209,7 @@ body[data-theme='dark'] {
 }
 
 [data-theme-option]:focus-within .theme-option {
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 0 3px var(--theme-option-ring, var(--theme-option-ring-default));
 }
 
 body[data-theme='dark'] .theme-dropdown {
@@ -185,8 +221,8 @@ body[data-theme='dark'] .theme-option {
 }
 
 body[data-theme='dark'] .theme-option.active {
-  background: rgba(99, 102, 241, 0.28);
-  color: var(--button-primary-color);
+  background: var(--theme-option-fill, var(--theme-option-fill-default));
+  color: var(--theme-option-accent, var(--theme-option-accent-default, var(--button-primary-color)));
 }
 
 .theme-action-group a,
