@@ -45,6 +45,16 @@
             {% endfor %}
         </div>
         <div>
+            <label for="image_url" class="theme-label">프로필 이미지 URL</label>
+            <input type="url" name="image_url" id="image_url"
+                   value="{{ form.image_url.value|default:'' }}"
+                   placeholder="선택 사항"
+                   class="theme-input {% if form.image_url.errors %}theme-input--error{% endif %}">
+            {% for error in form.image_url.errors %}
+            <p class="theme-input__error">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div>
             <label for="password" class="theme-label">비밀번호</label>
             <input type="password" name="password" id="password" required
                    class="theme-input {% if form.password.errors %}theme-input--error{% endif %}">

@@ -17,7 +17,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function initThemeControls() {
     const form = document.querySelector("[data-theme-form]");
-    if (!form) return;
+    if (!form) {
+      console.warn("테마 폼을 찾을 수 없습니다.");
+      return;
+    }
 
     const storageKey = "nourisher.theme.preference";
     const systemMatcher = window.matchMedia("(prefers-color-scheme: dark)");
@@ -26,10 +29,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const indicator = document.querySelector("[data-theme-indicator]");
     const optionLabels = Array.from(form.querySelectorAll("[data-theme-option]"));
     const inputs = Array.from(form.querySelectorAll("input[name='theme']"));
+
     const labelMap = {
       light: "기본 모드",
       dark: "다크 모드",
     };
+
     const indicatorStyles = {
       system: {
         color: "var(--indicator-active)",
@@ -75,9 +80,19 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateIndicator(preference, resolvedTheme) {
       if (!indicator) return;
       const styleKey = preference === "system" ? resolvedTheme : preference;
-      const { color, ring } = indicatorStyles[styleKey] || indicatorStyles.system;
+      const styles = indicatorStyles[styleKey] || indicatorStyles.system;
+
+      // CSS 변수 값을 실제 값으로 변환
+      let color = styles.color;
+      if (color.startsWith("var(")) {
+        const varName = color.match(/var\((--[^)]+)\)/)?.[1];
+        if (varName) {
+          color = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        }
+      }
+
       indicator.style.backgroundColor = color;
-      indicator.style.boxShadow = `0 0 0 4px ${ring}`;
+      indicator.style.boxShadow = `0 0 0 4px ${styles.ring}`;
     }
 
     function updateOptionStyles(preference, resolvedTheme) {
@@ -134,8 +149,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function applyTheme(preference, { updateForm = true } = {}) {
       const resolvedTheme = resolveTheme(preference);
-      document.body.dataset.theme = resolvedTheme;
+
+      // body에 data-theme 속성 적용
+      document.body.setAttribute("data-theme", resolvedTheme);
       document.documentElement.style.colorScheme = resolvedTheme === "dark" ? "dark" : "light";
+
       updateIndicator(preference, resolvedTheme);
       updateOptionStyles(preference, resolvedTheme);
 
@@ -143,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const displayText =
           preference === "system"
             ? `사용자설정 · ${resolvedTheme === "dark" ? "다크" : "기본"}`
-            : labelMap[preference] || labelMap.dark;
+            : labelMap[preference] || labelMap.light;
         currentText.textContent = displayText;
       }
 
@@ -154,9 +172,11 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    const initialPreference = readPreference() || "system";
+    // 초기 테마 적용
+    const initialPreference = readPreference() || "light";
     applyTheme(initialPreference);
 
+    // 폼 변경 이벤트 리스너
     form.addEventListener("change", event => {
       const target = event.target;
       if (!(target instanceof HTMLInputElement)) return;
@@ -165,6 +185,7 @@ document.addEventListener("DOMContentLoaded", () => {
       applyTheme(preference);
     });
 
+    // 시스템 테마 변경 감지
     const handleSystemChange = () => {
       const stored = readPreference() || "system";
       if (stored === "system") {
@@ -178,6 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
       systemMatcher.addListener(handleSystemChange);
     }
 
+    // 접근성 속성 설정
     if (trigger) {
       trigger.setAttribute("aria-haspopup", "true");
       trigger.setAttribute("aria-expanded", "false");
@@ -210,6 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // 검색 기능 (메인 페이지에만 존재)
   if (searchBtn && searchInput && searchSection && chatSection && chatBox && typeof window.appendMessage === "function") {
     const startConversation = async query => {
       if (!query) return;
@@ -221,12 +244,26 @@ document.addEventListener("DOMContentLoaded", () => {
       // 사용자 메시지 append
       window.appendMessage("user", query);
 
+      // ✅ 추가: 로딩 애니메이션
+      window.showTypingIndicator();
+
       try {
         const res = await fetch(`/api/v1/search/?query=${encodeURIComponent(query)}`);
         const data = await res.json();
 
-        window.appendMessage("assistant", data.content || "응답을 불러올 수 없습니다.");
+        // ✅ 추가: 로딩 애니메이션 제거
+        window.removeTypingIndicator();
+
+        // ✅ 수정: 렌더링 함수 사용
+        if (typeof window.renderAssistantMessage === "function") {
+          window.appendMessage("assistant", window.renderAssistantMessage(data));
+        } else {
+          console.warn("renderAssistantMessage not ready, fallback to JSON");
+          window.appendMessage("assistant", `<pre>${JSON.stringify(data, null, 2)}</pre>`);
+        }
       } catch (err) {
+        console.error("Search API 오류:", err);
+        window.removeTypingIndicator();
         window.appendMessage("assistant", "⚠️ 오류가 발생했습니다.");
       }
     };
@@ -234,6 +271,13 @@ document.addEventListener("DOMContentLoaded", () => {
     searchBtn.addEventListener("click", () => {
       const query = searchInput.value.trim();
       if (query) startConversation(query);
+    });
+
+    searchInput.addEventListener("keypress", event => {
+      if (event.key === "Enter") {
+        const query = searchInput.value.trim();
+        if (query) startConversation(query);
+      }
     });
   }
 });

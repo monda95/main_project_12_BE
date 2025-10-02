@@ -48,6 +48,7 @@ class SignupSerializer(serializers.ModelSerializer):
         return v.strip()
 
     def create(self, validated):
+        validated.setdefault("image_url", None)
         try:
             # 핵심 로직(이메일 소문자화/비번 해시)은 Manager가 수행
             return User.objects.create_user(**validated)
