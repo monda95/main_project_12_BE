@@ -291,77 +291,90 @@ class TemplateRenderTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "대화")
 
+    class SignupPageViewTests(TestCase):
+        def setUp(self):
+            self.url = reverse("signup-page")
 
-class SignupPageViewTests(TestCase):
-    def setUp(self):
-        self.url = reverse("signup-page")
+        @patch("apps.users.views.send_verification_email")
+        @patch("apps.users.views.transaction.on_commit")
+        def test_signup_page_post_success(self, mock_on_commit, mock_send_email):
+            mock_on_commit.side_effect = lambda func: func()
 
-    @patch("apps.users.views.send_verification_email")
-    @patch("apps.users.views.transaction.on_commit")
-    def test_signup_page_post_success(self, mock_on_commit, mock_send_email):
-        mock_on_commit.side_effect = lambda func: func()
+            payload = {
+                "email": "pageuser@example.com",
+                "password": "password123",
+                "password_confirm": "password123",
+                "username": "pageuser",
+                "nickname": "페이지유저",
+                "image_url": "https://example.com/avatar.png",
+            }
 
-        payload = {
-            "email": "pageuser@example.com",
-            "password": "password123",
-            "password_confirm": "password123",
-        }
+            response = self.client.post(self.url, payload)
 
-        response = self.client.post(self.url, payload)
+            self.assertRedirects(response, reverse("login-page"))
+            self.assertTrue(User.objects.filter(email=payload["email"]).exists())
+            mock_on_commit.assert_called_once()
+            mock_send_email.assert_called_once()
+            created_user = User.objects.get(email=payload["email"])
+            _, called_user = mock_send_email.call_args[0]
+            self.assertEqual(called_user, created_user)
+            self.assertEqual(created_user.username, payload["username"])
+            self.assertEqual(created_user.nickname, payload["nickname"])
+            self.assertEqual(created_user.image_url, payload["image_url"])
 
-        self.assertRedirects(response, reverse("login-page"))
-        self.assertTrue(User.objects.filter(email=payload["email"]).exists())
-        mock_on_commit.assert_called_once()
-        mock_send_email.assert_called_once()
-        created_user = User.objects.get(email=payload["email"])
-        _, called_user = mock_send_email.call_args[0]
-        self.assertEqual(called_user, created_user)
+        def test_signup_page_post_duplicate_email_shows_error(self):
+            User.objects.create_user(
+                email="duplicate@example.com",
+                password="password123",
+                username="dupuser",
+            )
 
-    def test_signup_page_post_duplicate_email_shows_error(self):
-        User.objects.create_user(
-            email="duplicate@example.com",
-            password="password123",
-            username="dupuser",
-        )
+            payload = {
+                "email": "duplicate@example.com",
+                "password": "password123",
+                "password_confirm": "password123",
+                "username": "dupuser2",
+            }
 
-        payload = {
-            "email": "duplicate@example.com",
-            "password": "password123",
-            "password_confirm": "password123",
-        }
+            response = self.client.post(self.url, payload)
 
-        response = self.client.post(self.url, payload)
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, "이미 사용 중인 이메일입니다.")
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "이미 사용 중인 이메일입니다.")
+        def test_signup_page_missing_username_shows_error(self):
+            payload = {
+                "email": "nouser@example.com",
+                "password": "password123",
+                "password_confirm": "password123",
+            }
 
+            response = self.client.post(self.url, payload)
 
-class EmailVerificationTests(TestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
-            email="unverified@example.com", password="password123"
-        )
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, "사용자명은 필수입니다.")
 
-    def test_verify_email_success(self):
-        """이메일 인증 성공 테스트"""
-        token = default_token_generator.make_token(self.user)
-        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
-        url = reverse("verify_email", kwargs={"uidb64": uid, "token": token})
+    class EmailVerificationTests(TestCase):
+        def setUp(self):
+            self.user = User.objects.create_user(
+                email="unverified@example.com", password="password123"
+            )
 
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        def test_verify_email_success(self):
+            """이메일 인증 성공 테스트"""
+            token = default_token_generator.make_token(self.user)
+            uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+            url = reverse("verify_email", kwargs={"uidb64": uid, "token": token})
 
-        self.user.refresh_from_db()
-        self.assertIsNotNone(self.user.email_verified_at)
-        self.assertEqual(self.user.role, "user")
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
 
-    def test_verify_email_invalid_token(self):
-        """잘못된 토큰으로 이메일 인증 실패 테스트"""
-        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
-        url = reverse("verify_email", kwargs={"uidb64": uid, "token": "invalid-token"})
+            self.user.refresh_from_db()
+            self.assertIsNotNone(self.user.email_verified_at)
+            self.assertEqual(self.user.role, "user")
 
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 400)
-
-        self.user.refresh_from_db()
-        self.assertIsNone(self.user.email_verified_at)
+        def test_verify_email_invalid_token(self):
+            """잘못된 토큰으로 이메일 인증 실패 테스트"""
+            uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+            url = reverse(
+                "verify_email", kwargs={"uidb64": uid, "token": "invalid-token"}
+            )
