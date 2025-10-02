@@ -1,25 +1,26 @@
 import requests
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate, login
 from django.contrib.auth.tokens import default_token_generator
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, FormView
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.http import JsonResponse
 from django.conf import settings
+from urllib.parse import urlencode
 
 # from django.core.mail import send_mail
 # from django.conf import settings
-from .forms import SignupForm
+from .forms import SignupForm, LoginForm
 from .serializers import (
     PasswordChangeSerializer,
     RefreshTokenSerializer,
@@ -29,6 +30,14 @@ from .serializers import (
 )
 
 User = get_user_model()
+
+
+def _build_github_redirect_uri(request):
+    github_settings = settings.OAUTH_CLIENTS.get("github", {})
+    redirect_uri = github_settings.get("redirect_uri")
+    if redirect_uri:
+        return redirect_uri
+    return request.build_absolute_uri(reverse("github_callback"))
 
 
 def send_verification_email(request, user):
@@ -59,9 +68,23 @@ class SignupView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
-        transaction.on_commit(
-            lambda: send_verification_email(self.request, user)
-        )
+        transaction.on_commit(lambda: send_verification_email(self.request, user))
+
+
+class LoginPageView(FormView):
+    template_name = "login.html"
+    form_class = LoginForm
+    success_url = reverse_lazy("main-page")
+
+    def form_valid(self, form):
+        email = form.cleaned_data["email"]
+        password = form.cleaned_data["password"]
+        user = authenticate(self.request, email=email, password=password)
+        if user is None:
+            form.add_error(None, "이메일 또는 비밀번호가 올바르지 않습니다.")
+            return self.form_invalid(form)
+        login(self.request, user)
+        return super().form_valid(form)
 
 
 class SignupPageView(TemplateView):
@@ -82,9 +105,7 @@ class SignupPageView(TemplateView):
             serializer = SignupSerializer(data=form.build_serializer_payload())
             if serializer.is_valid():
                 user = serializer.save()
-                transaction.on_commit(
-                    lambda: send_verification_email(request, user)
-                )
+                transaction.on_commit(lambda: send_verification_email(request, user))
                 return redirect("login-page")
             self._bind_serializer_errors_to_form(serializer, form)
         return self.render_to_response(self.get_context_data(form=form))
@@ -247,6 +268,29 @@ def verify_email(request, uidb64, token):
         return HttpResponse("잘못된 인증 링크입니다.", status=400)
 
 
+def start_github_oauth(request):
+    """GitHub OAuth 인증 흐름을 시작합니다."""
+
+    github_settings = settings.OAUTH_CLIENTS.get("github", {})
+    authorize_url = "https://github.com/login/oauth/authorize"
+    redirect_uri = _build_github_redirect_uri(request)
+
+    params = {
+        "client_id": github_settings.get("client_id"),
+        "redirect_uri": redirect_uri,
+    }
+
+    scope = github_settings.get("scope")
+    if scope:
+        params["scope"] = scope
+
+    query = urlencode(
+        {key: value for key, value in params.items() if value is not None}
+    )
+    target_url = f"{authorize_url}?{query}" if query else authorize_url
+    return redirect(target_url)
+
+
 def github_callback(request):
     code = request.GET.get("code")
     if not code:
@@ -254,11 +298,13 @@ def github_callback(request):
 
     # GitHub 토큰 교환 요청
     token_url = "https://github.com/login/oauth/access_token"
+    github_settings = settings.OAUTH_CLIENTS.get("github", {})
+    redirect_uri = _build_github_redirect_uri(request)
     data = {
-        "client_id": settings.OAUTH_CLIENTS["github"]["client_id"],
-        "client_secret": settings.OAUTH_CLIENTS["github"]["client_secret"],
+        "client_id": github_settings.get("client_id"),
+        "client_secret": github_settings.get("client_secret"),
         "code": code,
-        "redirect_uri": settings.OAUTH_CLIENTS["github"]["redirect_uri"],
+        "redirect_uri": redirect_uri,
     }
     headers = {"Accept": "application/json"}
     resp = requests.post(token_url, data=data, headers=headers)
@@ -280,11 +326,13 @@ def github_exchange(request):
         return JsonResponse({"error": "missing code"}, status=400)
 
     token_url = "https://github.com/login/oauth/access_token"
+    github_settings = settings.OAUTH_CLIENTS.get("github", {})
+    redirect_uri = _build_github_redirect_uri(request)
     data = {
-        "client_id": settings.OAUTH_CLIENTS["github"]["client_id"],
-        "client_secret": settings.OAUTH_CLIENTS["github"]["client_secret"],
+        "client_id": github_settings.get("client_id"),
+        "client_secret": github_settings.get("client_secret"),
         "code": code,
-        "redirect_uri": settings.OAUTH_CLIENTS["github"]["redirect_uri"],
+        "redirect_uri": redirect_uri,
     }
     headers = {"Accept": "application/json"}
     resp = requests.post(token_url, data=data, headers=headers)

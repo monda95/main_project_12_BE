@@ -3,6 +3,15 @@ body {
   transition: background 0.3s ease-in-out;
 }
 
+.headline-font {
+  font-family: 'Poppins', 'Noto Sans KR', sans-serif;
+}
+
+.header-banner {
+  padding-top: 2.75rem;
+  padding-bottom: 2.75rem;
+}
+
 button {
   transition: all 0.2s ease-in-out;
 }

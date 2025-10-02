@@ -4,6 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}Nourisher{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -12,9 +15,9 @@
 
   <!-- Header -->
   <header class="w-full shadow-md bg-white/80 backdrop-blur-sm fixed top-0 z-10">
-    <div class="max-w-6xl mx-auto flex justify-between items-center px-6 py-4">
-      <h1 class="text-2xl font-bold text-indigo-600">Nourisher</h1>
-      <nav class="flex gap-4">
+    <div class="max-w-6xl mx-auto flex flex-col items-center justify-center gap-4 px-6 header-banner">
+      <h1 class="text-3xl font-bold text-indigo-600 headline-font">Nourisher</h1>
+      <nav class="flex flex-wrap justify-center gap-3">
         {% if user.is_authenticated %}
           <form method="post" action="{% url 'logout' %}" class="contents">
             {% csrf_token %}
@@ -29,7 +32,7 @@
           <a href="{% url 'signup-page' %}" class="px-4 py-2 rounded-xl bg-indigo-500 text-white shadow hover:bg-indigo-600 transition">
             회원가입
           </a>
-          <a href="{% url 'github_exchange' %}" class="px-4 py-2 rounded-xl bg-gray-800 text-white shadow hover:bg-gray-900 transition">
+          <a href="{% url 'start_github_oauth' %}" class="px-4 py-2 rounded-xl bg-gray-800 text-white shadow hover:bg-gray-900 transition">
             GitHub OAuth
           </a>
         {% endif %}
