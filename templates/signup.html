@@ -26,6 +26,15 @@
             {% endfor %}
         </div>
         <div>
+            <label for="username" class="theme-label">사용자명</label>
+            <input type="text" name="username" id="username" required
+                   value="{{ form.username.value|default:'' }}"
+                   class="theme-input {% if form.username.errors %}theme-input--error{% endif %}">
+            {% for error in form.username.errors %}
+            <p class="theme-input__error">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div>
             <label for="nickname" class="theme-label">닉네임</label>
             <input type="text" name="nickname" id="nickname"
                    value="{{ form.nickname.value|default:'' }}"
