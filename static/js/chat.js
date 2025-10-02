@@ -27,33 +27,73 @@
 
   // 🔹 AI 답변 렌더링
   function renderAssistantMessage(data) {
-    if (!data || !data.content) {
+    if (!data) {
       return `<div class="text-gray-500">⚠️ 응답을 불러올 수 없습니다.</div>`;
     }
 
-    const content = data.content;
+    const content = data.content || data;
 
-    // 음식 데이터인 경우 → 카드 형태
-    if (content.nutrition || content.allergy || content.storage) {
-      const nutrition = content.nutrition || {};
+    if (!content || typeof content !== "object") {
+      return `<div class="text-gray-700">🤖 Nourisher는 식품 정보에 특화된 비서예요. 음식 관련 질문을 해주세요.</div>`;
+    }
+
+    const nutrition = content.nutrition || {};
+    const macros = [
+      { label: "열량", value: nutrition.calories },
+      { label: "단백질", value: nutrition.protein },
+      { label: "지방", value: nutrition.fat },
+      { label: "탄수화물", value: nutrition.carbohydrates }
+    ];
+    const macroList = macros
+      .filter((item) => item.value !== undefined && item.value !== null && item.value !== "")
+      .map(
+        (item) => `
+          <li>
+            <span>${item.label}</span>
+            <span>${item.value}</span>
+          </li>
+        `
+      )
+      .join("");
+    const macroHasValue = Boolean(macroList);
+
+    const detailSources = [
+      { label: "⚠️ 알레르기", value: content.allergy },
+      { label: "📦 보관", value: content.storage },
+      { label: "⚙️ 가공", value: content.processing },
+      { label: "🌱 원료", value: content.source }
+    ];
+    const detailMarkup = detailSources
+      .filter((item) => item.value !== undefined && item.value !== null && item.value !== "")
+      .map(
+        (item) => `
+          <div class="assistant-card__item">
+            <span class="assistant-card__item-label">${item.label}</span>
+            <span>${item.value}</span>
+          </div>
+        `
+      )
+      .join("");
+    const detailHasValue = Boolean(detailMarkup);
+
+    if (macroHasValue || detailHasValue) {
       return `
-        <div class="assistant-card p-3 bg-white rounded-lg shadow text-sm space-y-2">
-          <h3 class="font-bold mb-2">🍽️ 영양 성분 (100g 기준)</h3>
-          <ul class="mb-2 list-disc list-inside">
-            <li>열량: ${nutrition.calories || " -"}</li>
-            <li>단백질: ${nutrition.protein || " -"}</li>
-            <li>지방: ${nutrition.fat || " -"}</li>
-            <li>탄수화물: ${nutrition.carbohydrates || " -"}</li>
-          </ul>
-          <p>⚠️ 알레르기: ${content.allergy || "정보 없음"}</p>
-          <p>📦 보관: ${content.storage || "정보 없음"}</p>
-          <p>⚙️ 가공: ${content.processing || "정보 없음"}</p>
-          <p>🌱 원료: ${content.source || "정보 없음"}</p>
-        </div>
+        <article class="assistant-card" aria-label="영양 정보 카드">
+          <header class="assistant-card__header">
+            <h3>🍽️ 영양 정보</h3>
+            <p>100g 기준 주요 정보를 정리했어요.</p>
+          </header>
+          ${
+            macroHasValue
+              ? `<ul class="assistant-card__list">${macroList}</ul>`
+              : ""
+          }
+          ${macroHasValue && detailHasValue ? '<hr class="assistant-card__divider">' : ""}
+          ${detailHasValue ? detailMarkup : ""}
+        </article>
       `;
     }
 
-    // 음식 관련 정보가 없는 경우
     return `<div class="text-gray-700">🤖 Nourisher는 식품 정보에 특화된 비서예요. 음식 관련 질문을 해주세요.</div>`;
   }
 
@@ -65,17 +105,35 @@
 
     let displayContent = content;
 
-    // 객체일 경우 강제로 보기 좋게 변환
-    if (typeof content === "object") {
+    if (!isTemp && role === "assistant" && typeof content === "object") {
       displayContent = renderAssistantMessage(content);
     }
 
-    wrapper.innerHTML = `
-      <div class="chat-bubble">
-        <div class="chat-role">${role === "user" ? "사용자" : "Nourisher AI"}</div>
-        <div class="chat-content">${displayContent}</div>
-      </div>
-    `;
+    if (typeof displayContent === "string" && displayContent.indexOf("<") === -1) {
+      displayContent = displayContent.replace(/\n/g, "<br>");
+    }
+
+    const meta = document.createElement("div");
+    meta.className = `chat-meta ${role === "user" ? "items-end text-right" : "items-start text-left"}`;
+
+    const roleLabel = document.createElement("span");
+    roleLabel.className = "chat-role";
+    roleLabel.textContent = role === "user" ? "사용자" : "Nourisher AI";
+
+    const bubble = document.createElement("div");
+    bubble.className = `chat-bubble ${role === "user" ? "chat-bubble-user" : "chat-bubble-assistant"}`;
+    if (isTemp) {
+      bubble.classList.add("chat-bubble-typing");
+    }
+
+    const contentWrapper = document.createElement("div");
+    contentWrapper.className = "chat-content";
+    contentWrapper.innerHTML = displayContent;
+
+    bubble.appendChild(contentWrapper);
+    meta.appendChild(roleLabel);
+    meta.appendChild(bubble);
+    wrapper.appendChild(meta);
 
     hideGuideMessage();
     chatBox.appendChild(wrapper);
