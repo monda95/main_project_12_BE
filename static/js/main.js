@@ -31,9 +31,21 @@ document.addEventListener("DOMContentLoaded", () => {
       dark: "다크 모드",
     };
     const indicatorStyles = {
-      system: { color: "var(--indicator-active)", ring: "rgba(99, 102, 241, 0.2)" },
-      light: { color: "#f97316", ring: "rgba(249, 115, 22, 0.25)" },
-      dark: { color: "#a855f7", ring: "rgba(168, 85, 247, 0.25)" },
+      system: {
+        color: "var(--indicator-active)",
+        ring: "rgba(99, 102, 241, 0.2)",
+        fill: "rgba(99, 102, 241, 0.12)",
+      },
+      light: {
+        color: "#f97316",
+        ring: "rgba(249, 115, 22, 0.25)",
+        fill: "rgba(249, 115, 22, 0.12)",
+      },
+      dark: {
+        color: "#a855f7",
+        ring: "rgba(168, 85, 247, 0.25)",
+        fill: "rgba(168, 85, 247, 0.2)",
+      },
     };
 
     function readPreference() {
@@ -68,17 +80,47 @@ document.addEventListener("DOMContentLoaded", () => {
       indicator.style.boxShadow = `0 0 0 4px ${ring}`;
     }
 
-    function updateOptionStyles(preference) {
+    function updateOptionStyles(preference, resolvedTheme) {
       optionLabels.forEach(label => {
         const value = label.dataset.themeOption;
         const option = label.querySelector(".theme-option");
         const status = label.querySelector("[data-default-label]");
         const isActive = value === preference;
 
+        const styleKey = (value === "system" ? resolvedTheme : value) || "system";
+        const { color, ring, fill } = indicatorStyles[styleKey] || indicatorStyles.system;
+
         label.classList.toggle("is-active", isActive);
 
         if (option) {
           option.classList.toggle("active", isActive);
+          if (isActive) {
+            option.style.setProperty("--theme-option-accent", color);
+            option.style.setProperty("--theme-option-ring", ring);
+            if (fill) {
+              option.style.setProperty("--theme-option-fill", fill);
+            } else {
+              option.style.removeProperty("--theme-option-fill");
+            }
+          } else {
+            option.style.removeProperty("--theme-option-accent");
+            option.style.removeProperty("--theme-option-ring");
+            option.style.removeProperty("--theme-option-fill");
+          }
+        }
+
+        if (isActive) {
+          label.style.setProperty("--theme-option-accent", color);
+          label.style.setProperty("--theme-option-ring", ring);
+          if (fill) {
+            label.style.setProperty("--theme-option-fill", fill);
+          } else {
+            label.style.removeProperty("--theme-option-fill");
+          }
+        } else {
+          label.style.removeProperty("--theme-option-accent");
+          label.style.removeProperty("--theme-option-ring");
+          label.style.removeProperty("--theme-option-fill");
         }
 
         if (status) {
@@ -95,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.dataset.theme = resolvedTheme;
       document.documentElement.style.colorScheme = resolvedTheme === "dark" ? "dark" : "light";
       updateIndicator(preference, resolvedTheme);
-      updateOptionStyles(preference);
+      updateOptionStyles(preference, resolvedTheme);
 
       if (currentText) {
         const displayText =
