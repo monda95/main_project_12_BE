@@ -3,61 +3,49 @@
 
 {% block title %}대화 - Nourisher{% endblock %}
 
-{% block sidebar %}
-<nav class="sidebar-nav" aria-label="고정된 대화 목록">
-    <ul>
-        <li><a href="#" class="sidebar-nav-link is-active">오늘의 식단 체크</a></li>
-        <li><a href="#" class="sidebar-nav-link">주간 칼로리 브리핑</a></li>
-        <li><a href="#" class="sidebar-nav-link">알레르기 리스트 정리</a></li>
-        <li><a href="#" class="sidebar-nav-link">친구와 레시피 공유</a></li>
-    </ul>
-</nav>
-<div class="sidebar-hint">
-    <p>대화 목록은 곧 연결됩니다. 궁금한 영양 정보를 지금 바로 물어보세요!</p>
-</div>
-{% endblock %}
-
 {% block content %}
-<section class="w-full">
-    <div class="mx-auto flex max-w-4xl flex-col gap-6 rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-lg backdrop-blur dark:border-slate-700 dark:bg-slate-800/90">
-        <header class="flex items-start justify-between gap-4">
+<div class="app-main-grid app-main-grid--single">
+    <section>
+        <section class="chat-panel conversation-panel">
             <div>
-                <h2 class="text-3xl font-semibold text-slate-900 dark:text-slate-100">대화</h2>
-                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Nourisher는 열심히 학습 중입니다.</p>
+                <h2 class="chat-panel__title">대화</h2>
+                <p class="chat-panel__hint">Nourisher는 열심히 학습 중입니다.</p>
             </div>
-        </header>
 
-        <div id="chat-box"
-             class="h-[70vh] space-y-4 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40"
-             data-conversation-id="{{ conversation_id|default:'' }}"
-             data-csrf="{{ csrf_token }}">
-            {% for message in messages %}
-                <div class="chat-message {% if message.role == 'user' %}user{% else %}assistant{% endif %}">
-                    <div class="chat-meta {% if message.role == 'user' %}items-end text-right{% else %}items-start text-left{% endif %}">
-                        <span class="chat-role">
-                            {% if message.role == 'user' %}사용자{% else %}Nourisher AI{% endif %}
-                        </span>
-                        <div class="chat-bubble {% if message.role == 'user' %}chat-bubble-user{% else %}chat-bubble-assistant{% endif %}">
-                            <div class="chat-content">
-                                {{ message.content|linebreaksbr }}
+            <div id="chat-box"
+                 data-conversation-id="{{ conversation_id|default:'' }}"
+                 data-csrf="{{ csrf_token }}">
+                {% for message in messages %}
+                    <div class="chat-message {% if message.role == 'user' %}user{% else %}assistant{% endif %}">
+                        <div class="chat-meta {% if message.role == 'user' %}items-end text-right{% else %}items-start text-left{% endif %}">
+                            <span class="chat-role">
+                                {% if message.role == 'user' %}사용자{% else %}Nourisher AI{% endif %}
+                            </span>
+                            <div class="chat-bubble {% if message.role == 'user' %}chat-bubble-user{% else %}chat-bubble-assistant{% endif %}">
+                                <div class="chat-content">
+                                    {{ message.content|linebreaksbr }}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            {% empty %}
-                <p class="py-16 text-center text-sm text-slate-400">Nourisher는 열심히 학습 중입니다.</p>
-            {% endfor %}
-        </div>
+                {% empty %}
+                    <p class="py-16 text-center text-sm text-slate-400">Nourisher는 열심히 학습 중입니다.</p>
+                {% endfor %}
+            </div>
 
-        <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
-            <label for="chat-input" class="sr-only">메시지를 입력하세요</label>
-            <input id="chat-input" type="text" placeholder="메시지를 입력하세요..."
-                   class="flex-1 rounded-lg border border-slate-300 px-4 py-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/80 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" autocomplete="off">
-            <button id="chat-send"
-                    class="inline-flex items-center justify-center rounded-full bg-indigo-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent">
-                전송
-            </button>
-        </div>
-    </div>
-</section>
+            <div class="chat-panel__input">
+                <label for="chat-input" class="sr-only">메시지를 입력하세요</label>
+                <input id="chat-input" type="text" placeholder="메시지를 입력하세요..."
+                       class="rounded-full border border-slate-300 px-4 py-3 shadow-inner focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/70 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" autocomplete="off">
+                <button id="chat-send"
+                        class="inline-flex items-center justify-center rounded-full bg-indigo-600 p-3 text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent">
+                    <span class="sr-only">메시지 전송</span>
+                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M2.94 10.94a1 1 0 0 1-.88-1.48l2-4A1 1 0 0 1 5 5h10a1 1 0 0 1 .96 1.27l-2 7a1 1 0 0 1-1.6.5L9.8 11.6l-2.48 2.48a1 1 0 0 1-1.7-.76v-1.54l-1.86-.37a1 1 0 0 1-.82-.47z" />
+                    </svg>
+                </button>
+            </div>
+        </section>
+    </section>
+</div>
 {% endblock %}
