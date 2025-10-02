@@ -8,6 +8,23 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  function ensureEmptyState() {
+    if (chatBox.children.length === 0) {
+      const empty = document.createElement("p");
+      empty.dataset.emptyState = "true";
+      empty.className = "text-gray-500 text-center";
+      empty.textContent = "아직 대화가 없습니다. 검색창에 질문해주세요.";
+      chatBox.appendChild(empty);
+    }
+  }
+
+  function removeEmptyState() {
+    const empty = chatBox.querySelector('[data-empty-state="true"]');
+    if (empty) empty.remove();
+  }
+
+  ensureEmptyState();
+
   // 말풍선 append
   function appendMessage(role, content, isTemp = false) {
     const wrapper = document.createElement("div");
@@ -29,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
+    removeEmptyState();
     chatBox.appendChild(wrapper);
     chatBox.scrollTop = chatBox.scrollHeight;
   }
