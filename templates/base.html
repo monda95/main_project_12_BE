@@ -16,12 +16,24 @@
 <body class="min-h-screen flex flex-col" data-theme="light">
 
   <!-- Header -->
-  <header class="w-full shadow-md theme-surface fixed top-0 z-10">
-    <div class="relative max-w-6xl mx-auto px-6 py-10 header-banner flex flex-col items-center text-center">
-      <a href="{% url 'main-page' %}" class="text-3xl font-bold headline-font focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-lg inline-block" data-theme-title>
-        Nourisher
-      </a>
-      <div class="mt-8 flex w-full flex-col gap-3 items-stretch md:mt-0 md:absolute md:bottom-4 md:right-4 md:w-auto md:items-end">
+  <header class="site-header header-banner" data-header>
+    <div class="header-banner-inner max-w-6xl mx-auto grid grid-cols-1 gap-4 px-6 py-4 md:grid-cols-[auto,1fr,auto] md:items-center">
+      <div class="header-banner-left flex items-center gap-3 justify-self-start">
+        <a href="{% url 'main-page' %}" class="site-logo focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-lg" data-theme-title>
+          Nourisher
+        </a>
+        <button type="button"
+                class="sidebar-toggle-btn inline-flex items-center justify-center rounded-full border border-transparent px-3 py-2 text-sm font-semibold text-indigo-500 transition hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 lg:hidden"
+                data-sidebar-toggle
+                aria-expanded="false"
+                aria-controls="app-sidebar">
+          메뉴
+        </button>
+      </div>
+      <div class="header-banner-center text-center md:px-6">
+        <p class="header-banner-tagline">AI 음식 영양 분석 도우미</p>
+      </div>
+      <div class="header-banner-right flex flex-wrap items-center gap-4 md:justify-self-end">
         <div class="relative group" data-theme-menu>
           <button type="button" class="flex items-center gap-2 rounded-full border px-4 py-2 shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 theme-control-btn" data-theme-trigger>
             <span class="text-xs uppercase tracking-[0.35em] theme-trigger-caption" data-theme-trigger-label>사용자 설정</span>
@@ -62,19 +74,19 @@
             </form>
           </div>
         </div>
-        <nav class="flex flex-wrap justify-end gap-3 theme-action-group">
+        <nav class="header-auth-actions">
           {% if user.is_authenticated %}
             <form method="post" action="{% url 'logout' %}" class="contents">
               {% csrf_token %}
-              <button type="submit" class="px-4 py-2 rounded-xl shadow transition theme-primary-btn">
+              <button type="submit" class="header-auth-btn header-auth-btn--logout">
                 로그아웃
               </button>
             </form>
           {% else %}
-            <a href="{% url 'login-page' %}" class="px-4 py-2 rounded-xl shadow transition theme-secondary-btn">
+            <a href="{% url 'login-page' %}" class="header-auth-btn header-auth-btn--login">
               로그인
             </a>
-            <a href="{% url 'signup-page' %}" class="px-4 py-2 rounded-xl shadow transition theme-primary-btn">
+            <a href="{% url 'signup-page' %}" class="header-auth-btn header-auth-btn--signup">
               회원가입
             </a>
           {% endif %}
@@ -84,8 +96,51 @@
   </header>
 
   <!-- Main -->
-  <main class="flex-1 flex flex-col justify-center items-center pt-24">
-    {% block content %}{% endblock %}
+  <main class="flex-1 pt-24">
+    <div class="app-shell">
+      <div class="app-sidebar-backdrop" data-sidebar-backdrop></div>
+      <aside id="app-sidebar" class="app-sidebar" data-sidebar>
+        <div class="app-sidebar-inner">
+          <div class="app-sidebar-top">
+            <a href="{% url 'main-page' %}" class="app-sidebar-logo">
+              <span class="app-sidebar-logo-mark">N</span>
+              <span class="app-sidebar-logo-text">Nourisher</span>
+            </a>
+            <button type="button"
+                    class="sidebar-collapse-btn"
+                    data-sidebar-collapse
+                    aria-label="사이드바 접기"
+                    aria-expanded="true">
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd"
+                      d="M12.78 5.22a.75.75 0 0 0-1.06 0L8.47 8.47a.75.75 0 0 0 0 1.06l3.25 3.25a.75.75 0 1 0 1.06-1.06L10.06 9l2.72-2.72a.75.75 0 0 0 0-1.06Z"
+                      clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+          <div class="app-sidebar-section" aria-live="polite">
+            <p class="app-sidebar-heading">Conversations</p>
+            <div class="conversation-empty" data-conversation-state>
+              대화를 불러오는 중입니다...
+            </div>
+            <ul class="conversation-list" data-conversation-list aria-label="대화 목록" hidden></ul>
+          </div>
+          <div class="app-sidebar-footer">
+            <button type="button" class="new-conversation-btn" data-new-conversation>
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M10 3a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5h-5.5a.75.75 0 0 1 0-1.5h5.5v-5.5A.75.75 0 0 1 10 3Z" />
+              </svg>
+              <span>새 대화</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section class="app-content" data-sidebar-content>
+        <div class="app-content-inner">
+          {% block content %}{% endblock %}
+        </div>
+      </section>
+    </div>
   </main>
 
   <!-- Footer -->

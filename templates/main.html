@@ -4,70 +4,83 @@
 {% block title %}메인화면 - Nourisher{% endblock %}
 
 {% block content %}
-<div id="search-section" class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full text-center">
-  <h2 class="text-xl font-semibold text-gray-700 mb-4">음식에 대해 궁금한 것을 물어보세요</h2>
+<div class="app-main-grid">
+  <section>
+    <div id="search-section">
+      <h2>음식에 대해 궁금한 것을 물어보세요</h2>
 
-  <!-- 검색창 -->
-  <div class="flex shadow rounded-xl overflow-hidden">
-    <input id="search-input" type="text" placeholder="예: 닭가슴살 100g 칼로리"
-           class="flex-1 px-4 py-3 focus:outline-none" />
-    <button id="search-btn" class="bg-indigo-500 text-white px-6 hover:bg-indigo-600 transition">
-      검색
-    </button>
-  </div>
-
-  <!-- 추천 검색어 -->
-  <div class="mt-6">
-    <h3 class="text-gray-600 mb-2">추천 검색어</h3>
-    {% if recommended_queries %}
-      <div class="flex flex-wrap justify-center gap-2">
-        {% for item in recommended_queries %}
-          <button class="recommended-btn px-3 py-1 bg-gray-100 rounded-full text-gray-600 shadow hover:bg-gray-200 transition">
-            {{ item.query }}
-          </button>
-        {% endfor %}
+      <div class="search-bar">
+        <input
+          id="search-input"
+          type="text"
+          placeholder="예: 닭가슴살 100g 칼로리"
+          class="search-input"
+        />
+        <button id="search-btn" class="search-submit" type="button" aria-label="검색">
+          <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path d="M2.94 10.94a1 1 0 0 1-.88-1.48l2-4A1 1 0 0 1 5 5h10a1 1 0 0 1 .96 1.27l-2 7a1 1 0 0 1-1.6.5L9.8 11.6l-2.48 2.48a1 1 0 0 1-1.7-.76v-1.54l-1.86-.37a1 1 0 0 1-.82-.47z" />
+          </svg>
+          <span class="sr-only">검색</span>
+        </button>
       </div>
-    {% else %}
-      <p class="text-sm text-gray-400">아직 추천 검색어가 준비되지 않았어요.</p>
-    {% endif %}
-  </div>
 
-  <!-- 인기 검색어 -->
-  <div class="mt-6">
-    <h3 class="text-gray-600 mb-2">인기 검색어</h3>
-    {% if popular_queries %}
-      <ul class="flex flex-wrap justify-center gap-4 text-gray-700">
-        {% for item in popular_queries %}
-          <li>
-            <button class="popular-btn cursor-pointer hover:text-indigo-600 transition">
-              {{ item.query }}
-            </button>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="text-sm text-gray-400">최근 인기 검색어가 아직 없어요.</p>
-    {% endif %}
-  </div>
-</div>
+      <div class="suggestion-list">
+        <section class="suggestion-card">
+          <h3 class="suggestion-title">추천 검색어</h3>
+          {% if recommended_queries %}
+            <div class="suggestion-pills">
+              {% for item in recommended_queries %}
+                <button type="button" class="search-pill" data-search-fill="{{ item.query }}">
+                  {{ item.query }}
+                </button>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="suggestion-empty">아직 추천 검색어가 준비되지 않았어요.</p>
+          {% endif %}
+        </section>
 
-<!-- 대화 섹션 (처음엔 hidden) -->
-<div id="chat-section" class="hidden w-full max-w-4xl p-8 bg-white rounded-xl shadow-lg flex flex-col h-[70vh]">
-  <h2 class="text-3xl font-bold text-gray-900 mb-6">대화</h2>
+        <section class="suggestion-card suggestion-card--muted">
+          <h3 class="suggestion-title">인기 검색어</h3>
+          {% if popular_queries %}
+            <div class="suggestion-pills">
+              {% for item in popular_queries %}
+                <button type="button" class="search-pill" data-search-fill="{{ item.query }}">
+                  {{ item.query }}
+                </button>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="suggestion-empty">최근 인기 검색어가 아직 없어요.</p>
+          {% endif %}
+        </section>
+      </div>
+    </div>
+  </section>
 
-  <!-- 대화 메시지 -->
-<div id="chat-box" class="flex-1 overflow-y-auto border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50 space-y-4">
-</div>
+  <section>
+    <section id="chat-section" class="chat-panel hidden" aria-live="polite">
+      <div>
+        <h2 class="chat-panel__title">대화</h2>
+        <p class="chat-panel__hint">Nourisher는 열심히 학습 중입니다.</p>
+      </div>
 
-  <!-- 입력 영역 -->
-  <div class="flex">
-    <input id="chat-input" type="text" placeholder="메시지를 입력하세요..."
-           class="flex-1 px-4 py-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-    <button id="chat-send"
-            class="px-6 py-3 bg-indigo-500 text-white rounded-r-lg hover:bg-indigo-600 transition">
-      전송
-    </button>
-  </div>
+      <div id="chat-box"></div>
+
+      <div class="chat-panel__input">
+        <label for="chat-input" class="sr-only">메시지를 입력하세요</label>
+        <input id="chat-input" type="text" placeholder="메시지를 입력하세요..."
+               class="rounded-full border border-slate-300 px-4 py-3 shadow-inner focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/70">
+        <button id="chat-send"
+                class="inline-flex items-center justify-center rounded-full bg-indigo-600 p-3 text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent">
+          <span class="sr-only">메시지 전송</span>
+          <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path d="M2.94 10.94a1 1 0 0 1-.88-1.48l2-4A1 1 0 0 1 5 5h10a1 1 0 0 1 .96 1.27l-2 7a1 1 0 0 1-1.6.5L9.8 11.6l-2.48 2.48a1 1 0 0 1-1.7-.76v-1.54l-1.86-.37a1 1 0 0 1-.82-.47z" />
+          </svg>
+        </button>
+      </div>
+    </section>
+  </section>
 </div>
 {% endblock %}
 
