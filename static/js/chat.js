@@ -3,6 +3,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("chat-input");
   const sendBtn = document.getElementById("chat-send");
 
+  if (!chatBox) {
+    console.warn("chat.js: 대화 UI 요소를 찾을 수 없습니다. appendMessage는 비활성화됩니다.");
+    return;
+  }
+
   // 말풍선 append
   function appendMessage(role, content, isTemp = false) {
     const wrapper = document.createElement("div");
@@ -27,6 +32,8 @@ document.addEventListener("DOMContentLoaded", () => {
     chatBox.appendChild(wrapper);
     chatBox.scrollTop = chatBox.scrollHeight;
   }
+
+  window.appendMessage = appendMessage;
 
   // 로딩 말풍선 (… 점 3개 애니메이션)
   function showTypingIndicator() {

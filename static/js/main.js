@@ -168,34 +168,30 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  if (!ensureChatUiReady("검색/대화 초기화")) {
-    return;
+  if (searchBtn && searchInput && searchSection && chatSection && chatBox && typeof window.appendMessage === "function") {
+    const startConversation = async query => {
+      if (!query) return;
+
+      // 대화창으로 전환
+      searchSection.classList.add("hidden");
+      chatSection.classList.remove("hidden");
+
+      // 사용자 메시지 append
+      window.appendMessage("user", query);
+
+      try {
+        const res = await fetch(`/api/v1/search/?query=${encodeURIComponent(query)}`);
+        const data = await res.json();
+
+        window.appendMessage("assistant", data.content || "응답을 불러올 수 없습니다.");
+      } catch (err) {
+        window.appendMessage("assistant", "⚠️ 오류가 발생했습니다.");
+      }
+    };
+
+    searchBtn.addEventListener("click", () => {
+      const query = searchInput.value.trim();
+      if (query) startConversation(query);
+    });
   }
-
-  async function startConversation(query) {
-    if (!query) return;
-    if (!ensureChatUiReady("대화를 시작")) {
-      return;
-    }
-
-    // 대화창으로 전환
-    searchSection.classList.add("hidden");
-    chatSection.classList.remove("hidden");
-
-    // 사용자 메시지 append
-    appendMessage("user", query);
-
-    try {
-      const res = await fetch(`/api/v1/search/?query=${encodeURIComponent(query)}`);
-      const data = await res.json();
-
-      appendMessage("assistant", data.content || "응답을 불러올 수 없습니다.");
-    } catch (err) {
-      appendMessage("assistant", "⚠️ 오류가 발생했습니다.");
-    }
-  }
-
-  searchBtn.addEventListener("click", () => {
-    const query = searchInput.value.trim();
-    if (query) startConversation(query);
-  });
+});
