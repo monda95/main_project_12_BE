@@ -8,18 +8,108 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  function escapeHtml(value) {
+    if (value === null || value === undefined) return "";
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function renderAssistantContent(content) {
+    if (!content || typeof content !== "object") {
+      return `<p>${escapeHtml(content)}</p>`;
+    }
+
+    if (content.raw_text) {
+      return `<p>${escapeHtml(content.raw_text)}</p>`;
+    }
+
+    const sections = [];
+
+    if (content.nutrition && typeof content.nutrition === "object") {
+      const nutritionEntries = Object.entries(content.nutrition)
+        .filter(([, value]) => value !== null && value !== undefined && value !== "")
+        .map(
+          ([key, value]) => `
+            <div class="assistant-nutrition-item">
+              <span class="assistant-nutrition-label">${escapeHtml(key)}</span>
+              <span class="assistant-nutrition-value">${escapeHtml(value)}</span>
+            </div>
+          `,
+        )
+        .join("");
+
+      if (nutritionEntries) {
+        sections.push(`
+          <section class="assistant-section">
+            <h3 class="assistant-section-title">영양 정보</h3>
+            <div class="assistant-nutrition-grid">
+              ${nutritionEntries}
+            </div>
+          </section>
+        `);
+      }
+    }
+
+    const infoFields = [
+      ["allergy", "알레르기"],
+      ["storage", "보관"],
+      ["processing", "가공법"],
+      ["source", "출처"],
+    ];
+
+    const definitionItems = infoFields
+      .map(([key, label]) => {
+        const value = content[key];
+        if (value === null || value === undefined || value === "") {
+          return "";
+        }
+        return `
+          <div class="assistant-definition-item">
+            <dt class="assistant-definition-term">${escapeHtml(label)}</dt>
+            <dd class="assistant-definition-description">${escapeHtml(value)}</dd>
+          </div>
+        `;
+      })
+      .filter(Boolean)
+      .join("");
+
+    if (definitionItems) {
+      sections.push(`
+        <section class="assistant-section">
+          <h3 class="assistant-section-title">추가 정보</h3>
+          <dl class="assistant-definition-list">
+            ${definitionItems}
+          </dl>
+        </section>
+      `);
+    }
+
+    if (!sections.length) {
+      return `<pre class="whitespace-pre-wrap text-sm bg-gray-100 p-2 rounded">${escapeHtml(JSON.stringify(content, null, 2))}</pre>`;
+    }
+
+    return `<div class="assistant-card">${sections.join("")}</div>`;
+  }
+
   // 말풍선 append
   function appendMessage(role, content, isTemp = false) {
     const wrapper = document.createElement("div");
     wrapper.classList.add("chat-message", role);
     if (isTemp) wrapper.dataset.temp = "true"; // typing indicator용
 
-    // content가 객체일 경우 JSON 문자열화
     let displayContent;
-    if (typeof content === "object") {
-      displayContent = `<pre class="whitespace-pre-wrap text-sm bg-gray-100 p-2 rounded">${JSON.stringify(content, null, 2)}</pre>`;
+    if (role === "assistant" && typeof content === "object") {
+      displayContent = renderAssistantContent(content);
+    } else if (typeof content === "string") {
+      displayContent = escapeHtml(content);
+    } else if (content && typeof content === "object" && "raw_text" in content) {
+      displayContent = `<p>${escapeHtml(content.raw_text)}</p>`;
     } else {
-      displayContent = content;
+      displayContent = escapeHtml(String(content ?? ""));
     }
 
     wrapper.innerHTML = `
