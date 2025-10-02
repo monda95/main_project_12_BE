@@ -4,14 +4,14 @@
 {% block title %}메인화면 - Nourisher{% endblock %}
 
 {% block content %}
-<div id="search-section" class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full text-center">
+<div id="search-section" class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full text-center mx-auto">
   <h2 class="text-xl font-semibold text-gray-700 mb-4">음식에 대해 궁금한 것을 물어보세요</h2>
 
   <!-- 검색창 -->
-  <div class="flex shadow rounded-xl overflow-hidden">
+  <div class="search-bar flex shadow-md rounded-xl overflow-hidden">
     <input id="search-input" type="text" placeholder="예: 닭가슴살 100g 칼로리"
-           class="flex-1 px-4 py-3 focus:outline-none" />
-    <button id="search-btn" class="bg-indigo-500 text-white px-6 hover:bg-indigo-600 transition">
+           class="search-input flex-1 px-4 py-3 border border-transparent focus:outline-none" />
+    <button id="search-btn" class="search-submit px-6 text-white font-semibold transition">
       검색
     </button>
   </div>
@@ -22,7 +22,7 @@
     {% if recommended_queries %}
       <div class="flex flex-wrap justify-center gap-2">
         {% for item in recommended_queries %}
-          <button class="recommended-btn px-3 py-1 bg-gray-100 rounded-full text-gray-600 shadow hover:bg-gray-200 transition">
+          <button class="recommended-btn search-tag transition">
             {{ item.query }}
           </button>
         {% endfor %}
@@ -36,10 +36,10 @@
   <div class="mt-6">
     <h3 class="text-gray-600 mb-2">인기 검색어</h3>
     {% if popular_queries %}
-      <ul class="flex flex-wrap justify-center gap-4 text-gray-700">
+      <ul class="flex flex-wrap justify-center gap-2">
         {% for item in popular_queries %}
           <li>
-            <button class="popular-btn cursor-pointer hover:text-indigo-600 transition">
+            <button class="popular-btn search-tag transition">
               {{ item.query }}
             </button>
           </li>
@@ -52,7 +52,7 @@
 </div>
 
 <!-- 대화 섹션 (처음엔 hidden) -->
-<div id="chat-section" class="hidden w-full max-w-4xl p-8 bg-white rounded-xl shadow-lg flex flex-col h-[70vh]">
+<div id="chat-section" class="hidden w-full max-w-4xl p-8 bg-white rounded-xl shadow-lg flex flex-col h-[70vh] mx-auto">
   <h2 class="text-3xl font-bold text-gray-900 mb-6">대화</h2>
 
   <!-- 대화 메시지 -->

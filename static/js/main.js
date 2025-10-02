@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   initThemeControls();
+  initHeaderScroll();
+  initSidebarToggle();
 
   const searchBtn = document.getElementById("search-btn");
   const searchInput = document.getElementById("search-input");
@@ -230,6 +232,92 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     }
+  }
+
+  function initHeaderScroll() {
+    const header = document.querySelector("[data-header]");
+    if (!header) {
+      return;
+    }
+
+    const updateHeaderState = () => {
+      const shouldActivate = window.scrollY > 16;
+      header.classList.toggle("is-scrolled", shouldActivate);
+    };
+
+    updateHeaderState();
+    window.addEventListener("scroll", updateHeaderState, { passive: true });
+  }
+
+  function initSidebarToggle() {
+    const shell = document.querySelector(".app-shell");
+    const sidebar = document.querySelector("[data-sidebar]");
+    const toggleBtn = document.querySelector("[data-sidebar-toggle]");
+    const backdrop = document.querySelector("[data-sidebar-backdrop]");
+
+    if (!shell || !sidebar || !toggleBtn) {
+      return;
+    }
+
+    const navLinks = Array.from(shell.querySelectorAll(".sidebar-nav-link"));
+    const mobileQuery = window.matchMedia("(min-width: 1024px)");
+
+    const openSidebar = () => {
+      shell.classList.add("has-sidebar-open");
+      sidebar.classList.add("is-open");
+      toggleBtn.setAttribute("aria-expanded", "true");
+    };
+
+    const closeSidebar = () => {
+      shell.classList.remove("has-sidebar-open");
+      sidebar.classList.remove("is-open");
+      toggleBtn.setAttribute("aria-expanded", "false");
+    };
+
+    const toggleSidebar = () => {
+      if (mobileQuery.matches) {
+        return;
+      }
+      if (shell.classList.contains("has-sidebar-open")) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    };
+
+    const handleMediaChange = () => {
+      if (mobileQuery.matches) {
+        closeSidebar();
+      }
+    };
+
+    toggleBtn.addEventListener("click", toggleSidebar);
+
+    if (backdrop) {
+      backdrop.addEventListener("click", closeSidebar);
+    }
+
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        closeSidebar();
+      }
+    });
+
+    navLinks.forEach(link => {
+      link.addEventListener("click", () => {
+        if (!mobileQuery.matches) {
+          closeSidebar();
+        }
+      });
+    });
+
+    if (typeof mobileQuery.addEventListener === "function") {
+      mobileQuery.addEventListener("change", handleMediaChange);
+    } else if (typeof mobileQuery.addListener === "function") {
+      mobileQuery.addListener(handleMediaChange);
+    }
+
+    handleMediaChange();
   }
 
   // 검색 기능 (메인 페이지에만 존재)
