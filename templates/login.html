@@ -3,16 +3,16 @@
 {% block title %}로그인 - Nourisher{% endblock %}
 
 {% block content %}
-<div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
-    <h2 class="text-3xl font-bold text-center text-gray-900">로그인</h2>
+<div class="auth-card">
+    <h2 class="auth-card__title">로그인</h2>
 
     <!-- GitHub OAuth 로그인 -->
-    <div class="space-y-4">
-        <p class="text-sm text-gray-600 text-center">
+    <div class="auth-card__oauth">
+        <p class="auth-card__description">
             Nourisher는 GitHub 계정으로 로그인할 수 있습니다.
         </p>
         <a href="{% url 'start_github_oauth' %}"
-           class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition">
+           class="auth-card__oauth-btn">
             <svg class="w-5 h-5" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" clip-rule="evenodd"
                       d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303
@@ -41,39 +41,39 @@
     </div>
 
     <!-- 이메일/비밀번호 로그인 -->
-    <form method="post" action="{% url 'login-page' %}" class="space-y-4">
+    <form method="post" action="{% url 'login-page' %}" class="auth-card__form">
         {% csrf_token %}
         {% if form.non_field_errors %}
-        <div class="p-3 text-sm text-red-700 bg-red-100 rounded-md">
+        <div class="auth-card__error">
             {% for error in form.non_field_errors %}
             <p>{{ error }}</p>
             {% endfor %}
         </div>
         {% endif %}
         <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">이메일</label>
+            <label for="email" class="theme-label">이메일</label>
             <input type="email" name="email" id="email" required value="{{ form.email.value|default_if_none:'' }}"
-                   class="mt-1 block w-full px-3 py-2 border {% if form.email.errors %}border-red-400 focus:border-red-500 focus:ring-red-500{% else %}border-gray-300 focus:border-indigo-500 focus:ring-indigo-500{% endif %} rounded-md shadow-sm focus:outline-none sm:text-sm">
+                   class="theme-input {% if form.email.errors %}theme-input--error{% endif %}">
             {% if form.email.errors %}
-            <p class="mt-2 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+            <p class="theme-input__error">{{ form.email.errors.0 }}</p>
             {% endif %}
         </div>
         <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">비밀번호</label>
+            <label for="password" class="theme-label">비밀번호</label>
             <input type="password" name="password" id="password" required
-                   class="mt-1 block w-full px-3 py-2 border {% if form.password.errors %}border-red-400 focus:border-red-500 focus:ring-red-500{% else %}border-gray-300 focus:border-indigo-500 focus:ring-indigo-500{% endif %} rounded-md shadow-sm focus:outline-none sm:text-sm">
+                   class="theme-input {% if form.password.errors %}theme-input--error{% endif %}">
             {% if form.password.errors %}
-            <p class="mt-2 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+            <p class="theme-input__error">{{ form.password.errors.0 }}</p>
             {% endif %}
         </div>
         <button type="submit"
-                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                class="theme-primary-btn theme-primary-btn--block">
             로그인
         </button>
     </form>
 
-    <div class="text-center text-sm text-gray-600">
-        계정이 없으신가요? <a href="{% url 'signup-page' %}" class="font-medium text-indigo-600 hover:text-indigo-500">회원가입</a>
+    <div class="auth-card__footer">
+        계정이 없으신가요? <a href="{% url 'signup-page' %}" class="theme-link">회원가입</a>
     </div>
 </div>
 {% endblock %}
