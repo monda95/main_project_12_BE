@@ -7,6 +7,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatSection = document.getElementById("chat-section");
   const chatBox = document.getElementById("chat-box");
 
+  function ensureChatUiReady(context = "초기화") {
+    const ready = searchBtn && searchInput && searchSection && chatSection && chatBox;
+    if (!ready) {
+      console.warn(`검색/대화 UI 요소를 찾을 수 없어 ${context}를 건너뜁니다.`);
+    }
+    return ready;
+  }
+
   function initThemeControls() {
     const form = document.querySelector("[data-theme-form]");
     if (!form) return;
