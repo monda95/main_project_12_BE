@@ -1806,6 +1806,7 @@ body[data-theme='dark'] .ai-response p {
   display: flex;
   flex-direction: column;
   gap: clamp(1.25rem, 2vw, 2rem);
+  width: 100%;
 }
 
 .app-main-grid--single {
@@ -1813,6 +1814,10 @@ body[data-theme='dark'] .ai-response p {
   max-width: clamp(22rem, 92vw, 54rem);
   margin-left: auto;
   margin-right: auto;
+}
+
+#chat-section[hidden] {
+  display: none !important;
 }
 
 #search-section h2 {
@@ -1834,6 +1839,7 @@ body[data-theme='dark'] .ai-response p {
   border: 1px solid var(--surface-border);
   box-shadow: var(--shadow-elevated);
   min-height: clamp(26rem, 72vh, 40rem);
+  width: 100%;
 }
 
 
