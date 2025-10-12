@@ -110,7 +110,8 @@ body {
 
 .site-main {
   flex: 1 1 auto;
-  padding-top: var(--header-height);
+  /* 고정 헤더 여백은 .app-content에서 처리하므로 중복 패딩 제거 */
+  padding-top: 0;
 }
 
 body[data-theme='dark'] {
