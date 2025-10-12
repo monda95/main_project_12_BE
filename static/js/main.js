@@ -869,6 +869,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (searchBtn && searchInput) {
+
     const supportsInlineChat =
       Boolean(chatSection && chatBox) &&
       typeof window.appendMessage === "function" &&
@@ -887,7 +888,6 @@ document.addEventListener("DOMContentLoaded", () => {
         element.removeAttribute("hidden");
         element.removeAttribute("aria-hidden");
       };
-
       const escapeHtml = (value) =>
         String(value).replace(/[&<>'"]/g, (match) => {
           const map = {

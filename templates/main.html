@@ -5,59 +5,56 @@
 
 {% block content %}
 <div class="app-main-grid app-main-grid--single">
-  <section>
-    <div id="search-section">
-      <h2>음식에 대해 궁금한 것을 물어보세요</h2>
+  <div id="search-section">
+    <h2>음식에 대해 궁금한 것을 물어보세요</h2>
 
-      <div class="search-bar">
-        <input
-          id="search-input"
-          type="text"
-          placeholder="예: 닭가슴살 100g 칼로리"
-          class="search-input"
-        />
-        <button id="search-btn" class="search-submit" type="button" aria-label="검색">
-          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" width="20" height="20">
-            <path d="M2.94 10.94a1 1 0 0 1-.88-1.48l2-4A1 1 0 0 1 5 5h10a1 1 0 0 1 .96 1.27l-2 7a1 1 0 0 1-1.6.5L9.8 11.6l-2.48 2.48a1 1 0 0 1-1.7-.76v-1.54l-1.86-.37a1 1 0 0 1-.82-.47z" />
-          </svg>
-          <span class="sr-only">검색</span>
-        </button>
-      </div>
-
-      <div class="suggestion-list">
-        <section class="suggestion-card">
-          <h3 class="suggestion-title">추천 검색어</h3>
-          {% if recommended_queries %}
-            <div class="suggestion-pills">
-              {% for item in recommended_queries %}
-                <button type="button" class="search-pill" data-search-fill="{{ item.query }}">
-                  {{ item.query }}
-                </button>
-              {% endfor %}
-            </div>
-          {% else %}
-            <p class="suggestion-empty">아직 추천 검색어가 준비되지 않았어요.</p>
-          {% endif %}
-        </section>
-
-        <section class="suggestion-card suggestion-card--muted">
-          <h3 class="suggestion-title">인기 검색어</h3>
-          {% if popular_queries %}
-            <div class="suggestion-pills">
-              {% for item in popular_queries %}
-                <button type="button" class="search-pill" data-search-fill="{{ item.query }}">
-                  {{ item.query }}
-                </button>
-              {% endfor %}
-            </div>
-          {% else %}
-            <p class="suggestion-empty">최근 인기 검색어가 아직 없어요.</p>
-          {% endif %}
-        </section>
-      </div>
+    <div class="search-bar">
+      <input
+        id="search-input"
+        type="text"
+        placeholder="예: 닭가슴살 100g 칼로리"
+        class="search-input"
+      />
+      <button id="search-btn" class="search-submit" type="button" aria-label="검색">
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" width="20" height="20">
+          <path d="M2.94 10.94a1 1 0 0 1-.88-1.48l2-4A1 1 0 0 1 5 5h10a1 1 0 0 1 .96 1.27l-2 7a1 1 0 0 1-1.6.5L9.8 11.6l-2.48 2.48a1 1 0 0 1-1.7-.76v-1.54l-1.86-.37a1 1 0 0 1-.82-.47z" />
+        </svg>
+        <span class="sr-only">검색</span>
+      </button>
     </div>
-  </section>
 
+    <div class="suggestion-list">
+      <section class="suggestion-card">
+        <h3 class="suggestion-title">추천 검색어</h3>
+        {% if recommended_queries %}
+          <div class="suggestion-pills">
+            {% for item in recommended_queries %}
+              <button type="button" class="search-pill" data-search-fill="{{ item.query }}">
+                {{ item.query }}
+              </button>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="suggestion-empty">아직 추천 검색어가 준비되지 않았어요.</p>
+        {% endif %}
+      </section>
+
+      <section class="suggestion-card suggestion-card--muted">
+        <h3 class="suggestion-title">인기 검색어</h3>
+        {% if popular_queries %}
+          <div class="suggestion-pills">
+            {% for item in popular_queries %}
+              <button type="button" class="search-pill" data-search-fill="{{ item.query }}">
+                {{ item.query }}
+              </button>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="suggestion-empty">최근 인기 검색어가 아직 없어요.</p>
+        {% endif %}
+      </section>
+    </div>
+  </div>
   <section>
     <section
       id="chat-section"
@@ -72,9 +69,7 @@
           Nourisher는 열심히 학습 중입니다.
         </p>
       </div>
-
-      <div id="chat-box"></div>
-
+    <div id="chat-box"></div>
       <div class="chat-panel__input">
         <label for="chat-input" class="sr-only">메시지를 입력하세요</label>
         <input
@@ -94,6 +89,5 @@
       </div>
     </section>
   </section>
-
 </div>
 {% endblock %}
