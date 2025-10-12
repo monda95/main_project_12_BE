@@ -12,9 +12,9 @@
     {{ form.non_field_errors }}
     <div>
       <label class="theme-label" for="{{ form.username.id_for_label }}">이메일</label>
-      {{ form.username }}
-      {% if form.username.errors %}
-        <p class="theme-input__error">{{ form.username.errors.0 }}</p>
+      {{ form.email }}
+      {% if form.email.errors %}
+        <p class="theme-input__error">{{ form.email.errors.0 }}</p>
       {% endif %}
     </div>
     <div>
