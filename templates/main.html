@@ -4,8 +4,8 @@
 {% block title %}메인화면 - Nourisher{% endblock %}
 
 {% block content %}
-<div class="app-main-grid app-main-grid--single">
-  <section>
+<div class="app-main-grid app-main-grid--single" data-main-grid>
+  <section data-search-container>
     <div id="search-section">
       <h2>음식에 대해 궁금한 것을 물어보세요</h2>
 
@@ -59,10 +59,18 @@
   </section>
 
   <section>
-    <section id="chat-section" class="chat-panel" aria-live="polite" hidden>
+    <section
+      id="chat-section"
+      class="chat-panel conversation-panel"
+      aria-live="polite"
+      hidden
+      data-inline-chat-panel
+    >
       <div>
         <h2 class="chat-panel__title">대화</h2>
-        <p class="chat-panel__hint">Nourisher는 열심히 학습 중입니다.</p>
+        <p id="chat-guide" class="chat-panel__hint" hidden>
+          Nourisher는 열심히 학습 중입니다.
+        </p>
       </div>
 
       <div id="chat-box"></div>
@@ -73,25 +81,19 @@
           id="chat-input"
           type="text"
           placeholder="메시지를 입력하세요..."
-          class="rounded-full border border-slate-300 px-4 py-3 shadow-inner
-                 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/70
-                 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
           autocomplete="off"
         />
-        <button
-          id="chat-send"
-          class="inline-flex items-center justify-center rounded-full bg-indigo-600 p-3 text-white shadow-sm transition
-                 hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2
-                 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-        >
+        <button id="chat-send" type="button">
           <span class="sr-only">메시지 전송</span>
-          <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path d="M2.94 10.94a1 1 0 0 1-.88-1.48l2-4A1 1 0 0 1 5 5h10a1 1 0 0 1 .96 1.27l-2 7a1 1 0 0 1-1.6.5L9.8 11.6l-2.48 2.48a1 1 0 0 1-1.7-.76v-1.54l-1.86-.37a1 1 0 0 1-.82-.47z"></path>
-
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" width="20" height="20">
+            <path
+              d="M2.94 10.94a1 1 0 0 1-.88-1.48l2-4A1 1 0 0 1 5 5h10a1 1 0 0 1 .96 1.27l-2 7a1 1 0 0 1-1.6.5L9.8 11.6l-2.48 2.48a1 1 0 0 1-1.7-.76v-1.54l-1.86-.37a1 1 0 0 1-.82-.47z"
+            />
           </svg>
         </button>
       </div>
     </section>
   </section>
+
 </div>
 {% endblock %}

@@ -7,8 +7,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchBtn = document.getElementById("search-btn");
   const searchInput = document.getElementById("search-input");
   const searchSection = document.getElementById("search-section");
+  const searchContainer = document.querySelector("[data-search-container]");
+  const mainGrid = document.querySelector("[data-main-grid]");
   const chatSection = document.getElementById("chat-section");
   const chatBox = document.getElementById("chat-box");
+  const chatInput = document.getElementById("chat-input");
   const searchFillButtons = Array.from(
     document.querySelectorAll("[data-search-fill]")
   );
@@ -590,45 +593,141 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (searchBtn && searchInput && searchSection && chatSection && chatBox && typeof window.appendMessage === "function") {
-    const startConversation = async query => {
-      if (!query) return;
+  if (searchBtn && searchInput) {
+    const supportsInlineChat =
+      Boolean(chatSection && chatBox) &&
+      typeof window.appendMessage === "function" &&
+      typeof window.showTypingIndicator === "function" &&
+      typeof window.removeTypingIndicator === "function";
 
-      searchSection.classList.add("hidden");
-      chatSection.classList.remove("hidden");
+    if (supportsInlineChat) {
+      const hideElement = element => {
+        if (!element) return;
+        element.setAttribute("hidden", "");
+        element.setAttribute("aria-hidden", "true");
+      };
 
-      window.appendMessage("user", query);
-      window.showTypingIndicator();
+      const showElement = element => {
+        if (!element) return;
+        element.removeAttribute("hidden");
+        element.removeAttribute("aria-hidden");
+      };
 
-      try {
-        const res = await fetch(`/api/v1/search/?query=${encodeURIComponent(query)}`);
-        const data = await res.json();
+      const escapeHtml = value =>
+        String(value).replace(/[&<>'"]/g, match => {
+          const map = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          };
+          return map[match] || match;
+        });
 
-        window.removeTypingIndicator();
+      let isSubmitting = false;
 
-        if (typeof window.renderAssistantMessage === "function") {
-          window.appendMessage("assistant", window.renderAssistantMessage(data));
-        } else {
-          console.warn("renderAssistantMessage not ready, fallback to JSON");
-          window.appendMessage("assistant", `<pre>${JSON.stringify(data, null, 2)}</pre>`);
+      const activateInlineChat = () => {
+        hideElement(searchSection);
+        hideElement(searchContainer);
+        if (mainGrid) {
+          mainGrid.classList.add("is-chat-active");
         }
-      } catch (err) {
-        console.error("Search API 오류:", err);
+        if (chatSection) {
+          showElement(chatSection);
+        }
+      };
+
+      const startInlineConversation = async query => {
+        if (!query || isSubmitting) return;
+
+        isSubmitting = true;
+        searchBtn.setAttribute("aria-busy", "true");
+        searchBtn.disabled = true;
+        searchInput.setAttribute("aria-busy", "true");
+
+        activateInlineChat();
+
         window.removeTypingIndicator();
-        window.appendMessage("assistant", "⚠️ 오류가 발생했습니다.");
-      }
-    };
+        window.appendMessage("user", query);
+        searchInput.value = "";
+        window.showTypingIndicator();
 
-    searchBtn.addEventListener("click", () => {
-      const query = searchInput.value.trim();
-      if (query) startConversation(query);
-    });
+        try {
+          const response = await fetch(
+            `/api/v1/search/?query=${encodeURIComponent(query)}`
+          );
+          const data = await response.json();
 
-    searchInput.addEventListener("keypress", event => {
-      if (event.key === "Enter") {
+          window.removeTypingIndicator();
+
+          if (!response.ok) {
+            const message = data?.detail || data?.message || "검색에 실패했습니다.";
+            throw new Error(message);
+          }
+
+          if (typeof window.renderAssistantMessage === "function") {
+            window.appendMessage("assistant", window.renderAssistantMessage(data));
+          } else {
+            window.appendMessage("assistant", data);
+          }
+        } catch (error) {
+          window.removeTypingIndicator();
+          console.error("Search API 오류:", error);
+          const fallback =
+            (error && (error.message || error.detail)) || "잠시 후 다시 시도해주세요.";
+          window.appendMessage(
+            "assistant",
+            `<div class="text-red-600">⚠️ ${escapeHtml(fallback)}</div>`
+          );
+        } finally {
+          isSubmitting = false;
+          searchBtn.removeAttribute("aria-busy");
+          searchBtn.disabled = false;
+          searchInput.removeAttribute("aria-busy");
+          if (chatInput) {
+            chatInput.focus();
+          } else {
+            searchInput.focus();
+          }
+        }
+      };
+
+      const handleSearchSubmit = () => {
         const query = searchInput.value.trim();
-        if (query) startConversation(query);
-      }
-    });
+        if (!query) return;
+        startInlineConversation(query);
+      };
+
+      searchBtn.addEventListener("click", handleSearchSubmit);
+
+      searchInput.addEventListener("keypress", event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          handleSearchSubmit();
+        }
+      });
+    } else {
+      const navigateToConversation = query => {
+        if (!query) return;
+        const params = new URLSearchParams({ query });
+        window.location.href = `/conversation/?${params.toString()}`;
+      };
+
+      const handleSearchSubmit = () => {
+        const query = searchInput.value.trim();
+        if (!query) return;
+        navigateToConversation(query);
+      };
+
+      searchBtn.addEventListener("click", handleSearchSubmit);
+
+      searchInput.addEventListener("keypress", event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          handleSearchSubmit();
+        }
+      });
+    }
   }
 });

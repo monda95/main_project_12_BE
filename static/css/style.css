@@ -110,7 +110,8 @@ body {
 
 .site-main {
   flex: 1 1 auto;
-  padding-top: var(--header-height);
+  /* 고정 헤더 여백은 .app-content에서 처리하므로 중복 패딩 제거 */
+  padding-top: 0;
 }
 
 body[data-theme='dark'] {
@@ -916,7 +917,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: calc(var(--header-height) + 1.5rem) clamp(1.5rem, 4vw, 3rem) 3rem;
+  padding: calc(var(--header-height) + 0.75rem) clamp(1.5rem, 4vw, 3rem) 3rem;
   transition: padding 0.35s ease;
 }
 
@@ -1040,7 +1041,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   .app-content {
     grid-column: 1;
     align-items: center;
-    padding: calc(var(--header-height) + 2rem) clamp(2rem, 4vw, 4rem) 3.5rem;
+    padding: calc(var(--header-height) + 1rem) clamp(2rem, 4vw, 4rem) 3.5rem;
   }
 
   .app-shell.is-sidebar-collapsed {
@@ -1077,7 +1078,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   }
 
   .app-content {
-    padding: calc(var(--header-height) + 1.5rem) 1.25rem 3rem;
+    padding: calc(var(--header-height) + 0.5rem) 1.25rem 3rem;
     align-items: center;
   }
 
@@ -1834,7 +1835,6 @@ body[data-theme='dark'] .ai-response p {
   box-shadow: var(--shadow-elevated);
   min-height: clamp(26rem, 72vh, 40rem);
 }
-
 
 .conversation-panel {
   min-height: clamp(30rem, 78vh, 46rem);
