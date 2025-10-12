@@ -3,9 +3,11 @@ import requests
 from django.contrib.auth import get_user_model, authenticate, login
 from django.contrib.auth import logout as django_logout  # PATCH: 세션 로그아웃
 from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.generic import TemplateView, FormView
 from drf_spectacular.utils import extend_schema
@@ -55,7 +57,46 @@ def send_verification_email(request, user):
         reverse("verify_email", kwargs={"uidb64": uid, "token": token})
     )
 
-    print(f"인증 링크: {verification_link} (터미널에서 클릭 시 인증 처리됨)")
+    context = {
+        "user": user,
+        "verification_link": verification_link,
+        "site_name": getattr(settings, "PROJECT_DISPLAY_NAME", "Smart Nourish"),
+    }
+
+    subject = f"[{context['site_name']}] 이메일 인증 안내"
+    text_body = render_to_string("emails/signup_verification_email.txt", context)
+    html_body = render_to_string("emails/signup_verification_email.html", context)
+
+    email_message = EmailMultiAlternatives(
+        subject,
+        text_body,
+        getattr(settings, "DEFAULT_FROM_EMAIL", None),
+        [user.email],
+    )
+    if html_body.strip():
+        email_message.attach_alternative(html_body, "text/html")
+
+    try:
+        send_result = email_message.send()
+    except Exception:
+        logger.exception(
+            "[회원가입] %s님에게 이메일 인증 메일 발송 중 예외가 발생했습니다. 링크=%s",
+            user.email,
+            verification_link,
+        )
+        return
+
+    if send_result:
+        logger.info(
+            "[회원가입] %s님에게 이메일 인증 메일을 성공적으로 발송했습니다.",
+            user.email,
+        )
+    else:
+        logger.warning(
+            "[회원가입] %s님에게 이메일 인증 메일 발송에 실패했습니다. 링크=%s",
+            user.email,
+            verification_link,
+        )
 
 
 @extend_schema(summary="[생성] 회원가입", tags=["Auth & Users"])
