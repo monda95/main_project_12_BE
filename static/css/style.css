@@ -597,6 +597,10 @@ body[data-theme='dark'] .header-auth-btn--logout:focus-visible {
   padding: 0;
 }
 
+.app-shell--no-sidebar {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .app-sidebar-backdrop {
   position: fixed;
   inset: 0;
@@ -1014,6 +1018,14 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   .app-shell {
     grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
     align-items: flex-start;
+  }
+
+  .app-shell--no-sidebar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-shell--no-sidebar .app-content {
+    grid-column: 1;
   }
 
   .app-shell.has-sidebar-open {
