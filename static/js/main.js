@@ -6,8 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const searchBtn = document.getElementById("search-btn");
   const searchInput = document.getElementById("search-input");
-  const searchSection = document.getElementById("search-section");
-  const chatSection = document.getElementById("chat-section");
   const chatBox = document.getElementById("chat-box");
   const searchFillButtons = Array.from(
     document.querySelectorAll("[data-search-fill]")
@@ -174,18 +172,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   initLoginFormSync();
   initLogoutSync();
-
-  function ensureChatUiReady(context = "초기화") {
-    const ready = Boolean(
-      searchBtn && searchInput && searchSection && chatSection && chatBox
-    );
-    if (!ready) {
-      console.warn(
-        `검색/대화 UI 요소를 찾을 수 없어 ${context} 초기화를 건너뜁니다.`
-      );
-    }
-    return ready;
-  }
 
   // ---------- Theme ----------
   function initThemeControls() {
@@ -868,56 +854,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (
-    searchBtn &&
-    searchInput &&
-    searchSection &&
-    chatSection &&
-    chatBox &&
-    typeof window.appendMessage === "function"
-  ) {
-    const startConversation = async (query) => {
+  if (searchBtn && searchInput) {
+    const navigateToConversation = (query) => {
       if (!query) return;
-
-      searchSection.classList.add("hidden");
-      chatSection.classList.remove("hidden");
-
-      window.appendMessage("user", query);
-      window.showTypingIndicator();
-
-      try {
-        const res = await fetch(
-          `/api/v1/search/?query=${encodeURIComponent(query)}`
-        );
-        const data = await res.json();
-
-        window.removeTypingIndicator();
-
-        if (typeof window.renderAssistantMessage === "function") {
-          window.appendMessage("assistant", window.renderAssistantMessage(data));
-        } else {
-          console.warn("renderAssistantMessage not ready, fallback to JSON");
-          window.appendMessage(
-            "assistant",
-            `<pre>${JSON.stringify(data, null, 2)}</pre>`
-          );
-        }
-      } catch (err) {
-        console.error("Search API 오류:", err);
-        window.removeTypingIndicator();
-        window.appendMessage("assistant", "⚠️ 오류가 발생했습니다.");
-      }
+      const params = new URLSearchParams({ query });
+      window.location.href = `/conversation/?${params.toString()}`;
     };
 
-    searchBtn.addEventListener("click", () => {
+    const handleSearchSubmit = () => {
       const query = searchInput.value.trim();
-      if (query) startConversation(query);
-    });
+      if (!query) return;
+      navigateToConversation(query);
+    };
+
+    searchBtn.addEventListener("click", handleSearchSubmit);
 
     searchInput.addEventListener("keypress", (event) => {
       if (event.key === "Enter") {
-        const query = searchInput.value.trim();
-        if (query) startConversation(query);
+        event.preventDefault();
+        handleSearchSubmit();
       }
     });
   }
