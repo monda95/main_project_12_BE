@@ -200,22 +200,62 @@ document.addEventListener("DOMContentLoaded", () => {
       system: "시스템 기본",
     };
 
-    const indicatorStyles = {
-      system: {
-        color: "var(--indicator-active)",
-        ring: "rgba(99, 102, 241, 0.2)",
-        fill: "rgba(99, 102, 241, 0.12)",
-      },
-      light: {
-        color: "#f59e0b",
-        ring: "rgba(245, 158, 11, 0.25)",
-        fill: "rgba(245, 158, 11, 0.12)",
-      },
-      dark: {
-        color: "var(--color-secondary)",
-        ring: "rgba(99, 102, 241, 0.25)",
-        fill: "rgba(99, 102, 241, 0.2)",
-      },
+    const readTokenValue = (rawValue, fallback) => {
+      let value = (rawValue || "").trim();
+      if (!value) return fallback;
+
+      if (value.startsWith("var(")) {
+        const varName = value.match(/var\((--[^, )]+)/)?.[1];
+        if (varName) {
+          value = getComputedStyle(document.documentElement)
+            .getPropertyValue(varName)
+            .trim();
+        }
+      }
+
+      return value || fallback;
+    };
+
+    const readOptionTokens = (mode) => {
+      const label = optionLabels.find(
+        (node) => node.dataset.themeOption === mode
+      );
+      if (!label) return null;
+
+      const option = label.querySelector(".theme-option");
+      if (!option) return null;
+
+      const computed = getComputedStyle(option);
+
+      const color = readTokenValue(
+        computed.getPropertyValue("--theme-option-accent"),
+        readTokenValue(
+          computed.getPropertyValue("--theme-option-accent-default"),
+          "var(--indicator-active)"
+        )
+      );
+
+      const ring = readTokenValue(
+        computed.getPropertyValue("--theme-option-ring"),
+        readTokenValue(
+          computed.getPropertyValue("--theme-option-ring-default"),
+          "rgba(99, 102, 241, 0.2)"
+        )
+      );
+
+      const fill = readTokenValue(
+        computed.getPropertyValue("--theme-option-fill"),
+        readTokenValue(
+          computed.getPropertyValue("--theme-option-fill-default"),
+          ""
+        )
+      );
+
+      return {
+        color,
+        ring,
+        fill,
+      };
     };
 
     const readPreference = () => {
@@ -258,7 +298,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const updateIndicator = (preference, resolvedTheme) => {
       if (!indicator) return;
       const styleKey = preference === "system" ? resolvedTheme : preference;
-      const styles = indicatorStyles[styleKey] || indicatorStyles.system;
+      const styles =
+        readOptionTokens(styleKey) ||
+        readOptionTokens(resolvedTheme) ||
+        readOptionTokens("system");
+      if (!styles) return;
 
       indicator.style.backgroundColor = getIndicatorColor(styles.color);
       indicator.style.boxShadow = `0 0 0 4px ${styles.ring}`;
@@ -272,17 +316,21 @@ document.addEventListener("DOMContentLoaded", () => {
         const isActive = value === preference;
 
         const styleKey = (value === "system" ? resolvedTheme : value) || "system";
-        const { color, ring, fill } = indicatorStyles[styleKey] || indicatorStyles.system;
+        const tokens =
+          readOptionTokens(styleKey) ||
+          readOptionTokens(resolvedTheme) ||
+          readOptionTokens("system");
+        if (!tokens) return;
 
         label.classList.toggle("is-active", isActive);
 
         if (option) {
           option.classList.toggle("active", isActive);
           if (isActive) {
-            option.style.setProperty("--theme-option-accent", color);
-            option.style.setProperty("--theme-option-ring", ring);
-            if (fill) {
-              option.style.setProperty("--theme-option-fill", fill);
+            option.style.setProperty("--theme-option-accent", tokens.color);
+            option.style.setProperty("--theme-option-ring", tokens.ring);
+            if (tokens.fill) {
+              option.style.setProperty("--theme-option-fill", tokens.fill);
             } else {
               option.style.removeProperty("--theme-option-fill");
             }
@@ -294,10 +342,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (isActive) {
-          label.style.setProperty("--theme-option-accent", color);
-          label.style.setProperty("--theme-option-ring", ring);
-          if (fill) {
-            label.style.setProperty("--theme-option-fill", fill);
+          label.style.setProperty("--theme-option-accent", tokens.color);
+          label.style.setProperty("--theme-option-ring", tokens.ring);
+          if (tokens.fill) {
+            label.style.setProperty("--theme-option-fill", tokens.fill);
           } else {
             label.style.removeProperty("--theme-option-fill");
           }

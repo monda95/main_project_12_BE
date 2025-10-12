@@ -254,15 +254,34 @@ body[data-theme='dark'] .header-banner-tagline {
 }
 
 .sidebar-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--sidebar-interactive-border);
   background: var(--sidebar-interactive-bg);
   color: var(--sidebar-interactive-color);
   box-shadow: 0 10px 25px -18px rgba(79, 70, 229, 0.4);
+  transition: background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-toggle-btn svg {
+  width: 1.4rem;
+  height: 1.4rem;
 }
 
 .sidebar-toggle-btn:hover,
 .sidebar-toggle-btn:focus-visible {
   background: var(--sidebar-interactive-hover);
   box-shadow: 0 16px 35px -18px rgba(79, 70, 229, 0.55);
+}
+
+@media (min-width: 1024px) {
+  .sidebar-toggle-btn {
+    display: none;
+  }
 }
 
 .theme-surface {

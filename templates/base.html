@@ -4,8 +4,6 @@
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}Nourisher{% endblock %}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -13,8 +11,7 @@
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
 </head>
-<body class="min-h-screen flex flex-col"
-      data-theme="light"
+<body data-theme="light"
       data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">
 
   <!-- Header -->
@@ -22,7 +19,7 @@
 
 
   <!-- Main -->
-  <main class="flex-1 pt-24">
+  <main class="site-main">
     <div class="app-shell">
       <div class="app-sidebar-backdrop" data-sidebar-backdrop></div>
       <aside id="app-sidebar" class="app-sidebar" data-sidebar>
