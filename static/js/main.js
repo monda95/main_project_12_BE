@@ -323,6 +323,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const stateEl = document.querySelector("[data-conversation-state]");
     const listEl = document.querySelector("[data-conversation-list]");
     const newBtn = document.querySelector("[data-new-conversation]");
+    const isAuthenticated =
+      document.body?.dataset.authenticated === "true";
 
     if (!shell || !sidebar || !collapseBtn || !stateEl || !listEl) {
       return;
@@ -490,9 +492,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (response.status === 401 || response.status === 403) {
-          setState("로그인 후 대화 목록을 확인할 수 있습니다. 새 대화를 시작해보세요!", "info", {
-            hideList: listEl.childElementCount === 0,
-          });
+          listEl.innerHTML = "";
+          setState(
+            "로그인을 하면 대화 목록을 확인할 수 있습니다.",
+            "info",
+            { hideList: true }
+          );
           return;
         }
 
@@ -537,7 +542,15 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     if (newBtn) {
+      const authAlertMessage =
+        newBtn.dataset.requiresAuthMessage || "로그인이 필요합니다.";
+
       newBtn.addEventListener("click", async () => {
+        if (!isAuthenticated) {
+          alert(authAlertMessage);
+          return;
+        }
+
         newBtn.disabled = true;
         newBtn.setAttribute("aria-busy", "true");
 
@@ -551,6 +564,11 @@ document.addEventListener("DOMContentLoaded", () => {
             credentials: "same-origin",
             body: JSON.stringify({ title: "새 대화" }),
           });
+
+          if (response.status === 401 || response.status === 403) {
+            alert(authAlertMessage);
+            return;
+          }
 
           if (!response.ok) {
             throw new Error(`Failed to create conversation: ${response.status}`);
@@ -576,7 +594,12 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    fetchConversations();
+    if (isAuthenticated) {
+      fetchConversations();
+    } else {
+      listEl.innerHTML = "";
+      setState("로그인을 하면 대화 목록을 확인할 수 있습니다.", "info", { hideList: true });
+    }
   }
 
   if (searchInput && searchFillButtons.length) {
