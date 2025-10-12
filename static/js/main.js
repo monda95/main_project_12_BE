@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const SIDEBAR_ENABLED = true;
+  const SIDEBAR_ENABLED = false;
   initThemeControls();
   initHeaderScroll();
   initSidebarToggle();

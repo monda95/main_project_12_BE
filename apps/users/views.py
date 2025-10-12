@@ -1,7 +1,6 @@
 import logging
 import requests
 from django.contrib.auth import get_user_model, authenticate, login
-from django.contrib.auth import logout as django_logout  # PATCH: 세션 로그아웃
 from django.contrib.auth.tokens import default_token_generator
 from django.db import transaction
 from django.http import HttpResponse
@@ -19,11 +18,6 @@ from django.utils.encoding import force_bytes
 from django.http import JsonResponse
 from django.conf import settings
 from urllib.parse import urlencode
-
-# PATCH: CSRF/Decorator/APIView
-from django.views.decorators.csrf import csrf_protect
-from django.utils.decorators import method_decorator
-from rest_framework.views import APIView
 
 from .forms import SignupForm, LoginForm
 from .serializers import (
@@ -397,12 +391,6 @@ def github_exchange(request):
         },
     )
 
-    # PATCH: OAuth 교환 시 세션 로그인까지 수행 (세션 기반 화면 루프 방지)
-    try:
-        login(request, user)  # Django 세션 로그인
-    except Exception:
-        logger.warning("[GitHub OAuth] 세션 로그인 실패(무시)", exc_info=True)
-
     # JWT 발급
     refresh = RefreshToken.for_user(user)
     return JsonResponse(
@@ -412,62 +400,3 @@ def github_exchange(request):
             "user": {"id": user.id, "email": user.email, "nickname": user.nickname},
         }
     )
-
-
-# ============================
-# PATCH: 세션 + JWT 겸용 로그아웃 뷰
-# ============================
-@method_decorator(csrf_protect, name="dispatch")
-class CombinedLogoutView(APIView):
-    """
-    - 세션(OAuth/슈퍼유저/일반) 로그인: Django 세션 종료
-    - JWT가 전달되면: Refresh 블랙리스트 시도(실패해도 무해)
-    - 항상 성공적으로 종료: XHR이면 JSON 205, 폼이면 /login/으로 리다이렉트
-    """
-
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request, *args, **kwargs):
-        # 1) JWT 블랙리스트(선택적으로, 실패 무시)
-        refresh_value = None
-        try:
-            refresh_value = (request.data or {}).get("refresh")
-        except Exception:
-            pass
-
-        if refresh_value:
-            try:
-                token = RefreshToken(refresh_value)
-                try:
-                    token.blacklist()
-                    logger.info("[CombinedLogout] refresh 블랙리스트 완료")
-                except Exception:
-                    logger.warning(
-                        "[CombinedLogout] 블랙리스트 실패 (무시)", exc_info=True
-                    )
-            except Exception:
-                logger.warning(
-                    "[CombinedLogout] refresh 파싱 실패 (무시)", exc_info=True
-                )
-
-        # 2) 세션 로그아웃(로그인 안 되어 있어도 무해)
-        try:
-            if request.user.is_authenticated:
-                logger.info(
-                    "[CombinedLogout] 세션 사용자 %s 로그아웃",
-                    getattr(request.user, "email", request.user.get_username()),
-                )
-            django_logout(request)
-        except Exception:
-            logger.warning(
-                "[CombinedLogout] 세션 로그아웃 중 예외(무시)", exc_info=True
-            )
-
-        # 3) 응답: XHR이면 JSON, 아니면 /login/으로 이동
-        wants_json = (
-            request.headers.get("Accept", "").startswith("application/json")
-            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
-        )
-        if wants_json:
-            return JsonResponse({"detail": "logged_out"}, status=205)
-        return redirect("login-page")
