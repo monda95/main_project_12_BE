@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchBtn = document.getElementById("search-btn");
   const searchInput = document.getElementById("search-input");
   const searchSection = document.getElementById("search-section");
+  const searchContainer = document.querySelector("[data-search-container]");
+  const mainGrid = document.querySelector("[data-main-grid]");
   const chatSection = document.getElementById("chat-section");
   const chatBox = document.getElementById("chat-box");
   const chatInput = document.getElementById("chat-input");
@@ -683,6 +685,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const activateInlineChat = () => {
         hideElement(searchSection);
+        hideElement(searchContainer);
+        if (mainGrid) {
+          mainGrid.classList.add("is-chat-active");
+        }
+
         if (chatSection) {
           showElement(chatSection);
         }
@@ -764,6 +771,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = `/conversation/?${params.toString()}`;
       };
 
+
       const handleSearchSubmit = () => {
         const query = searchInput.value.trim();
         if (!query) return;
@@ -779,6 +787,5 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     }
-
   }
 });
