@@ -1864,7 +1864,6 @@ body[data-theme='dark'] .ai-response p {
   width: 100%;
 }
 
-
 .conversation-panel {
   min-height: clamp(30rem, 78vh, 46rem);
 }
