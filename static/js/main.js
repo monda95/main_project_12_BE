@@ -906,7 +906,6 @@ document.addEventListener("DOMContentLoaded", () => {
         hideElement(searchSection);
         if (chatSection) {
           showElement(chatSection);
-          chatSection.classList.add("chat-panel--active");
         }
       };
 
