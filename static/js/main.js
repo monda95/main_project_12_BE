@@ -962,16 +962,36 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
       let isSubmitting = false;
+      let hasActivatedInlineChat = false;
 
       const activateInlineChat = () => {
+        if (hasActivatedInlineChat) {
+          return;
+        }
+
         hideElement(searchSection);
         hideElement(searchContainer);
+
         if (mainGrid) {
           mainGrid.classList.add("is-chat-active");
+          mainGrid.setAttribute("data-chat-active", "true");
         }
+
         if (chatSection) {
           showElement(chatSection);
+          chatSection.dataset.inlineChatReady = "true";
+
+          requestAnimationFrame(() => {
+            try {
+              chatSection.scrollIntoView({ behavior: "smooth", block: "start" });
+            } catch (error) {
+              console.info("대화창 위치로 스크롤하지 못했습니다.", error);
+            }
+          });
         }
+
+        hasActivatedInlineChat = true;
+        console.info("인라인 대화 모드를 활성화했습니다.");
       };
 
       const startInlineConversation = async (query) => {
