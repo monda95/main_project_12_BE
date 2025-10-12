@@ -81,6 +81,11 @@ class LoginPageView(FormView):
             form.add_error(None, "이메일 또는 비밀번호가 올바르지 않습니다.")
             return self.form_invalid(form)
         login(self.request, user)
+
+        # 비회원 시절에 생성된 대화 목록은 로그인 후 노출되지 않도록 정리합니다.
+        if "anonymous_conversations" in self.request.session:
+            del self.request.session["anonymous_conversations"]
+
         return super().form_valid(form)
 
 

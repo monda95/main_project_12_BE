@@ -42,6 +42,10 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
+            # 관리자(staff/superuser)는 전체 대화를 조회할 수 있습니다.
+            if self.request.user.is_staff or self.request.user.is_superuser:
+                return Conversation.objects.all().select_related("owner")
+
             # 로그인 사용자 → 자신의 대화만
             return Conversation.objects.filter(owner=self.request.user).select_related(
                 "owner"
@@ -91,7 +95,12 @@ class MessageListCreateView(generics.ListCreateAPIView):
         )
 
         if self.request.user.is_authenticated:
-            self.check_object_permissions(self.request, conversation)
+            if not (
+                self.request.user.is_staff
+                or self.request.user.is_superuser
+                or conversation.owner_id == self.request.user.id
+            ):
+                raise PermissionDenied("이 대화에 접근할 권한이 없습니다.")
         else:
             conv_ids = self.request.session.get("anonymous_conversations", [])
             if conversation.id not in conv_ids:
@@ -166,12 +175,34 @@ class ConversationPageView(View):
                 conversation = get_object_or_404(Conversation, id=conversation_id_int)
 
                 if request.user.is_authenticated:
-                    if conversation.owner_id != request.user.id:
-                        raise PermissionDenied("이 대화에 접근할 권한이 없습니다.")
+                    if not (
+                        request.user.is_staff
+                        or request.user.is_superuser
+                        or conversation.owner_id == request.user.id
+                    ):
+                        return render(
+                            request,
+                            self.template_name,
+                            {
+                                "conversation": None,
+                                "conversation_id": None,
+                                "messages": [],
+                            },
+                            status=status.HTTP_200_OK,
+                        )
                 else:
                     conv_ids = request.session.get("anonymous_conversations", [])
                     if conversation.id not in conv_ids:
-                        raise PermissionDenied("이 대화에 접근할 권한이 없습니다.")
+                        return render(
+                            request,
+                            self.template_name,
+                            {
+                                "conversation": None,
+                                "conversation_id": None,
+                                "messages": [],
+                            },
+                            status=status.HTTP_200_OK,
+                        )
 
                 messages = list(
                     Message.objects.filter(conversation=conversation)
