@@ -142,6 +142,47 @@
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
+  function submitChatQuery(query, options = {}) {
+    const { emitUserMessage = true } = options;
+    const normalized = (query || "").toString().trim();
+
+    if (!normalized) {
+      return Promise.resolve(null);
+    }
+
+    if (emitUserMessage) {
+      appendMessage("user", normalized);
+    }
+
+    showTypingIndicator();
+
+    return fetch(`/api/v1/search/?query=${encodeURIComponent(normalized)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        removeTypingIndicator();
+
+        if (data.error || data.detail) {
+          appendMessage(
+            "assistant",
+            `<div class="text-red-600">⚠️ 서버가 잠시 응답하지 않습니다. 잠시 후 다시 시도해주세요.</div>`
+          );
+          return null;
+        }
+
+        appendMessage("assistant", data);
+        return data;
+      })
+      .catch((err) => {
+        console.error(err);
+        removeTypingIndicator();
+        appendMessage(
+          "assistant",
+          `<div class="text-red-600">⚠️ 일시적인 오류가 발생했습니다. 다시 시도해주세요.</div>`
+        );
+        return null;
+      });
+  }
+
   // 🔹 로딩 중(생각중) 말풍선
   function showTypingIndicator() {
     appendMessage(
@@ -159,6 +200,7 @@
 
   // 전역 노출
   window.appendMessage = appendMessage;
+  window.submitChatQuery = submitChatQuery;
   window.showTypingIndicator = showTypingIndicator;
   window.removeTypingIndicator = removeTypingIndicator;
   window.showGuideMessage = showGuideMessage;
@@ -175,37 +217,9 @@
       const query = input.value.trim();
       if (!query) return;
 
-      appendMessage("user", query);
       input.value = "";
 
-      // "생각중" 표시
-      showTypingIndicator();
-
-      // API 호출
-      fetch(`/api/v1/search/?query=${encodeURIComponent(query)}`)
-        .then((res) => res.json())
-        .then((data) => {
-          removeTypingIndicator();
-
-          if (data.error || data.detail) {
-            appendMessage(
-              "assistant",
-              `<div class="text-red-600">⚠️ 서버가 잠시 응답하지 않습니다. 잠시 후 다시 시도해주세요.</div>`
-            );
-            return;
-          }
-
-          // ✅ 객체 그대로 넘기면 renderAssistantMessage가 처리
-          appendMessage("assistant", data);
-        })
-        .catch((err) => {
-          console.error(err);
-          removeTypingIndicator();
-          appendMessage(
-            "assistant",
-            `<div class="text-red-600">⚠️ 일시적인 오류가 발생했습니다. 다시 시도해주세요.</div>`
-          );
-        });
+      submitChatQuery(query);
     };
 
     sendBtn.addEventListener("click", handleSend);

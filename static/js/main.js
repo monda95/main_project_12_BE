@@ -8,6 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchBtn = document.getElementById("search-btn");
   const searchInput = document.getElementById("search-input");
   const chatBox = document.getElementById("chat-box");
+  const chatSection = document.getElementById("chat-section");
+  const chatInputField = document.getElementById("chat-input");
   const searchFillButtons = Array.from(
     document.querySelectorAll("[data-search-fill]")
   );
@@ -866,16 +868,36 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (searchBtn && searchInput) {
-    const navigateToConversation = (query) => {
-      if (!query) return;
-      const params = new URLSearchParams({ query });
-      window.location.href = `/conversation/?${params.toString()}`;
+    const revealChatSection = () => {
+      if (!chatSection) return;
+      chatSection.hidden = false;
+      try {
+        chatSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      } catch (error) {
+        console.warn("채팅 영역으로 스크롤하지 못했습니다.", error);
+      }
     };
 
     const handleSearchSubmit = () => {
       const query = searchInput.value.trim();
       if (!query) return;
-      navigateToConversation(query);
+
+      const canHandleInline = typeof window.submitChatQuery === "function";
+
+      if (!canHandleInline) {
+        const params = new URLSearchParams({ query });
+        window.location.href = `/conversation/?${params.toString()}`;
+        return;
+      }
+
+      revealChatSection();
+      searchInput.value = "";
+      window.submitChatQuery(query);
+
+      if (chatInputField) {
+        chatInputField.value = "";
+        chatInputField.focus();
+      }
     };
 
     searchBtn.addEventListener("click", handleSearchSubmit);
