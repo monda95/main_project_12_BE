@@ -23,15 +23,15 @@
             Nourisher
           </a>
           <!-- 사이드바 기능 비활성화: 토글 버튼 제거 -->
-          {#
-          <button type="button"
-                  class="sidebar-toggle-btn inline-flex items-center justify-center rounded-full border border-transparent px-3 py-2 text-sm font-semibold transition lg:hidden"
-                  data-sidebar-toggle
-                  aria-expanded="false"
-                  aria-controls="app-sidebar">
-            메뉴
-          </button>
-          #}
+          <!--
+            <button type="button"
+                    class="sidebar-toggle-btn inline-flex items-center justify-center rounded-full border border-transparent px-3 py-2 text-sm font-semibold transition lg:hidden"
+                    data-sidebar-toggle
+                    aria-expanded="false"
+                    aria-controls="app-sidebar">
+              메뉴
+            </button>
+          -->
         </div>
         <p class="header-banner-tagline">AI 음식 영양 분석 도우미</p>
       </div>
@@ -101,47 +101,47 @@
   <main class="site-main">
     <div class="app-shell">
       <!-- 사이드바 기능 비활성화: 전체 마크업 가드 -->
-      {#
-      <div class="app-sidebar-backdrop" data-sidebar-backdrop></div>
-      <aside id="app-sidebar" class="app-sidebar" data-sidebar>
-        <div class="app-sidebar-inner">
-          <div class="app-sidebar-top">
-            <a href="{% url 'main-page' %}" class="app-sidebar-logo">
-              <span class="app-sidebar-logo-mark">N</span>
-            </a>
-            <button type="button"
-                    class="sidebar-collapse-btn"
-                    data-sidebar-collapse
-                    aria-label="사이드바 접기"
-                    aria-expanded="true">
-              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd"
-                      d="M12.78 5.22a.75.75 0 0 0-1.06 0L8.47 8.47a.75.75 0 0 0 0 1.06l3.25 3.25a.75.75 0 1 0 1.06-1.06L10.06 9l2.72-2.72a.75.75 0 0 0 0-1.06Z"
-                      clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
-          <div class="app-sidebar-section" aria-live="polite">
-            <p class="app-sidebar-heading">Conversations</p>
-            <div class="conversation-empty" data-conversation-state>
-              대화를 불러오는 중입니다...
+      <!--
+        <div class="app-sidebar-backdrop" data-sidebar-backdrop></div>
+        <aside id="app-sidebar" class="app-sidebar" data-sidebar>
+          <div class="app-sidebar-inner">
+            <div class="app-sidebar-top">
+              <a href="{% url 'main-page' %}" class="app-sidebar-logo">
+                <span class="app-sidebar-logo-mark">N</span>
+              </a>
+              <button type="button"
+                      class="sidebar-collapse-btn"
+                      data-sidebar-collapse
+                      aria-label="사이드바 접기"
+                      aria-expanded="true">
+                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd"
+                        d="M12.78 5.22a.75.75 0 0 0-1.06 0L8.47 8.47a.75.75 0 0 0 0 1.06l3.25 3.25a.75.75 0 1 0 1.06-1.06L10.06 9l2.72-2.72a.75.75 0 0 0 0-1.06Z"
+                        clip-rule="evenodd" />
+                </svg>
+              </button>
             </div>
-            <ul class="conversation-list" data-conversation-list aria-label="대화 목록" hidden></ul>
+            <div class="app-sidebar-section" aria-live="polite">
+              <p class="app-sidebar-heading">Conversations</p>
+              <div class="conversation-empty" data-conversation-state>
+                대화를 불러오는 중입니다...
+              </div>
+              <ul class="conversation-list" data-conversation-list aria-label="대화 목록" hidden></ul>
+            </div>
+            <div class="app-sidebar-footer">
+              <button type="button"
+                      class="new-conversation-btn"
+                      data-new-conversation
+                      data-requires-auth-message="로그인이 필요합니다. 로그인 후 다시 시도해주세요.">
+                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path d="M10 3a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5h-5.5a.75.75 0 0 1 0-1.5h5.5v-5.5A.75.75 0 0 1 10 3Z" />
+                </svg>
+                <span>새 대화</span>
+              </button>
+            </div>
           </div>
-          <div class="app-sidebar-footer">
-            <button type="button"
-                    class="new-conversation-btn"
-                    data-new-conversation
-                    data-requires-auth-message="로그인이 필요합니다. 로그인 후 다시 시도해주세요.">
-              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path d="M10 3a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5h-5.5a.75.75 0 0 1 0-1.5h5.5v-5.5A.75.75 0 0 1 10 3Z" />
-              </svg>
-              <span>새 대화</span>
-            </button>
-          </div>
-        </div>
-      </aside>
-      #}
+        </aside>
+      -->
       <section class="app-content" data-sidebar-content>
         <div class="app-content-inner">
           {% block content %}{% endblock %}
