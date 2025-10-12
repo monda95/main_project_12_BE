@@ -466,6 +466,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const header = document.querySelector("[data-header]");
     if (!header) return;
 
+    const root = document.documentElement;
+    const updateHeaderHeight = () => {
+      const measured = header.offsetHeight;
+      if (!measured) return;
+
+      const current = root.style.getPropertyValue("--header-height");
+      const nextValue = `${measured}px`;
+      if (current !== nextValue) {
+        root.style.setProperty("--header-height", nextValue);
+      }
+    };
+
+    updateHeaderHeight();
+
+    if (typeof ResizeObserver !== "undefined") {
+      const headerResizeObserver = new ResizeObserver(() => {
+        updateHeaderHeight();
+      });
+      headerResizeObserver.observe(header);
+    }
+
+    window.addEventListener("resize", updateHeaderHeight);
+
     const updateHeaderState = () => {
       const shouldActivate = window.scrollY > 16;
       header.classList.toggle("is-scrolled", shouldActivate);
