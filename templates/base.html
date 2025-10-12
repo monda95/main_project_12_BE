@@ -13,7 +13,9 @@
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="{% static 'css/chat.css' %}">
 </head>
-<body class="min-h-screen flex flex-col" data-theme="light">
+<body class="min-h-screen flex flex-col"
+      data-theme="light"
+      data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">
 
   <!-- Header -->
   <header class="site-header header-banner" data-header>
@@ -125,7 +127,10 @@
             <ul class="conversation-list" data-conversation-list aria-label="대화 목록" hidden></ul>
           </div>
           <div class="app-sidebar-footer">
-            <button type="button" class="new-conversation-btn" data-new-conversation>
+            <button type="button"
+                    class="new-conversation-btn"
+                    data-new-conversation
+                    data-requires-auth-message="로그인이 필요합니다. 로그인 후 다시 시도해주세요.">
               <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path d="M10 3a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5h-5.5a.75.75 0 0 1 0-1.5h5.5v-5.5A.75.75 0 0 1 10 3Z" />
               </svg>

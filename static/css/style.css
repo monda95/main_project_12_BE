@@ -1555,7 +1555,7 @@ body[data-theme='dark'] .ai-response p {
   padding-bottom: 2.5rem; /* 추가 */
   background: #f9fafb;
   border-radius: 1.5rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--surface-border);
   box-shadow: var(--shadow-elevated);
   min-height: clamp(26rem, 72vh, 40rem);
 }
