@@ -166,6 +166,10 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# Frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+
 # JetBrains IDE (PyCharm, IntelliJ)
 .idea/
 *.iml
