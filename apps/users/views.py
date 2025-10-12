@@ -2,7 +2,7 @@ import logging
 import requests
 from django.contrib import messages
 from django.contrib.auth import get_user_model, authenticate, login
-from django.contrib.auth import logout as django_logout  # PATCH: 세션 로그아웃
+from django.contrib.auth import logout as django_logout
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
@@ -10,10 +10,13 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.views.decorators.csrf import csrf_protect
 from django.views.generic import TemplateView, FormView
+from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.urls import reverse, reverse_lazy
@@ -22,11 +25,6 @@ from django.utils.encoding import force_bytes
 from django.http import JsonResponse
 from django.conf import settings
 from urllib.parse import urlencode
-
-# PATCH: CSRF/Decorator/APIView
-from django.views.decorators.csrf import csrf_protect
-from django.utils.decorators import method_decorator
-from rest_framework.views import APIView
 
 from .forms import SignupForm, LoginForm
 from .serializers import (
@@ -440,9 +438,8 @@ def github_exchange(request):
         },
     )
 
-    # PATCH: OAuth 교환 시 세션 로그인까지 수행 (세션 기반 화면 루프 방지)
     try:
-        login(request, user)  # Django 세션 로그인
+        login(request, user)
     except Exception:
         logger.warning("[GitHub OAuth] 세션 로그인 실패(무시)", exc_info=True)
 
@@ -457,21 +454,19 @@ def github_exchange(request):
     )
 
 
-# ============================
-# PATCH: 세션 + JWT 겸용 로그아웃 뷰
-# ============================
 @method_decorator(csrf_protect, name="dispatch")
 class CombinedLogoutView(APIView):
     """
-    - 세션(OAuth/슈퍼유저/일반) 로그인: Django 세션 종료
-    - JWT가 전달되면: Refresh 블랙리스트 시도(실패해도 무해)
-    - 항상 성공적으로 종료: XHR이면 JSON 205, 폼이면 /login/으로 리다이렉트
+    세션 + JWT 겸용 로그아웃.
+
+    - 세션 로그인 상태라면 Django 세션을 종료합니다.
+    - Refresh 토큰이 전달되면 블랙리스트에 등록을 시도합니다.
+    - 항상 성공 응답을 반환하고, 폼 요청은 로그인 페이지로 리다이렉션합니다.
     """
 
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        # 1) JWT 블랙리스트(선택적으로, 실패 무시)
         refresh_value = None
         try:
             refresh_value = (request.data or {}).get("refresh")
@@ -493,7 +488,6 @@ class CombinedLogoutView(APIView):
                     "[CombinedLogout] refresh 파싱 실패 (무시)", exc_info=True
                 )
 
-        # 2) 세션 로그아웃(로그인 안 되어 있어도 무해)
         try:
             if request.user.is_authenticated:
                 logger.info(
@@ -506,7 +500,6 @@ class CombinedLogoutView(APIView):
                 "[CombinedLogout] 세션 로그아웃 중 예외(무시)", exc_info=True
             )
 
-        # 3) 응답: XHR이면 JSON, 아니면 /login/으로 이동
         wants_json = (
             request.headers.get("Accept", "").startswith("application/json")
             or request.headers.get("X-Requested-With") == "XMLHttpRequest"
