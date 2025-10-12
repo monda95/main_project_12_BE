@@ -9,7 +9,7 @@
         <section class="chat-panel conversation-panel">
             <div>
                 <h2 class="chat-panel__title">대화</h2>
-                <p class="chat-panel__hint">Nourisher는 열심히 학습 중입니다.</p>
+                <p id="chat-guide" class="chat-panel__hint" hidden>Nourisher는 열심히 학습 중입니다.</p>
             </div>
 
             <div id="chat-box"
@@ -28,8 +28,6 @@
                             </div>
                         </div>
                     </div>
-                {% empty %}
-                    <p class="py-16 text-center text-sm text-slate-400">Nourisher는 열심히 학습 중입니다.</p>
                 {% endfor %}
             </div>
 
