@@ -13,14 +13,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-search-fill]")
   );
 
-  function ensureChatUiReady(context = "초기화") {
-    const ready = searchBtn && searchInput && searchSection && chatSection && chatBox;
-    if (!ready) {
-      console.warn(`검색/대화 UI 요소를 찾을 수 없어 ${context}를 건너뜁니다.`);
-    }
-    return ready;
-  }
-
   function initThemeControls() {
     const form = document.querySelector("[data-theme-form]");
     if (!form) {
@@ -37,7 +29,180 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputs = Array.from(form.querySelectorAll("input[name='theme']"));
 
     const labelMap = {
-@@ -210,74 +216,440 @@ document.addEventListener("DOMContentLoaded", () => {
+      system: "사용자설정",
+      light: "기본 모드",
+      dark: "다크 모드",
+    };
+
+    const indicatorStyles = {
+      system: {
+        color: "var(--indicator-active)",
+        ring: "rgba(99, 102, 241, 0.2)",
+        fill: "rgba(99, 102, 241, 0.12)",
+      },
+      light: {
+        color: "#f59e0b",
+        ring: "rgba(245, 158, 11, 0.25)",
+        fill: "rgba(245, 158, 11, 0.12)",
+      },
+      dark: {
+        color: "var(--color-secondary)",
+        ring: "rgba(99, 102, 241, 0.25)",
+        fill: "rgba(99, 102, 241, 0.2)",
+      },
+    };
+
+    function readPreference() {
+      try {
+        return localStorage.getItem(storageKey);
+      } catch (error) {
+        console.warn("테마 설정을 불러오지 못했습니다.", error);
+        return null;
+      }
+    }
+
+    function persistPreference(value) {
+      try {
+        localStorage.setItem(storageKey, value);
+      } catch (error) {
+        console.warn("테마 설정을 저장할 수 없습니다.", error);
+      }
+    }
+
+    function resolveTheme(preference) {
+      if (preference === "system") {
+        return systemMatcher.matches ? "dark" : "light";
+      }
+      return preference;
+    }
+
+    function updateIndicator(preference, resolvedTheme) {
+      if (!indicator) return;
+      const styleKey = preference === "system" ? resolvedTheme : preference;
+      const styles = indicatorStyles[styleKey] || indicatorStyles.system;
+
+      let color = styles.color;
+      if (color.startsWith("var(")) {
+        const varName = color.match(/var\((--[^)]+)\)/)?.[1];
+        if (varName) {
+          color = getComputedStyle(document.documentElement)
+            .getPropertyValue(varName)
+            .trim();
+        }
+      }
+
+      indicator.style.backgroundColor = color;
+      indicator.style.boxShadow = `0 0 0 4px ${styles.ring}`;
+    }
+
+    function updateOptionStyles(preference, resolvedTheme) {
+      optionLabels.forEach(label => {
+        const value = label.dataset.themeOption;
+        const option = label.querySelector(".theme-option");
+        const status = label.querySelector("[data-default-label]");
+        const isActive = value === preference;
+
+        const styleKey = (value === "system" ? resolvedTheme : value) || "system";
+        const { color, ring, fill } = indicatorStyles[styleKey] || indicatorStyles.system;
+
+        label.classList.toggle("is-active", isActive);
+
+        if (option) {
+          option.classList.toggle("active", isActive);
+          if (isActive) {
+            option.style.setProperty("--theme-option-accent", color);
+            option.style.setProperty("--theme-option-ring", ring);
+            if (fill) {
+              option.style.setProperty("--theme-option-fill", fill);
+            } else {
+              option.style.removeProperty("--theme-option-fill");
+            }
+          } else {
+            option.style.removeProperty("--theme-option-accent");
+            option.style.removeProperty("--theme-option-ring");
+            option.style.removeProperty("--theme-option-fill");
+          }
+        }
+
+        if (isActive) {
+          label.style.setProperty("--theme-option-accent", color);
+          label.style.setProperty("--theme-option-ring", ring);
+          if (fill) {
+            label.style.setProperty("--theme-option-fill", fill);
+          } else {
+            label.style.removeProperty("--theme-option-fill");
+          }
+        } else {
+          label.style.removeProperty("--theme-option-accent");
+          label.style.removeProperty("--theme-option-ring");
+          label.style.removeProperty("--theme-option-fill");
+        }
+
+        if (status) {
+          status.classList.toggle("is-active", isActive);
+          const activeText = status.dataset.activeLabel || "ACTIVE";
+          const defaultText = status.dataset.defaultLabel || status.textContent;
+          status.textContent = isActive ? activeText : defaultText;
+        }
+      });
+    }
+
+    function applyTheme(preference, { updateForm = true } = {}) {
+      const resolvedTheme = resolveTheme(preference);
+
+      document.body.setAttribute("data-theme", resolvedTheme);
+      document.documentElement.style.colorScheme =
+        resolvedTheme === "dark" ? "dark" : "light";
+
+      updateIndicator(preference, resolvedTheme);
+      updateOptionStyles(preference, resolvedTheme);
+
+      if (currentText) {
+        const displayText =
+          preference === "system"
+            ? `사용자설정 · ${resolvedTheme === "dark" ? "다크" : "기본"}`
+            : labelMap[preference] || labelMap.light;
+        currentText.textContent = displayText;
+      }
+
+      if (updateForm) {
+        inputs.forEach(input => {
+          input.checked = input.value === preference;
+        });
+      }
+    }
+
+    const initialPreference = readPreference() || "light";
+    applyTheme(initialPreference);
+
+    form.addEventListener("change", event => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      const preference = target.value;
+      persistPreference(preference);
+      applyTheme(preference);
+    });
+
+    const handleSystemChange = () => {
+      const stored = readPreference() || "system";
+      if (stored === "system") {
+        applyTheme("system", { updateForm: false });
+      }
+    };
+
+    if (typeof systemMatcher.addEventListener === "function") {
+      systemMatcher.addEventListener("change", handleSystemChange);
+    } else if (typeof systemMatcher.addListener === "function") {
+      systemMatcher.addListener(handleSystemChange);
+    }
+
+    if (trigger) {
+      trigger.setAttribute("aria-haspopup", "true");
+      trigger.setAttribute("aria-expanded", "false");
+
+      const schedule = window.requestAnimationFrame
+        ? callback => window.requestAnimationFrame(callback)
+        : callback => setTimeout(callback, 0);
 
       const updateExpansionState = () => {
         const isExpanded =
@@ -198,10 +363,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (desktopQuery.matches) {
         const stored = readStoredCollapsed();
         applyCollapsed(stored);
-        isCollapsed = stored;
       } else {
         applyCollapsed(false);
-        isCollapsed = false;
       }
     };
 
@@ -209,7 +372,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     collapseBtn.addEventListener("click", () => {
       if (!desktopQuery.matches) {
-        // 모바일에서는 접기 대신 오버레이 토글을 사용
         document.dispatchEvent(new Event("sidebar:close"));
         return;
       }
@@ -222,10 +384,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (event.matches) {
         const stored = readStoredCollapsed();
         applyCollapsed(stored);
-        isCollapsed = stored;
       } else {
         applyCollapsed(false);
-        isCollapsed = false;
       }
     };
 
@@ -296,7 +456,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const titleWrapper = document.createElement("span");
       titleWrapper.className = "conversation-item__title";
       const titleText = document.createElement("span");
-      titleText.textContent = (conversation.title && conversation.title.trim()) || "제목 없는 대화";
+      titleText.textContent =
+        (conversation.title && conversation.title.trim()) || "제목 없는 대화";
       titleWrapper.appendChild(titleText);
       button.appendChild(titleWrapper);
 
@@ -418,7 +579,6 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchConversations();
   }
 
-  // 검색 기능 (메인 페이지에만 존재)
   if (searchInput && searchFillButtons.length) {
     searchFillButtons.forEach(button => {
       button.addEventListener("click", () => {
@@ -434,24 +594,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const startConversation = async query => {
       if (!query) return;
 
-      // 대화창으로 전환
       searchSection.classList.add("hidden");
       chatSection.classList.remove("hidden");
 
-      // 사용자 메시지 append
       window.appendMessage("user", query);
-
-      // ✅ 추가: 로딩 애니메이션
       window.showTypingIndicator();
 
       try {
         const res = await fetch(`/api/v1/search/?query=${encodeURIComponent(query)}`);
         const data = await res.json();
 
-        // ✅ 추가: 로딩 애니메이션 제거
         window.removeTypingIndicator();
 
-        // ✅ 수정: 렌더링 함수 사용
         if (typeof window.renderAssistantMessage === "function") {
           window.appendMessage("assistant", window.renderAssistantMessage(data));
         } else {
