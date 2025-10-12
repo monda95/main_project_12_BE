@@ -15,36 +15,63 @@
       <div class="theme-menu" data-theme-menu>
         <button type="button"
                 class="theme-control-btn"
-                data-theme-trigger>
+                data-theme-trigger
+                aria-haspopup="listbox"
+                aria-expanded="false"
+                aria-controls="theme-menu-panel">
           <span class="theme-trigger-caption" data-theme-trigger-label>사용자 설정</span>
           <span class="theme-trigger-label" data-theme-label>
             <span class="theme-indicator-dot" data-theme-indicator></span>
             <span data-theme-current-text>기본 모드</span>
           </span>
         </button>
-        <div class="theme-dropdown">
-          <form class="theme-dropdown__form" aria-label="테마 선택" data-theme-form>
+        <div class="theme-dropdown" id="theme-menu-panel" role="presentation">
+          <form class="theme-dropdown__form"
+                aria-label="테마 선택"
+                data-theme-form>
             <div class="theme-dropdown__intro">
               <p>사용자설정</p>
               <p>원하는 UI 모드를 선택하세요.</p>
             </div>
             <div class="theme-option-list">
-              <label for="theme-system" data-theme-option="system">
-                <input type="radio" name="theme" value="system" id="theme-system" class="sr-only" />
+              <label for="theme-system"
+                     data-theme-option="system"
+                     role="option"
+                     aria-selected="false">
+                <input type="radio"
+                       name="theme"
+                       value="system"
+                       id="theme-system"
+                       class="sr-only" />
                 <div class="theme-option">
                   <span class="theme-option__label">사용자설정</span>
                   <span class="theme-option__badge" data-default-label="SYSTEM" data-active-label="ACTIVE">SYSTEM</span>
                 </div>
               </label>
-              <label for="theme-light" data-theme-option="light">
-                <input type="radio" name="theme" value="light" id="theme-light" class="sr-only" checked />
+              <label for="theme-light"
+                     data-theme-option="light"
+                     role="option"
+                     aria-selected="true">
+                <input type="radio"
+                       name="theme"
+                       value="light"
+                       id="theme-light"
+                       class="sr-only"
+                       checked />
                 <div class="theme-option">
                   <span class="theme-option__label">기본</span>
                   <span class="theme-option__badge" data-default-label="LIGHT" data-active-label="ACTIVE">LIGHT</span>
                 </div>
               </label>
-              <label for="theme-dark" data-theme-option="dark">
-                <input type="radio" name="theme" value="dark" id="theme-dark" class="sr-only" />
+              <label for="theme-dark"
+                     data-theme-option="dark"
+                     role="option"
+                     aria-selected="false">
+                <input type="radio"
+                       name="theme"
+                       value="dark"
+                       id="theme-dark"
+                       class="sr-only" />
                 <div class="theme-option">
                   <span class="theme-option__label">다크</span>
                   <span class="theme-option__badge" data-default-label="DARK" data-active-label="ACTIVE">DARK</span>
@@ -56,7 +83,10 @@
       </div>
       <nav class="header-auth-actions">
         {% if user.is_authenticated %}
-          <form method="post" action="{% url 'logout' %}" data-logout-form>
+          <form method="post"
+                action="{% url 'logout' %}"
+                class="contents"
+                data-logout-form>
             {% csrf_token %}
             <button type="submit" class="header-auth-btn header-auth-btn--logout">
               로그아웃
