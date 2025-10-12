@@ -745,8 +745,8 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  padding: calc(var(--header-height) + 1.5rem) 1.5rem 3rem;
+  align-items: center;
+  padding: calc(var(--header-height) + 1.5rem) clamp(1.5rem, 4vw, 3rem) 3rem;
   transition: padding 0.35s ease;
 }
 
@@ -757,7 +757,12 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   margin-right: auto;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: clamp(1.5rem, 2vw, 2.5rem);
+}
+
+.app-content-inner > * {
+  width: 100%;
 }
 
 .app-shell.has-sidebar-open {
@@ -863,8 +868,9 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   }
 
   .app-content {
-    grid-column: 2;
-    padding: calc(var(--header-height) + 2rem) clamp(2rem, 3vw, 3.5rem) 3.5rem;
+    grid-column: 1;
+    align-items: center;
+    padding: calc(var(--header-height) + 2rem) clamp(2rem, 4vw, 4rem) 3.5rem;
   }
 
   .app-shell.is-sidebar-collapsed {
@@ -879,6 +885,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
 
   .app-shell.is-sidebar-collapsed .app-content {
     padding-left: clamp(1.5rem, 3vw, 3rem);
+    padding-right: clamp(1.5rem, 3vw, 3rem);
   }
 
   .app-main-grid {
@@ -901,6 +908,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
 
   .app-content {
     padding: calc(var(--header-height) + 1.5rem) 1.25rem 3rem;
+    align-items: center;
   }
 
   .app-shell.is-sidebar-collapsed .app-sidebar {
