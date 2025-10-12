@@ -354,6 +354,19 @@ body[data-theme='dark'] .header-auth-btn--logout:focus-visible {
   transform: translateY(-1px);
 }
 
+.theme-menu:hover .theme-dropdown,
+.theme-menu:focus-within .theme-dropdown,
+.theme-menu.is-open .theme-dropdown {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.theme-menu.is-open .theme-control-btn {
+  color: var(--indicator-active);
+}
+
 .theme-dropdown {
   background: var(--surface-color);
   border-color: var(--surface-border);
