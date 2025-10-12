@@ -2,16 +2,22 @@ import logging
 import requests
 from django.contrib import messages
 from django.contrib.auth import get_user_model, authenticate, login
-from django.contrib.auth import logout as django_logout  # PATCH: 세션 로그아웃
+from django.contrib.auth import logout as django_logout
 from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.views.decorators.csrf import csrf_protect
 from django.views.generic import TemplateView, FormView
+from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.urls import reverse, reverse_lazy
@@ -20,11 +26,6 @@ from django.utils.encoding import force_bytes
 from django.http import JsonResponse
 from django.conf import settings
 from urllib.parse import urlencode
-
-# PATCH: CSRF/Decorator/APIView
-from django.views.decorators.csrf import csrf_protect
-from django.utils.decorators import method_decorator
-from rest_framework.views import APIView
 
 from .forms import SignupForm, LoginForm
 from .serializers import (
@@ -56,7 +57,46 @@ def send_verification_email(request, user):
         reverse("verify_email", kwargs={"uidb64": uid, "token": token})
     )
 
-    print(f"인증 링크: {verification_link} (터미널에서 클릭 시 인증 처리됨)")
+    context = {
+        "user": user,
+        "verification_link": verification_link,
+        "site_name": getattr(settings, "PROJECT_DISPLAY_NAME", "Smart Nourish"),
+    }
+
+    subject = f"[{context['site_name']}] 이메일 인증 안내"
+    text_body = render_to_string("emails/signup_verification_email.txt", context)
+    html_body = render_to_string("emails/signup_verification_email.html", context)
+
+    email_message = EmailMultiAlternatives(
+        subject,
+        text_body,
+        getattr(settings, "DEFAULT_FROM_EMAIL", None),
+        [user.email],
+    )
+    if html_body.strip():
+        email_message.attach_alternative(html_body, "text/html")
+
+    try:
+        send_result = email_message.send()
+    except Exception:
+        logger.exception(
+            "[회원가입] %s님에게 이메일 인증 메일 발송 중 예외가 발생했습니다. 링크=%s",
+            user.email,
+            verification_link,
+        )
+        return
+
+    if send_result:
+        logger.info(
+            "[회원가입] %s님에게 이메일 인증 메일을 성공적으로 발송했습니다.",
+            user.email,
+        )
+    else:
+        logger.warning(
+            "[회원가입] %s님에게 이메일 인증 메일 발송에 실패했습니다. 링크=%s",
+            user.email,
+            verification_link,
+        )
 
 
 @extend_schema(summary="[생성] 회원가입", tags=["Auth & Users"])
@@ -203,46 +243,83 @@ class LogoutView(generics.GenericAPIView):
     로그아웃 API
 
     - 클라이언트로부터 받은 **Refresh Token을 블랙리스트에 추가**하여 더 이상 사용할 수 없도록 처리합니다.
+    - 세션으로 로그인된 사용자 역시 함께 로그아웃되도록 처리합니다.
+    - 일반 폼 요청은 메인 페이지로 리다이렉션합니다.
     """
 
     serializer_class = RefreshTokenSerializer
     permission_classes = [permissions.AllowAny]
     throttle_classes: list = []
 
+    def _wants_json(self, request):
+        accept = request.headers.get("Accept", "")
+        content_type = request.headers.get("Content-Type", "")
+        x_requested_with = request.headers.get("X-Requested-With")
+        return (
+            "application/json" in accept
+            or "application/json" in content_type
+            or x_requested_with == "XMLHttpRequest"
+        )
+
     def post(self, request, *args, **kwargs):
-        refresh_value = request.data.get("refresh")
+        refresh_value = request.data.get("refresh") if request.data else None
         user = request.user if request.user.is_authenticated else None
 
-        if not refresh_value:
+        serializer_error = None
+        blacklist_failed = False
+
+        if refresh_value:
+            try:
+                serializer = self.get_serializer(data={"refresh": refresh_value})
+                serializer.is_valid(raise_exception=True)
+                refresh_token = RefreshToken(serializer.validated_data["refresh"])
+                refresh_token.blacklist()
+                logger.info("[로그아웃] Refresh 토큰을 블랙리스트에 등록했습니다.")
+            except ValidationError as exc:
+                serializer_error = exc
+            except Exception:
+                blacklist_failed = True
+                logger.warning(
+                    "[로그아웃] Refresh 토큰 블랙리스트 등록 중 오류가 발생했습니다.",
+                    exc_info=True,
+                )
+        else:
             if user and user.is_superuser:
                 logger.info(
-                    "[로그아웃] 슈퍼유저 %s가 토큰 없이 로그아웃을 완료했습니다.",
+                    "[로그아웃] 슈퍼유저 %s가 토큰 없이 로그아웃을 요청했습니다.",
                     getattr(user, "email", user.get_username()),
                 )
             elif user:
                 logger.info(
-                    "[로그아웃] 사용자 %s가 토큰 없이 로그아웃을 요청하여 추가 조치 없이 종료했습니다.",
+                    "[로그아웃] 사용자 %s가 토큰 없이 로그아웃을 요청했습니다.",
                     getattr(user, "email", user.get_username()),
                 )
             else:
-                logger.info(
-                    "[로그아웃] 비로그인 요청이 토큰 없이 로그아웃을 시도해 추가 조치 없이 종료했습니다."
-                )
-            return Response(status=status.HTTP_204_NO_CONTENT)
+                logger.info("[로그아웃] 비로그인 사용자가 로그아웃을 요청했습니다.")
 
-        serializer = self.get_serializer(data={"refresh": refresh_value})
-        serializer.is_valid(raise_exception=True)
         try:
-            refresh_token = RefreshToken(serializer.validated_data["refresh"])
-            refresh_token.blacklist()
-            logger.info("[로그아웃] Refresh 토큰을 블랙리스트에 등록했습니다.")
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            if user:
+                logger.info(
+                    "[로그아웃] 세션 사용자 %s 로그아웃을 처리합니다.",
+                    getattr(user, "email", user.get_username()),
+                )
+            django_logout(request)
+            logger.info("[로그아웃] 세션 로그아웃 처리가 완료되었습니다.")
         except Exception:
             logger.warning(
-                "[로그아웃] Refresh 토큰 블랙리스트 등록에 실패했습니다.",
+                "[로그아웃] 세션 로그아웃 처리 중 오류가 발생했습니다.",
                 exc_info=True,
             )
+
+        if serializer_error:
+            raise serializer_error
+
+        if blacklist_failed:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        if self._wants_json(request):
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return redirect("main-page")
 
 
 @extend_schema(summary="[인증] 로그인 (토큰 발급)", tags=["Auth & Users"])
@@ -399,9 +476,8 @@ def github_exchange(request):
         },
     )
 
-    # PATCH: OAuth 교환 시 세션 로그인까지 수행 (세션 기반 화면 루프 방지)
     try:
-        login(request, user)  # Django 세션 로그인
+        login(request, user)
     except Exception:
         logger.warning("[GitHub OAuth] 세션 로그인 실패(무시)", exc_info=True)
 
@@ -416,21 +492,19 @@ def github_exchange(request):
     )
 
 
-# ============================
-# PATCH: 세션 + JWT 겸용 로그아웃 뷰
-# ============================
 @method_decorator(csrf_protect, name="dispatch")
 class CombinedLogoutView(APIView):
     """
-    - 세션(OAuth/슈퍼유저/일반) 로그인: Django 세션 종료
-    - JWT가 전달되면: Refresh 블랙리스트 시도(실패해도 무해)
-    - 항상 성공적으로 종료: XHR이면 JSON 205, 폼이면 /login/으로 리다이렉트
+    세션 + JWT 겸용 로그아웃.
+
+    - 세션 로그인 상태라면 Django 세션을 종료합니다.
+    - Refresh 토큰이 전달되면 블랙리스트에 등록을 시도합니다.
+    - 항상 성공 응답을 반환하고, 폼 요청은 로그인 페이지로 리다이렉션합니다.
     """
 
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        # 1) JWT 블랙리스트(선택적으로, 실패 무시)
         refresh_value = None
         try:
             refresh_value = (request.data or {}).get("refresh")
@@ -452,7 +526,6 @@ class CombinedLogoutView(APIView):
                     "[CombinedLogout] refresh 파싱 실패 (무시)", exc_info=True
                 )
 
-        # 2) 세션 로그아웃(로그인 안 되어 있어도 무해)
         try:
             if request.user.is_authenticated:
                 logger.info(
@@ -465,7 +538,6 @@ class CombinedLogoutView(APIView):
                 "[CombinedLogout] 세션 로그아웃 중 예외(무시)", exc_info=True
             )
 
-        # 3) 응답: XHR이면 JSON, 아니면 /login/으로 이동
         wants_json = (
             request.headers.get("Accept", "").startswith("application/json")
             or request.headers.get("X-Requested-With") == "XMLHttpRequest"
