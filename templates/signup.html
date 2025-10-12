@@ -7,7 +7,7 @@
     <h2 class="auth-card__title">회원가입</h2>
     {% if form.non_field_errors %}
     <div class="auth-card__error">
-        <ul class="space-y-1">
+        <ul>
             {% for error in form.non_field_errors %}
             <li>{{ error }}</li>
             {% endfor %}

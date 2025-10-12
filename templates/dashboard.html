@@ -3,34 +3,31 @@
 {% block title %}대시보드 - Nourisher{% endblock %}
 
 {% block content %}
-<div class="w-full max-w-4xl p-8 bg-white rounded-xl shadow-lg">
-    <h2 class="text-3xl font-bold text-gray-900 mb-6">환영합니다, 사용자님!</h2>
-    <p class="text-lg text-gray-700 mb-8">Nourisher 대시보드에서 다양한 정보를 확인하세요.</p>
+<div class="dashboard">
+    <h2 class="dashboard__title">환영합니다, 사용자님!</h2>
+    <p class="dashboard__subtitle">Nourisher 대시보드에서 다양한 정보를 확인하세요.</p>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- 카드 1: 최근 활동 -->
-        <div class="bg-gray-50 p-6 rounded-lg shadow-md">
-            <h3 class="text-xl font-semibold text-gray-800 mb-3">최근 활동</h3>
-            <ul class="list-disc list-inside text-gray-600 space-y-2">
-                <li><a href="#" class="text-indigo-600 hover:underline">닭가슴살 영양 정보 검색</a></li>
-                <li><a href="#" class="text-indigo-600 hover:underline">새로운 대화 시작</a></li>
-                <li><a href="#" class="text-indigo-600 hover:underline">프로필 업데이트</a></li>
+    <div class="dashboard-grid">
+        <article class="dashboard-card">
+            <h3 class="dashboard-card__title">최근 활동</h3>
+            <ul class="dashboard-card__list">
+                <li><a href="#" class="dashboard-link">닭가슴살 영양 정보 검색</a></li>
+                <li><a href="#" class="dashboard-link">새로운 대화 시작</a></li>
+                <li><a href="#" class="dashboard-link">프로필 업데이트</a></li>
             </ul>
-        </div>
+        </article>
 
-        <!-- 카드 2: 통계 요약 -->
-        <div class="bg-gray-50 p-6 rounded-lg shadow-md">
-            <h3 class="text-xl font-semibold text-gray-800 mb-3">통계 요약</h3>
-            <p class="text-gray-600">총 검색 횟수: <span class="font-bold text-indigo-600">123</span></p>
-            <p class="text-gray-600">총 대화 수: <span class="font-bold text-indigo-600">15</span></p>
-        </div>
+        <article class="dashboard-card">
+            <h3 class="dashboard-card__title">통계 요약</h3>
+            <p class="dashboard-card__text">총 검색 횟수: <span class="dashboard-card__highlight">123</span></p>
+            <p class="dashboard-card__text">총 대화 수: <span class="dashboard-card__highlight">15</span></p>
+        </article>
 
-        <!-- 카드 3: 추천 콘텐츠 -->
-        <div class="bg-gray-50 p-6 rounded-lg shadow-md">
-            <h3 class="text-xl font-semibold text-gray-800 mb-3">추천 콘텐츠</h3>
-            <p class="text-gray-600">"건강한 식단" 관련 최신 정보</p>
-            <button class="mt-4 px-4 py-2 rounded-md bg-indigo-500 text-white hover:bg-indigo-600 transition">더 보기</button>
-        </div>
+        <article class="dashboard-card">
+            <h3 class="dashboard-card__title">추천 콘텐츠</h3>
+            <p class="dashboard-card__text">"건강한 식단" 관련 최신 정보</p>
+            <button class="dashboard-button" type="button">더 보기</button>
+        </article>
     </div>
 </div>
 {% endblock %}
