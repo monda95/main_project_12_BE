@@ -2,6 +2,7 @@
   const chatBox = document.getElementById("chat-box");
   const input = document.getElementById("chat-input");
   const sendBtn = document.getElementById("chat-send");
+  const guideMessage = document.getElementById("chat-guide");
 
   if (!chatBox) {
     console.warn("chat.js: #chat-box 요소를 찾을 수 없습니다.");
@@ -10,19 +11,20 @@
 
   // 🔹 안내 문구 표시
   function showGuideMessage() {
-    if (!chatBox.querySelector('[data-guide="true"]')) {
-      const guide = document.createElement("p");
-      guide.dataset.guide = "true";
-      guide.className = "text-gray-500 text-center";
-      guide.textContent = "Nourisher는 오늘도 열심히 학습 중입니다.";
-      chatBox.appendChild(guide);
-    }
+    if (!guideMessage) return;
+    guideMessage.hidden = false;
   }
 
   // 🔹 안내 문구 제거
   function hideGuideMessage() {
-    const guide = chatBox.querySelector('[data-guide="true"]');
-    if (guide) guide.remove();
+    if (!guideMessage) return;
+    guideMessage.hidden = true;
+  }
+
+  function syncGuideMessage() {
+    if (!guideMessage) return;
+    const hasMessages = Boolean(chatBox.querySelector(".chat-message"));
+    guideMessage.hidden = hasMessages;
   }
 
   // 🔹 AI 답변 렌더링
@@ -165,7 +167,7 @@
   console.log("✅ chat.js 초기화 완료: renderAssistantMessage 준비됨");
 
   // 초기 안내 문구
-  showGuideMessage();
+  syncGuideMessage();
 
   // 🔹 전송 이벤트
   if (sendBtn && input) {
