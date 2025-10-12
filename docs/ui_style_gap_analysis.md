@@ -1,16 +1,15 @@
 # 🎨 전역 테마 & CSS 세부 마감 점검
 
-
 > 참고: 최신 구조와 하드코딩 현황은 `docs/ui_style_snapshot.md`에서 스냅샷으로 확인 가능하다.
 
 ## 1. 전역 토큰 사용 현황
-- `static/css/chat.css` 전반에 하드코딩된 Hex 색상(예: `.chat-role`, `.chat-bubble-*`, `.assistant-card` 등)이 다수 남아 있어 라이트/다크 모드 동기화가 불완전함. → `var(--color-*)`, `var(--surface-*)` 토큰으로 치환 필요.【F:static/css/chat.css†L1-L132】【F:static/css/chat.css†L133-L210】
-- `static/css/style.css` 내 인증 버튼/테마 메뉴 등은 일부 토큰을 활용하지만, `.header-auth-btn--login` 계열에 여전히 Hex 값이 남아 있어 토큰 일관성이 떨어짐.【F:static/css/style.css†L174-L236】
-- `style.css` 파일 중간에 diff 잔여(`@@ -105,93 +292,812 @@`)가 그대로 남아 있어 컴파일 안정성이 보장되지 않음. 정리 및 중복 블록 제거 필요.【F:static/css/style.css†L237-L244】
+- `static/css/chat.css` 전반에 하드코딩된 Hex 색상(예: `.chat-role`, `.chat-bubble-*`, `.assistant-card` 등)이 다수 남아 있어 라이트/다크 모드 동기화가 불완전함. → `var(--color-*)`, `var(--surface-*)` 토큰으로 치환 필요. *(2025-10-12: 주요 대화/어시스턴트 카드 영역 전역 토큰 치환 완료, 신규 토큰 정의 확인 필요).*【F:static/css/chat.css†L1-L120】【F:static/css/chat.css†L121-L188】
+- `static/css/style.css` 내 인증 버튼/테마 메뉴 등은 일부 토큰을 활용하지만, `.header-auth-btn--login` 계열에 여전히 Hex 값이 남아 있어 토큰 일관성이 떨어짐. *(2025-10-12: 로그인 버튼 중립 토큰 도입 및 포커스 링 변수화 완료.)*【F:static/css/style.css†L140-L214】
+- `style.css` 파일 중간에 diff 잔여(`@@ -105,93 +292,812 @@`)가 그대로 남아 있어 컴파일 안정성이 보장되지 않음. 정리 및 중복 블록 제거 필요. *(2025-10-12: diff 마커 제거 완료.)*【F:static/css/style.css†L1-L120】
 
 ## 2. 컴포넌트별 마감 포인트
 - 헤더/테마 드롭다운은 토큰 구성이 갖춰져 있으나, `templates/base.html` 구조가 2중으로 중복 렌더링되고 Tailwind 클래스와 커스텀 CSS 클래스가 혼재되어 있음. 중복 제거 후 CSS 가이드를 기준으로 Tailwind 사용 최소화 필요.【F:templates/base.html†L1-L210】
-- 사이드바/콘텐츠 레이아웃은 `style.css`에 정의됐지만, 실제 페이지에서 Tailwind 유틸이 상충 가능성이 있으니 QA 시 레이아웃 깨짐 점검 필요. 특히 `.app-sidebar` 계열은 배경/테두리를 직접 지정하고 있어 토큰 치환 및 대비 재검증이 요구됨.【F:static/css/style.css†L310-L379】
+- 사이드바/콘텐츠 레이아웃은 `style.css`에 정의됐지만, 실제 페이지에서 Tailwind 유틸이 상충 가능성이 있으니 QA 시 레이아웃 깨짐 점검 필요. 특히 `.app-sidebar` 계열은 배경/테두리를 직접 지정하고 있어 토큰 치환 및 대비 재검증이 요구됨. *(2025-10-12: 사이드바·대화목록 변수 치환 완료, 실 화면 QA 필요.)*【F:static/css/style.css†L260-L408】
 
 - 채팅 버블/어시스턴트 카드 섹션은 라이트/다크 모드 대비비율 재검토(하드코딩 색상)와 그림자 강도 조절이 필요. WCAG AA 대비 확인 권장.【F:static/css/chat.css†L1-L210】
 
