@@ -273,12 +273,106 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const metaText =
         formatTimestamp(conversation.updated_at || conversation.created_at);
+      const metaActionsWrapper = document.createElement("span");
+      metaActionsWrapper.className = "conversation-item__meta-actions";
+
       if (metaText) {
         const meta = document.createElement("span");
         meta.className = "conversation-item__meta";
         meta.textContent = metaText;
-        button.appendChild(meta);
+        metaActionsWrapper.appendChild(meta);
       }
+
+      const actions = document.createElement("span");
+      actions.className = "conversation-item__actions";
+
+      const renameBtn = document.createElement("button");
+      renameBtn.type = "button";
+      renameBtn.className = "conversation-action conversation-action--rename";
+      renameBtn.setAttribute("aria-label", "대화 제목 수정");
+      renameBtn.innerHTML =
+        '<span aria-hidden="true">✏️</span><span class="sr-only">제목 수정</span>';
+
+      renameBtn.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        const currentTitle = (conversation.title || "").trim();
+        const newTitle = prompt("새 대화 제목을 입력하세요.", currentTitle);
+
+        if (newTitle === null) {
+          return;
+        }
+
+        const trimmed = newTitle.trim();
+        if (!trimmed) {
+          alert("대화 제목은 비워둘 수 없습니다.");
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/v1/conversations/${conversation.id}/`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCSRFToken(),
+            },
+            credentials: "same-origin",
+            body: JSON.stringify({ title: trimmed }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to update conversation: ${response.status}`);
+          }
+
+          await fetchConversations();
+        } catch (error) {
+          console.error("대화 제목을 수정하지 못했습니다.", error);
+          alert("대화 제목을 수정하지 못했습니다. 잠시 후 다시 시도해주세요.");
+        }
+      });
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "conversation-action conversation-action--delete";
+      deleteBtn.setAttribute("aria-label", "대화 삭제");
+      deleteBtn.innerHTML =
+        '<span aria-hidden="true">🗑️</span><span class="sr-only">대화 삭제</span>';
+
+      deleteBtn.addEventListener("click", async (event) => {
+        event.stopPropagation();
+
+        if (!confirm("선택한 대화를 삭제할까요?")) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/v1/conversations/${conversation.id}/`, {
+            method: "DELETE",
+            headers: {
+              "X-CSRFToken": getCSRFToken(),
+            },
+            credentials: "same-origin",
+          });
+
+          if (response.status !== 204) {
+            throw new Error(`Failed to delete conversation: ${response.status}`);
+          }
+
+          if (String(conversation.id) === activeConversationId) {
+            window.location.href = "/conversation/";
+            return;
+          }
+
+          await fetchConversations();
+        } catch (error) {
+          console.error("대화를 삭제하지 못했습니다.", error);
+          alert("대화를 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.");
+        }
+      });
+
+      actions.appendChild(renameBtn);
+      actions.appendChild(deleteBtn);
+      metaActionsWrapper.appendChild(actions);
+      button.appendChild(metaActionsWrapper);
 
       button.addEventListener("click", () => {
         if (String(conversation.id) === activeConversationId) {

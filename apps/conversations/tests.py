@@ -97,3 +97,45 @@ class TestConversationAPI:
             {"content": "I am an AI!", "role": "ai"},
         )
         assert response.status_code == 400
+
+    def test_staff_can_manage_all_conversations(self):
+        """스태프 사용자는 모든 대화를 조회/수정/삭제할 수 있어야 합니다."""
+        staff_user = User.objects.create_user(
+            email="staff@example.com", password="password123", is_staff=True
+        )
+        other_conversation = Conversation.objects.create(
+            owner=self.user2, title="User2's Conversation"
+        )
+
+        self.client.force_authenticate(user=staff_user)
+
+        list_response = self.client.get("/api/v1/conversations/")
+        assert list_response.status_code == 200
+        assert list_response.data["count"] == 2
+
+        patch_response = self.client.patch(
+            f"/api/v1/conversations/{other_conversation.id}/",
+            {"title": "Updated by Staff"},
+            format="json",
+        )
+        assert patch_response.status_code == 200
+
+        delete_response = self.client.delete(
+            f"/api/v1/conversations/{self.conversation1.id}/"
+        )
+        assert delete_response.status_code == 204
+
+    def test_staff_can_post_message_in_any_conversation(self):
+        """스태프 사용자는 어떤 대화에도 메시지를 추가할 수 있습니다."""
+        staff_user = User.objects.create_user(
+            email="staff2@example.com", password="password123", is_staff=True
+        )
+
+        self.client.force_authenticate(user=staff_user)
+        response = self.client.post(
+            f"/api/v1/conversations/{self.conversation1.id}/messages/",
+            {"content": "스태프의 메시지"},
+        )
+
+        assert response.status_code == 201
+        assert self.conversation1.messages.filter(content="스태프의 메시지").exists()
