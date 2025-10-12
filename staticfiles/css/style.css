@@ -354,6 +354,19 @@ body[data-theme='dark'] .header-auth-btn--logout:focus-visible {
   transform: translateY(-1px);
 }
 
+.theme-menu:hover .theme-dropdown,
+.theme-menu:focus-within .theme-dropdown,
+.theme-menu.is-open .theme-dropdown {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.theme-menu.is-open .theme-control-btn {
+  color: var(--indicator-active);
+}
+
 .theme-dropdown {
   background: var(--surface-color);
   border-color: var(--surface-border);
@@ -378,9 +391,15 @@ body[data-theme='dark'] .header-auth-btn--logout:focus-visible {
   font-weight: 700;
 }
 
-.theme-option:hover {
+.theme-option:hover,
+.theme-option:focus-visible {
   border-color: var(--theme-option-accent, var(--theme-option-accent-default));
+  background: var(--theme-option-fill, var(--theme-option-fill-default));
+  color: var(--theme-option-accent, var(--theme-option-accent-default));
+  box-shadow: 0 0 0 1px var(--theme-option-ring, var(--theme-option-ring-default)),
+    0 18px 32px -22px var(--theme-option-ring, var(--theme-option-ring-default));
   transform: translateY(-1px);
+  outline: none;
 }
 
 .theme-option.active {
@@ -654,18 +673,19 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  padding: calc(var(--header-height) + 1.5rem) 1.5rem 3rem;
+  align-items: center;
+  padding: calc(var(--header-height) + 0.75rem) 1.5rem 3rem;
   transition: padding 0.35s ease;
 }
 
 .app-content-inner {
   width: 100%;
   max-width: 80rem;
-  margin-left: 0;
+  margin-left: auto;
   margin-right: auto;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: clamp(1.5rem, 2vw, 2.5rem);
 }
 
@@ -772,7 +792,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
 
   .app-content {
     grid-column: 2;
-    padding: calc(var(--header-height) + 2rem) clamp(2rem, 3vw, 3.5rem) 3.5rem;
+    padding: calc(var(--header-height) + 1rem) clamp(2rem, 3vw, 3.5rem) 3.5rem;
   }
 
   .app-shell.is-sidebar-collapsed {
@@ -808,7 +828,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   }
 
   .app-content {
-    padding: calc(var(--header-height) + 1.5rem) 1.25rem 3rem;
+    padding: calc(var(--header-height) + 0.5rem) 1.25rem 3rem;
   }
 
   .app-shell.is-sidebar-collapsed .app-sidebar {

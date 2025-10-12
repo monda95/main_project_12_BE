@@ -7,9 +7,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const searchBtn = document.getElementById("search-btn");
   const searchInput = document.getElementById("search-input");
-  const chatBox = document.getElementById("chat-box");
+  const searchSection = document.getElementById("search-section");
   const chatSection = document.getElementById("chat-section");
-  const chatInputField = document.getElementById("chat-input");
+  const chatBox = document.getElementById("chat-box");
+  const chatInput = document.getElementById("chat-input");
   const searchFillButtons = Array.from(
     document.querySelectorAll("[data-search-fill]")
   );
@@ -191,10 +192,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const trigger = document.querySelector("[data-theme-trigger]");
     const currentText = document.querySelector("[data-theme-current-text]");
     const indicator = document.querySelector("[data-theme-indicator]");
+    const menu = form.closest("[data-theme-menu]");
+    const dropdown = menu?.querySelector(".theme-dropdown");
     const optionLabels = Array.from(
       form.querySelectorAll("[data-theme-option]")
     );
     const inputs = Array.from(form.querySelectorAll("input[name='theme']"));
+    let closeThemeMenu = () => {};
+    let openThemeMenu = () => {};
 
     const labelMap = {
       light: "라이트 모드",
@@ -352,6 +357,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const preference = target.value;
       persistPreference(preference);
       applyTheme(preference);
+      closeThemeMenu();
     });
 
     const handleSystemChange = () => {
@@ -367,33 +373,86 @@ document.addEventListener("DOMContentLoaded", () => {
       systemMatcher.addListener(handleSystemChange);
     }
 
-    if (trigger) {
+    if (trigger && menu) {
       trigger.setAttribute("aria-haspopup", "true");
       trigger.setAttribute("aria-expanded", "false");
 
-      const schedule = window.requestAnimationFrame
-        ? (callback) => window.requestAnimationFrame(callback)
-        : (callback) => setTimeout(callback, 0);
-
-      const updateExpansionState = () => {
-        const isExpanded =
-          document.activeElement === trigger || form.contains(document.activeElement);
-        trigger.setAttribute("aria-expanded", isExpanded ? "true" : "false");
+      openThemeMenu = () => {
+        if (menu.classList.contains("is-open")) return;
+        menu.classList.add("is-open");
+        trigger.setAttribute("aria-expanded", "true");
       };
 
-      trigger.addEventListener("focus", updateExpansionState);
-      trigger.addEventListener("blur", () => {
-        schedule(updateExpansionState);
-      });
+      closeThemeMenu = ({ restoreFocus = false } = {}) => {
+        if (!menu.classList.contains("is-open")) return;
+        menu.classList.remove("is-open");
+        trigger.setAttribute("aria-expanded", "false");
+        if (restoreFocus) {
+          trigger.focus();
+        }
+      };
 
-      form.addEventListener("focusin", updateExpansionState);
-      form.addEventListener("focusout", () => {
-        schedule(updateExpansionState);
+      const toggleThemeMenu = () => {
+        if (menu.classList.contains("is-open")) {
+          closeThemeMenu();
+        } else {
+          openThemeMenu();
+          const activeInput = form.querySelector(
+            "input[name='theme']:checked"
+          );
+          if (activeInput) {
+            activeInput.focus();
+          } else if (dropdown && typeof dropdown.focus === "function") {
+            dropdown.focus();
+          }
+        }
+      };
+
+      trigger.addEventListener("click", (event) => {
+        event.preventDefault();
+        toggleThemeMenu();
       });
 
       trigger.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
+          event.preventDefault();
+          closeThemeMenu();
           trigger.blur();
+          return;
+        }
+
+        if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openThemeMenu();
+          const activeInput = form.querySelector("input[name='theme']:checked");
+          if (activeInput) {
+            activeInput.focus();
+          }
+        }
+      });
+
+      const handleOutsidePointerDown = (event) => {
+        if (!menu.classList.contains("is-open")) return;
+        if (!menu.contains(event.target)) {
+          closeThemeMenu();
+        }
+      };
+
+      document.addEventListener("pointerdown", handleOutsidePointerDown);
+
+      form.addEventListener("focusin", openThemeMenu);
+
+      form.addEventListener("focusout", (event) => {
+        const next = event.relatedTarget;
+        if (!next || !menu.contains(next)) {
+          closeThemeMenu();
+        }
+      });
+
+      form.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeThemeMenu({ restoreFocus: true });
         }
       });
     }
@@ -868,45 +927,136 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (searchBtn && searchInput) {
-    const revealChatSection = () => {
-      if (!chatSection) return;
-      chatSection.hidden = false;
-      try {
-        chatSection.scrollIntoView({ behavior: "smooth", block: "start" });
-      } catch (error) {
-        console.warn("채팅 영역으로 스크롤하지 못했습니다.", error);
-      }
-    };
 
-    const handleSearchSubmit = () => {
-      const query = searchInput.value.trim();
-      if (!query) return;
+    const supportsInlineChat =
+      Boolean(chatSection && chatBox) &&
+      typeof window.appendMessage === "function" &&
+      typeof window.showTypingIndicator === "function" &&
+      typeof window.removeTypingIndicator === "function";
 
-      const canHandleInline = typeof window.submitChatQuery === "function";
+    if (supportsInlineChat) {
+      const hideElement = (element) => {
+        if (!element) return;
+        element.setAttribute("hidden", "");
+        element.setAttribute("aria-hidden", "true");
+      };
 
-      if (!canHandleInline) {
+      const showElement = (element) => {
+        if (!element) return;
+        element.removeAttribute("hidden");
+        element.removeAttribute("aria-hidden");
+      };
+      const escapeHtml = (value) =>
+        String(value).replace(/[&<>'"]/g, (match) => {
+          const map = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          };
+          return map[match] || match;
+        });
+
+      let isSubmitting = false;
+
+      const activateInlineChat = () => {
+        hideElement(searchSection);
+        if (chatSection) {
+          showElement(chatSection);
+        }
+      };
+
+      const startInlineConversation = async (query) => {
+        if (!query || isSubmitting) return;
+
+        isSubmitting = true;
+        searchBtn.setAttribute("aria-busy", "true");
+        searchBtn.disabled = true;
+        searchInput.setAttribute("aria-busy", "true");
+
+        activateInlineChat();
+
+        window.removeTypingIndicator();
+        window.appendMessage("user", query);
+        searchInput.value = "";
+        window.showTypingIndicator();
+
+        try {
+          const response = await fetch(
+            `/api/v1/search/?query=${encodeURIComponent(query)}`
+          );
+          const data = await response.json();
+
+          window.removeTypingIndicator();
+
+          if (!response.ok) {
+            const message = data?.detail || data?.message || "검색에 실패했습니다.";
+            throw new Error(message);
+          }
+
+          if (typeof window.renderAssistantMessage === "function") {
+            window.appendMessage("assistant", window.renderAssistantMessage(data));
+          } else {
+            window.appendMessage("assistant", data);
+          }
+        } catch (error) {
+          window.removeTypingIndicator();
+          console.error("Search API 오류:", error);
+          const fallback =
+            (error && (error.message || error.detail)) || "잠시 후 다시 시도해주세요.";
+          window.appendMessage(
+            "assistant",
+            `<div class="text-red-600">⚠️ ${escapeHtml(fallback)}</div>`
+          );
+        } finally {
+          isSubmitting = false;
+          searchBtn.removeAttribute("aria-busy");
+          searchBtn.disabled = false;
+          searchInput.removeAttribute("aria-busy");
+          if (chatInput) {
+            chatInput.focus();
+          } else {
+            searchInput.focus();
+          }
+        }
+      };
+
+      const handleSearchSubmit = () => {
+        const query = searchInput.value.trim();
+        if (!query) return;
+        startInlineConversation(query);
+      };
+
+      searchBtn.addEventListener("click", handleSearchSubmit);
+
+      searchInput.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          handleSearchSubmit();
+        }
+      });
+    } else {
+      const navigateToConversation = (query) => {
+        if (!query) return;
         const params = new URLSearchParams({ query });
         window.location.href = `/conversation/?${params.toString()}`;
-        return;
-      }
+      };
 
-      revealChatSection();
-      searchInput.value = "";
-      window.submitChatQuery(query);
+      const handleSearchSubmit = () => {
+        const query = searchInput.value.trim();
+        if (!query) return;
+        navigateToConversation(query);
+      };
 
-      if (chatInputField) {
-        chatInputField.value = "";
-        chatInputField.focus();
-      }
-    };
+      searchBtn.addEventListener("click", handleSearchSubmit);
 
-    searchBtn.addEventListener("click", handleSearchSubmit);
-
-    searchInput.addEventListener("keypress", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        handleSearchSubmit();
-      }
-    });
+      searchInput.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          handleSearchSubmit();
+        }
+      });
+    }
   }
 });
