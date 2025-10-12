@@ -30,27 +30,32 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - .:/app:cached       # 소스 코드만 공유
+      - .:/app:cached       # 소스 코드 공유
       - /app/.venv          # 컨테이너 내부 전용 가상환경
       - ./staticfiles:/app/staticfiles
       - ./media:/app/media
     restart: unless-stopped
 
+  nginx:
+    image: nginx:1.25
+    container_name: nginx
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+    volumes:
+      # Nginx 설정 파일 매핑
+      - ./deploy/nginx/app.conf:/etc/nginx/conf.d/default.conf
+      # 정적파일, 미디어파일 볼륨 공유
+      - ./staticfiles:/static
+      - ./media:/media
+    # t2.micro 리소스 제한 대비 로그 최소화
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   pg_data:
-
-#    docker-compose --env-file .env.prod up -d --build  뭔 짓을해도 자꾸 .env 못 읽어올 때 강제로 읽게해버리는 명령어
-#            docker-compose down --remove-orphans
-#
-#            docker system prune -f
-#            docker image prune -f
-#            docker container prune -f
-
-#  web 컨테이너 안에서 gunicorn + celery worker/beat를 subprocess로 통합 실행 : t2.micro 환경 고려한 것
-# restart 아래로 추가하면 됨 or run.sh에서 관리하기.
-#    command: >
-#      sh -c "
-#        gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers=3 &
-#        celery -A config worker -l info --concurrency=2 &
-#        celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-#      "
