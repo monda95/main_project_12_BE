@@ -949,7 +949,6 @@ document.addEventListener("DOMContentLoaded", () => {
         element.removeAttribute("aria-hidden");
       };
 
-feat2
       const escapeHtml = (value) =>
         String(value).replace(/[&<>'"]/g, (match) => {
           const map = {
@@ -970,7 +969,6 @@ feat2
         if (mainGrid) {
           mainGrid.classList.add("is-chat-active");
         }
-feat2
         if (chatSection) {
           showElement(chatSection);
         }
