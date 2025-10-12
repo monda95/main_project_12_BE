@@ -212,11 +212,12 @@ h6 {
   width: 100%;
   max-width: clamp(22rem, 95vw, 90rem);
   margin: 0 auto;
-  padding: clamp(1.5rem, 3.5vw, 2.25rem) clamp(1.5rem, 4vw, 2.75rem);
+  padding-block: clamp(1.125rem, 2.5vw, 1.75rem);
+  padding-inline: 2.5rem;
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
-  align-items: start;
+  align-items: center;
   justify-items: center;
 }
 
@@ -229,9 +230,10 @@ h6 {
 
 .header-banner-left {
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.35rem;
   justify-self: start;
+  text-align: center;
 }
 
 .header-banner-right {
@@ -287,6 +289,9 @@ body[data-theme='dark'] .header-banner-tagline {
 }
 
 .site-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: 'Poppins', 'Noto Sans KR', sans-serif;
   font-weight: 700;
   font-size: clamp(1.35rem, calc(1.5vw + 1.1rem), 1.9rem);
@@ -973,7 +978,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   margin-right: auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   padding-top: clamp(1.125rem, 2.4vw, 2.25rem);
   gap: clamp(1.5rem, 2vw, 2.5rem);
 }
