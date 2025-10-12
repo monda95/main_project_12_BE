@@ -605,8 +605,60 @@ body[data-theme='dark'] .header-auth-btn--logout:focus-visible {
   color: rgba(71, 85, 105, 0.75);
 }
 
+.conversation-item__meta-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.conversation-item__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.conversation-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.75rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  font-size: 0.95rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.conversation-action:hover,
+.conversation-action:focus-visible {
+  border-color: rgba(148, 163, 184, 0.6);
+  background: rgba(148, 163, 184, 0.18);
+  outline: none;
+}
+
+.conversation-action:focus-visible {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
+}
+
+.conversation-action--delete {
+  color: #dc2626;
+}
+
 body[data-theme='dark'] .conversation-item__meta {
   color: rgba(226, 232, 240, 0.55);
+}
+
+body[data-theme='dark'] .conversation-action:hover,
+body[data-theme='dark'] .conversation-action:focus-visible {
+  border-color: rgba(129, 140, 248, 0.6);
+  background: rgba(129, 140, 248, 0.18);
+}
+
+body[data-theme='dark'] .conversation-action--delete {
+  color: #fca5a5;
 }
 
 .conversation-empty {
@@ -741,6 +793,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
 .app-shell.is-sidebar-collapsed .app-sidebar-heading,
 .app-shell.is-sidebar-collapsed .conversation-item__meta,
 .app-shell.is-sidebar-collapsed .conversation-item__title span,
+.app-shell.is-sidebar-collapsed .conversation-item__actions,
 .app-shell.is-sidebar-collapsed .new-conversation-btn span {
   opacity: 0;
   visibility: hidden;
@@ -1686,73 +1739,4 @@ body[data-theme='dark'] .ai-response p {
   transform: translateY(-1px);
 }
 
-/* ==================== LOGIN / SIGNUP INPUT ==================== */
-.auth-card input[type="text"],
-.auth-card input[type="email"],
-.auth-card input[type="password"] {
-  width: 100%;
-  border: 1px solid #e5e7eb;
-  background-color: #f9fafb;
-  border-radius: 0.75rem;
-  padding: 0.65rem 1rem;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-  color: #111827;
-}
-
-/* 포커스 시 강조 */
-.auth-card input:focus {
-  border-color: #4f46e5;
-  background-color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
-  outline: none;
-}
-
-/* placeholder 색상 조정 */
-.auth-card input::placeholder {
-  color: #9ca3af;
-}
-
-/* ==== Header overrides (center logo + tagline, actions on right) ==== */
-.header-banner-inner {
-  /* 기존 width:100% 만 있던 블록을 덮어씁니다 */
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 0.75rem 1.5rem 0.5rem;
-  display: flex;
-  flex-direction: column;        /* 로고 위, 태그라인 아래로 세로 배치 */
-  align-items: center;            /* 중앙 정렬 */
-  gap: 0.35rem;
-  position: relative;             /* 우측 버튼 절대배치 기준 */
-}
-
-.header-banner-left {
-  width: auto;                    /* 100% → auto (가운데만 차지) */
-  display: flex;
-  flex-direction: column;
-  align-items: center;            /* 로고 자체도 중앙 */
-}
-
-.header-banner-tagline {
-  text-align: center;             /* 태그라인 중앙 */
-  margin-top: 0.35rem;
-}
-
-.header-auth-actions {
-  /* 기존: inline-flex + margin-left:auto → 우측 상단 고정 */
-  position: absolute;
-  top: 0.5rem;
-  right: 1.5rem;
-  margin-left: 0 !important;
-  display: inline-flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-}
-
-.site-logo {
-  /* 로고 크기/가독성 살짝 키움 */
-  font-size: clamp(2rem, 2.4vw, 2.75rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
+#chat-input { color: #0f172a !important; }   /* dark 모드일 때는 위 클래스가 덮어줌 */
