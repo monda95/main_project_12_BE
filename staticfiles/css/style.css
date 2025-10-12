@@ -1594,6 +1594,7 @@ body[data-theme='dark'] .ai-response p {
   transform: translateY(0);
 }
 
+
 #search-section h2 {
   margin: 0;
   font-size: clamp(1.35rem, 1vw + 1.1rem, 1.75rem);

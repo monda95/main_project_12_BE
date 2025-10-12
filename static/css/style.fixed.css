@@ -166,17 +166,39 @@ body[data-theme='dark'] .header-banner-tagline {
   color: var(--surface-text);
 }
 
+.theme-menu {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.header-auth-wrapper .theme-menu {
+  align-self: center;
+}
+
 .header-banner-right {
   width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  justify-self: end;
+  align-items: flex-start;
+}
+
+.header-auth-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
 }
 
 .header-auth-actions {
-  display: inline-flex;
+  display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 0.75rem;
-  margin-left: auto;
+
 }
 
 .header-auth-actions form {
@@ -188,6 +210,7 @@ body[data-theme='dark'] .header-banner-tagline {
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
+  min-width: 9.5rem;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
   font-weight: 600;
@@ -302,6 +325,50 @@ body[data-theme='dark'] .header-auth-btn--logout:focus-visible {
   color: var(--surface-subtle);
 }
 
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  padding: 2.35rem 0.9rem 0.9rem;
+
+  border: 1px solid var(--surface-border);
+  border-radius: 1rem;
+  font-size: 0.9rem;
+  background: var(--surface-color);
+  position: relative;
+
+  text-align: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.theme-option__badge {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.5rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--surface-subtle);
+}
+
+.theme-option__label {
+  margin: 0;
+  margin-top: 0.35rem;
+  font-weight: 500;
+  font-size: 0.78rem;
+  line-height: 1.45;
+
+  color: var(--surface-subtle);
+}
 
 .theme-option span {
   color: inherit;
@@ -331,6 +398,11 @@ body[data-theme='dark'] .header-auth-btn--logout:focus-visible {
   background: var(--theme-option-fill, var(--theme-option-fill-default));
   color: var(--theme-option-accent, var(--theme-option-accent-default));
   box-shadow: 0 0 0 2px var(--theme-option-ring, var(--theme-option-ring-default));
+}
+
+.theme-option.active .theme-option__label,
+[data-theme-option].is-active .theme-option__label {
+  color: inherit;
 }
 
 .app-shell {
