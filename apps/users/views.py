@@ -17,7 +17,7 @@ from django.utils.encoding import force_bytes
 from django.http import JsonResponse
 from django.conf import settings
 from urllib.parse import urlencode
-
+from rest_framework.permissions import AllowAny
 from .forms import SignupForm, LoginForm
 from .serializers import (
     PasswordChangeSerializer,
@@ -184,24 +184,20 @@ class PasswordChangeView(generics.UpdateAPIView):
 
 @extend_schema(summary="[인증] 로그아웃", tags=["Auth & Users"])
 class LogoutView(generics.GenericAPIView):
-    """
-    로그아웃 API
-
-    - 클라이언트로부터 받은 **Refresh Token을 블랙리스트에 추가**하여 더 이상 사용할 수 없도록 처리합니다.
-    """
-
     serializer_class = RefreshTokenSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AllowAny]  # ✅ 비로그인도 시도 가능하게
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
         try:
-            refresh_token = RefreshToken(serializer.validated_data["refresh"])
-            refresh_token.blacklist()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            refresh = request.data.get("refresh")
+            if not refresh:
+                return Response({"detail": "refresh 토큰이 필요합니다."}, status=400)
+
+            token = RefreshToken(refresh)
+            token.blacklist()
+            return Response({"detail": "로그아웃 완료"}, status=205)
         except Exception:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "유효하지 않은 토큰입니다."}, status=400)
 
 
 @extend_schema(summary="[인증] 로그인 (토큰 발급)", tags=["Auth & Users"])

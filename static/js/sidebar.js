@@ -1,10 +1,56 @@
 document.addEventListener("DOMContentLoaded", () => {
   const convList = document.getElementById("conversation-list");
   const newBtn = document.getElementById("new-conv");
+  const logoutBtn = document.getElementById("logout-btn"); // ✅ [추가] 로그아웃 버튼 요소
 
   function getCSRFToken() {
     const cookie = document.cookie.split("; ").find(row => row.startsWith("csrftoken="));
     return cookie ? cookie.split("=")[1] : "";
+  }
+
+  // ✅ [추가] 로그아웃 처리 함수
+  async function handleLogout() {
+    const access = localStorage.getItem("access_token");
+    const refresh = localStorage.getItem("refresh_token");
+
+    if (!refresh) {
+      alert("로그인 정보가 없습니다.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/v1/auth/logout/", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${access}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refresh }),
+      });
+
+      if (res.status === 204 || res.status === 205) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        alert("로그아웃 되었습니다.");
+        location.href = "/login/";
+      } else if (res.status === 401) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        alert("이미 로그아웃된 상태입니다.");
+        location.href = "/login/";
+      } else {
+        console.warn("Logout failed:", await res.text());
+        alert("로그아웃에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error("Logout error:", err);
+      alert("네트워크 오류가 발생했습니다.");
+    }
+  }
+
+  // ✅ [추가] 로그아웃 버튼 이벤트 등록
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", handleLogout);
   }
 
   // 새 대화
@@ -17,6 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       body: JSON.stringify({ title: "새 대화" }),
     });
+
     const conv = await resp.json();
     location.href = `/conversations/${conv.id}/`;
   });
@@ -60,6 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
           },
           body: JSON.stringify({ title: newTitle }),
         });
+
         if (resp.ok) {
           const span = document.createElement("span");
           span.className = "truncate";
