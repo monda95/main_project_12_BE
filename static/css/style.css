@@ -1832,8 +1832,29 @@ body[data-theme='dark'] .ai-response p {
   margin-right: auto;
 }
 
-#chat-section[hidden] {
+[data-search-container][hidden],
+#search-section[hidden],
+[data-inline-chat-panel][hidden] {
   display: none !important;
+}
+
+[data-inline-chat-panel] {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.28s ease, transform 0.32s ease;
+}
+
+[data-main-grid].is-chat-active {
+  max-width: clamp(22rem, 92vw, 54rem);
+}
+
+[data-main-grid].is-chat-active [data-search-container] {
+  display: none !important;
+}
+
+[data-main-grid].is-chat-active [data-inline-chat-panel] {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 #search-section h2 {
