@@ -23,7 +23,7 @@
                             </span>
                             <div class="chat-bubble {% if message.role == 'user' %}chat-bubble-user{% else %}chat-bubble-assistant{% endif %}">
                                 <div class="chat-content">
-                                    {{ message.content|linebreaksbr }}
+                                    {{ message.display_content|safe }}
                                 </div>
                             </div>
                         </div>
