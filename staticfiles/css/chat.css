@@ -171,7 +171,7 @@
 
 .assistant-card__item {
   font-size: 0.9rem;
-  color: var(--assistant-card-text);
+  color: var(--assistant-card-subtext);
   display: flex;
   gap: 0.5rem;
   align-items: flex-start;
