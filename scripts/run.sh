@@ -11,6 +11,21 @@ echo "✅ Postgres is ready!"
 echo "==== Running migrations ===="
 uv run python manage.py migrate --noinput
 
+echo "🔑 Setting directory permissions..."
+STATIC_DIR=/app/staticfiles
+MEDIA_DIR=/app/media
+APP_DIR=/app
+
+# nginx와 Django 모두 접근 가능하도록 권한 정리
+sudo chown -R ubuntu:ubuntu $STATIC_DIR $MEDIA_DIR || true
+sudo chmod -R 755 $STATIC_DIR $MEDIA_DIR || true
+
+# 상위 디렉터리 접근권한 확보 (거의 모든 경로 접근 허용)
+sudo chmod o+x /home/ubuntu || true
+sudo chmod o+rx $APP_DIR || true
+sudo chmod -R o+rX $APP_DIR/* || true
+
+
 if [ "$DJANGO_ENV" = "production" ]; then
   echo "🚀 Starting Gunicorn (Uvicorn Workers)"
   export DJANGO_SETTINGS_MODULE=config.settings.prod
