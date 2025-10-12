@@ -8,6 +8,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchBtn = document.getElementById("search-btn");
   const searchInput = document.getElementById("search-input");
   const searchSection = document.getElementById("search-section");
+  const searchContainer = document.querySelector("[data-search-container]");
+  const mainGrid = document.querySelector("[data-main-grid]");
+
   const chatSection = document.getElementById("chat-section");
   const chatBox = document.getElementById("chat-box");
   const chatInput = document.getElementById("chat-input");
@@ -927,7 +930,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (searchBtn && searchInput) {
-
     const supportsInlineChat =
       Boolean(chatSection && chatBox) &&
       typeof window.appendMessage === "function" &&
@@ -946,6 +948,8 @@ document.addEventListener("DOMContentLoaded", () => {
         element.removeAttribute("hidden");
         element.removeAttribute("aria-hidden");
       };
+
+feat2
       const escapeHtml = (value) =>
         String(value).replace(/[&<>'"]/g, (match) => {
           const map = {
@@ -962,6 +966,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const activateInlineChat = () => {
         hideElement(searchSection);
+        hideElement(searchContainer);
+        if (mainGrid) {
+          mainGrid.classList.add("is-chat-active");
+        }
+feat2
         if (chatSection) {
           showElement(chatSection);
         }

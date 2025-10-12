@@ -4,9 +4,11 @@
 {% block title %}메인화면 - Nourisher{% endblock %}
 
 {% block content %}
-<div class="app-main-grid app-main-grid--single">
-  <div id="search-section">
-    <h2>음식에 대해 궁금한 것을 물어보세요</h2>
+<div class="app-main-grid app-main-grid--single" data-main-grid>
+  <section data-search-container>
+    <div id="search-section">
+      <h2>음식에 대해 궁금한 것을 물어보세요</h2>
+
 
     <div class="search-bar">
       <input
@@ -89,5 +91,6 @@
       </div>
     </section>
   </section>
+
 </div>
 {% endblock %}
