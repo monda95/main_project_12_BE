@@ -1836,6 +1836,17 @@ body[data-theme='dark'] .ai-response p {
   min-height: clamp(26rem, 72vh, 40rem);
 }
 
+.chat-panel[data-inline-chat-panel] {
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition: opacity 240ms ease, transform 240ms ease;
+}
+
+.chat-panel[data-inline-chat-panel]:not([hidden]) {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 
 .conversation-panel {
   min-height: clamp(30rem, 78vh, 46rem);

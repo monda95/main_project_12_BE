@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchSection = document.getElementById("search-section");
   const chatSection = document.getElementById("chat-section");
   const chatBox = document.getElementById("chat-box");
+  const chatInput = document.getElementById("chat-input");
   const searchFillButtons = Array.from(
     document.querySelectorAll("[data-search-fill]")
   );
@@ -591,25 +592,137 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (searchBtn && searchInput) {
-    const navigateToConversation = query => {
-      if (!query) return;
-      const params = new URLSearchParams({ query });
-      window.location.href = `/conversation/?${params.toString()}`;
-    };
+    const supportsInlineChat =
+      Boolean(chatSection && chatBox) &&
+      typeof window.appendMessage === "function" &&
+      typeof window.showTypingIndicator === "function" &&
+      typeof window.removeTypingIndicator === "function";
 
-    const handleSearchSubmit = () => {
-      const query = searchInput.value.trim();
-      if (!query) return;
-      navigateToConversation(query);
-    };
+    if (supportsInlineChat) {
+      const hideElement = element => {
+        if (!element) return;
+        element.setAttribute("hidden", "");
+        element.setAttribute("aria-hidden", "true");
+      };
 
-    searchBtn.addEventListener("click", handleSearchSubmit);
+      const showElement = element => {
+        if (!element) return;
+        element.removeAttribute("hidden");
+        element.removeAttribute("aria-hidden");
+      };
 
-    searchInput.addEventListener("keypress", event => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        handleSearchSubmit();
-      }
-    });
+      const escapeHtml = value =>
+        String(value).replace(/[&<>'"]/g, match => {
+          const map = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          };
+          return map[match] || match;
+        });
+
+      let isSubmitting = false;
+
+      const activateInlineChat = () => {
+        hideElement(searchSection);
+        if (chatSection) {
+          showElement(chatSection);
+          chatSection.classList.add("chat-panel--active");
+        }
+      };
+
+      const startInlineConversation = async query => {
+        if (!query || isSubmitting) return;
+
+        isSubmitting = true;
+        searchBtn.setAttribute("aria-busy", "true");
+        searchBtn.disabled = true;
+        searchInput.setAttribute("aria-busy", "true");
+
+        activateInlineChat();
+
+        window.removeTypingIndicator();
+        window.appendMessage("user", query);
+        searchInput.value = "";
+        window.showTypingIndicator();
+
+        try {
+          const response = await fetch(
+            `/api/v1/search/?query=${encodeURIComponent(query)}`
+          );
+          const data = await response.json();
+
+          window.removeTypingIndicator();
+
+          if (!response.ok) {
+            const message = data?.detail || data?.message || "검색에 실패했습니다.";
+            throw new Error(message);
+          }
+
+          if (typeof window.renderAssistantMessage === "function") {
+            window.appendMessage("assistant", window.renderAssistantMessage(data));
+          } else {
+            window.appendMessage("assistant", data);
+          }
+        } catch (error) {
+          window.removeTypingIndicator();
+          console.error("Search API 오류:", error);
+          const fallback =
+            (error && (error.message || error.detail)) || "잠시 후 다시 시도해주세요.";
+          window.appendMessage(
+            "assistant",
+            `<div class="text-red-600">⚠️ ${escapeHtml(fallback)}</div>`
+          );
+        } finally {
+          isSubmitting = false;
+          searchBtn.removeAttribute("aria-busy");
+          searchBtn.disabled = false;
+          searchInput.removeAttribute("aria-busy");
+          if (chatInput) {
+            chatInput.focus();
+          } else {
+            searchInput.focus();
+          }
+        }
+      };
+
+      const handleSearchSubmit = () => {
+        const query = searchInput.value.trim();
+        if (!query) return;
+        startInlineConversation(query);
+      };
+
+      searchBtn.addEventListener("click", handleSearchSubmit);
+
+      searchInput.addEventListener("keypress", event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          handleSearchSubmit();
+        }
+      });
+    } else {
+      const navigateToConversation = query => {
+        if (!query) return;
+        const params = new URLSearchParams({ query });
+        window.location.href = `/conversation/?${params.toString()}`;
+      };
+
+      const handleSearchSubmit = () => {
+        const query = searchInput.value.trim();
+        if (!query) return;
+        navigateToConversation(query);
+      };
+
+      searchBtn.addEventListener("click", handleSearchSubmit);
+
+      searchInput.addEventListener("keypress", event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          handleSearchSubmit();
+        }
+      });
+    }
   }
 });
