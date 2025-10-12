@@ -7,14 +7,18 @@ User = get_user_model()
 
 
 class SignupSerializer(serializers.ModelSerializer):
+    """
+    사용자가 회원가입하기 위한 시리얼라이저입니다.
+    """
+
     password = serializers.CharField(write_only=True, min_length=8)
     username = serializers.CharField(max_length=100)
     nickname = serializers.CharField(
         max_length=50, required=False, allow_blank=True, allow_null=True
     )
-    image_url = serializers.URLField(
-        required=False, allow_blank=True, allow_null=True, max_length=500
-    )
+    # image_url = serializers.URLField(
+    #     required=False, allow_blank=True, allow_null=True, max_length=500
+    # )
 
     class Meta:
         model = User
@@ -42,10 +46,10 @@ class SignupSerializer(serializers.ModelSerializer):
             return None
         return str(v).strip()
 
-    def validate_image_url(self, v):
-        if v in (None, ""):
-            return None
-        return v.strip()
+    # def validate_image_url(self, v):
+    #     if v in (None, ""):
+    #         return None
+    #     return v.strip()
 
     def create(self, validated):
         validated.setdefault("image_url", None)

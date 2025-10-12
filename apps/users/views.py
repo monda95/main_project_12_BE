@@ -18,8 +18,6 @@ from django.http import JsonResponse
 from django.conf import settings
 from urllib.parse import urlencode
 
-# from django.core.mail import send_mail
-# from django.conf import settings
 from .forms import SignupForm, LoginForm
 from .serializers import (
     PasswordChangeSerializer,
@@ -49,7 +47,6 @@ def send_verification_email(request, user):
         reverse("verify_email", kwargs={"uidb64": uid, "token": token})
     )
 
-    # 실제 이메일 발송 로직은 주석 처리되어 있습니다.
     print(f"인증 링크: {verification_link} (터미널에서 클릭 시 인증 처리됨)")
 
 
@@ -117,7 +114,7 @@ class SignupPageView(TemplateView):
             if not isinstance(errors, (list, tuple)):
                 errors = [errors]
 
-            if field == serializer.non_field_errors_key:
+            if field == "non_field_errors":
                 target_field = None
             elif field in form.fields:
                 target_field = field
