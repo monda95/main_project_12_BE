@@ -364,6 +364,8 @@ body[data-theme='dark'] .header-banner-tagline {
   backdrop-filter: blur(14px);
 }
 
+[data-theme-menu]:hover .theme-dropdown,
+[data-theme-menu]:focus-within .theme-dropdown,
 .theme-menu:hover .theme-dropdown,
 .theme-menu:focus-within .theme-dropdown {
   opacity: 1;

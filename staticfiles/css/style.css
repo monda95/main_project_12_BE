@@ -355,10 +355,35 @@ body[data-theme='dark'] .header-auth-btn--logout:focus-visible {
 }
 
 .theme-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.625rem;
+  width: clamp(14rem, 22vw, 16rem);
+  border-radius: 1.5rem;
+  border: 1px solid var(--surface-border);
+  padding: 1rem 1.25rem;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 50;
+  backdrop-filter: blur(14px);
   background: var(--surface-color);
   border-color: var(--surface-border);
   color: var(--surface-text);
   box-shadow: 0 24px 45px -20px rgba(15, 23, 42, 0.18);
+}
+
+[data-theme-menu]:hover .theme-dropdown,
+[data-theme-menu]:focus-within .theme-dropdown,
+.theme-menu:hover .theme-dropdown,
+.theme-menu:focus-within .theme-dropdown {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .theme-dropdown p {
