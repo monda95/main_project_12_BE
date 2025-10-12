@@ -1,3 +1,4 @@
+import logging
 import requests
 from django.contrib.auth import get_user_model, authenticate, login
 from django.contrib.auth.tokens import default_token_generator
@@ -28,6 +29,7 @@ from .serializers import (
 )
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 def _build_github_redirect_uri(request):
@@ -196,7 +198,7 @@ class LogoutView(generics.GenericAPIView):
     """
 
     serializer_class = RefreshTokenSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     throttle_classes: list = []
 
     def post(self, request, *args, **kwargs):
@@ -205,8 +207,13 @@ class LogoutView(generics.GenericAPIView):
         try:
             refresh_token = RefreshToken(serializer.validated_data["refresh"])
             refresh_token.blacklist()
+            logger.info("[로그아웃] Refresh 토큰을 블랙리스트에 등록했습니다.")
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Exception:
+            logger.warning(
+                "[로그아웃] Refresh 토큰 블랙리스트 등록에 실패했습니다.",
+                exc_info=True,
+            )
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
