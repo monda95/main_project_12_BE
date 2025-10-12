@@ -232,10 +232,17 @@ h6 {
 }
 
 .header-banner-right {
+  width: 100%;
+  justify-content: flex-end;
+  justify-self: end;
+  align-items: flex-start;
+}
+
+.header-auth-wrapper {
+  display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.6rem;
-  justify-self: end;
+  gap: 0.75rem;
 }
 
 .header-banner-center {
@@ -333,7 +340,10 @@ body[data-theme='dark'] .header-banner-tagline {
   position: relative;
   display: inline-flex;
   align-items: center;
-  align-self: flex-end;
+}
+
+.header-auth-wrapper .theme-menu {
+  align-self: center;
 }
 
 .theme-dropdown {
@@ -402,10 +412,11 @@ body[data-theme='dark'] .header-banner-tagline {
 
 .theme-option {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  padding: 0.6rem 0.85rem;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  padding: 2.35rem 0.9rem 0.9rem;
   border: 1px solid var(--surface-border);
   border-radius: 1rem;
   font-size: 0.9rem;
@@ -413,17 +424,31 @@ body[data-theme='dark'] .header-banner-tagline {
   position: relative;
   overflow: hidden;
   z-index: 0;
+  text-align: center;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .theme-option__label {
-  font-weight: 600;
+  margin: 0;
+  margin-top: 0.35rem;
+  font-weight: 500;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--surface-subtle);
 }
 
 .theme-option__badge {
-  font-size: 0.7rem;
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.5rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--surface-subtle);
 }
@@ -433,13 +458,18 @@ body[data-theme='dark'] .header-banner-tagline {
   color: inherit;
 }
 
+.theme-option.active .theme-option__label,
+[data-theme-option].is-active .theme-option__label {
+  color: inherit;
+}
+
 .header-auth-actions {
-  display: inline-flex;
+  display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 0.75rem;
-  margin-left: auto;
 }
 
 .header-auth-actions form {
@@ -451,6 +481,7 @@ body[data-theme='dark'] .header-banner-tagline {
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
+  min-width: 9.5rem;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
   font-weight: 600;
