@@ -23,53 +23,88 @@
             Nourisher
           </a>
           <!-- 사이드바 기능 비활성화: 토글 버튼 제거 -->
-          {#
-          <button type="button"
-                  class="sidebar-toggle-btn inline-flex items-center justify-center rounded-full border border-transparent px-3 py-2 text-sm font-semibold transition lg:hidden"
-                  data-sidebar-toggle
-                  aria-expanded="false"
-                  aria-controls="app-sidebar">
-            메뉴
-          </button>
-          #}
+          <!--
+            <button type="button"
+                    class="sidebar-toggle-btn inline-flex items-center justify-center rounded-full border border-transparent px-3 py-2 text-sm font-semibold transition lg:hidden"
+                    data-sidebar-toggle
+                    aria-expanded="false"
+                    aria-controls="app-sidebar">
+              메뉴
+            </button>
+          -->
         </div>
         <p class="header-banner-tagline">AI 음식 영양 분석 도우미</p>
       </div>
       <div class="header-banner-right flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
-        <div class="relative group" data-theme-menu>
-          <button type="button" class="flex items-center gap-2 rounded-full border px-4 py-2 shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 theme-control-btn" data-theme-trigger>
-            <span class="text-xs uppercase tracking-[0.35em] theme-trigger-caption" data-theme-trigger-label>사용자 설정</span>
-            <span class="flex items-center gap-2 text-sm font-medium" data-theme-label>
-              <span class="inline-flex h-2 w-2 rounded-full" data-theme-indicator></span>
+        <div class="theme-menu" data-theme-menu>
+          <button type="button"
+                  class="theme-control-btn"
+                  data-theme-trigger
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  aria-controls="theme-menu-panel">
+            <span class="theme-trigger-caption" data-theme-trigger-label>사용자 설정</span>
+            <span class="theme-trigger-label" data-theme-label>
+              <span class="theme-indicator-dot" data-theme-indicator></span>
               <span data-theme-current-text>기본 모드</span>
             </span>
           </button>
-          <div class="absolute right-0 top-full mt-2.5 w-56 rounded-2xl border shadow-xl backdrop-blur theme-dropdown invisible opacity-0 transition-all duration-200 ease-out group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-            <form class="px-4 py-3 space-y-4" aria-label="테마 선택" data-theme-form>
-              <div>
-                <p class="text-[10px] uppercase tracking-[0.35em]">사용자설정</p>
-                <p class="text-xs">원하는 UI 모드를 선택하세요.</p>
+          <div class="theme-dropdown" id="theme-menu-panel" role="presentation">
+            <form class="theme-dropdown__form"
+                  aria-label="테마 선택"
+                  data-theme-form>
+              <div class="theme-dropdown__intro">
+                <p>사용자설정</p>
+                <p>원하는 UI 모드를 선택하세요.</p>
               </div>
-              <div class="flex flex-col gap-2">
-                <label for="theme-system" class="cursor-pointer" data-theme-option="system">
-                  <input type="radio" name="theme" value="system" id="theme-system" class="sr-only peer">
-                  <div class="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition theme-option">
-                    <span class="font-medium">사용자설정</span>
-                    <span class="text-[10px] font-semibold tracking-[0.3em]" data-default-label="SYSTEM" data-active-label="ACTIVE">SYSTEM</span>
+              <div class="theme-option-list">
+                <label for="theme-system"
+                       data-theme-option="system"
+                       role="option"
+                       aria-selected="false">
+                  <input type="radio"
+                         name="theme"
+                         value="system"
+                         id="theme-system"
+                         class="sr-only">
+                  <div class="theme-option">
+                    <span class="theme-option__label">사용자설정</span>
+                    <span class="theme-option__badge"
+                          data-default-label="SYSTEM"
+                          data-active-label="ACTIVE">SYSTEM</span>
                   </div>
                 </label>
-                <label for="theme-light" class="cursor-pointer" data-theme-option="light">
-                  <input type="radio" name="theme" value="light" id="theme-light" class="sr-only peer" checked>
-                  <div class="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition theme-option">
-                    <span class="font-medium">기본</span>
-                    <span class="text-[10px] font-semibold tracking-[0.3em]" data-default-label="LIGHT" data-active-label="ACTIVE">LIGHT</span>
+                <label for="theme-light"
+                       data-theme-option="light"
+                       role="option"
+                       aria-selected="true">
+                  <input type="radio"
+                         name="theme"
+                         value="light"
+                         id="theme-light"
+                         class="sr-only"
+                         checked>
+                  <div class="theme-option">
+                    <span class="theme-option__label">기본</span>
+                    <span class="theme-option__badge"
+                          data-default-label="LIGHT"
+                          data-active-label="ACTIVE">LIGHT</span>
                   </div>
                 </label>
-                <label for="theme-dark" class="cursor-pointer" data-theme-option="dark">
-                  <input type="radio" name="theme" value="dark" id="theme-dark" class="sr-only peer">
-                  <div class="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition theme-option">
-                    <span class="font-medium">다크</span>
-                    <span class="text-[10px] font-semibold tracking-[0.3em]" data-default-label="DARK" data-active-label="ACTIVE">DARK</span>
+                <label for="theme-dark"
+                       data-theme-option="dark"
+                       role="option"
+                       aria-selected="false">
+                  <input type="radio"
+                         name="theme"
+                         value="dark"
+                         id="theme-dark"
+                         class="sr-only">
+                  <div class="theme-option">
+                    <span class="theme-option__label">다크</span>
+                    <span class="theme-option__badge"
+                          data-default-label="DARK"
+                          data-active-label="ACTIVE">DARK</span>
                   </div>
                 </label>
               </div>
@@ -99,49 +134,49 @@
 
   <!-- Main -->
   <main class="site-main">
-    <div class="app-shell">
+    <div class="app-shell app-shell--no-sidebar">
       <!-- 사이드바 기능 비활성화: 전체 마크업 가드 -->
-      {#
-      <div class="app-sidebar-backdrop" data-sidebar-backdrop></div>
-      <aside id="app-sidebar" class="app-sidebar" data-sidebar>
-        <div class="app-sidebar-inner">
-          <div class="app-sidebar-top">
-            <a href="{% url 'main-page' %}" class="app-sidebar-logo">
-              <span class="app-sidebar-logo-mark">N</span>
-            </a>
-            <button type="button"
-                    class="sidebar-collapse-btn"
-                    data-sidebar-collapse
-                    aria-label="사이드바 접기"
-                    aria-expanded="true">
-              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd"
-                      d="M12.78 5.22a.75.75 0 0 0-1.06 0L8.47 8.47a.75.75 0 0 0 0 1.06l3.25 3.25a.75.75 0 1 0 1.06-1.06L10.06 9l2.72-2.72a.75.75 0 0 0 0-1.06Z"
-                      clip-rule="evenodd" />
-              </svg>
-            </button>
-          </div>
-          <div class="app-sidebar-section" aria-live="polite">
-            <p class="app-sidebar-heading">Conversations</p>
-            <div class="conversation-empty" data-conversation-state>
-              대화를 불러오는 중입니다...
+      <!--
+        <div class="app-sidebar-backdrop" data-sidebar-backdrop></div>
+        <aside id="app-sidebar" class="app-sidebar" data-sidebar>
+          <div class="app-sidebar-inner">
+            <div class="app-sidebar-top">
+              <a href="{% url 'main-page' %}" class="app-sidebar-logo">
+                <span class="app-sidebar-logo-mark">N</span>
+              </a>
+              <button type="button"
+                      class="sidebar-collapse-btn"
+                      data-sidebar-collapse
+                      aria-label="사이드바 접기"
+                      aria-expanded="true">
+                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd"
+                        d="M12.78 5.22a.75.75 0 0 0-1.06 0L8.47 8.47a.75.75 0 0 0 0 1.06l3.25 3.25a.75.75 0 1 0 1.06-1.06L10.06 9l2.72-2.72a.75.75 0 0 0 0-1.06Z"
+                        clip-rule="evenodd" />
+                </svg>
+              </button>
             </div>
-            <ul class="conversation-list" data-conversation-list aria-label="대화 목록" hidden></ul>
+            <div class="app-sidebar-section" aria-live="polite">
+              <p class="app-sidebar-heading">Conversations</p>
+              <div class="conversation-empty" data-conversation-state>
+                대화를 불러오는 중입니다...
+              </div>
+              <ul class="conversation-list" data-conversation-list aria-label="대화 목록" hidden></ul>
+            </div>
+            <div class="app-sidebar-footer">
+              <button type="button"
+                      class="new-conversation-btn"
+                      data-new-conversation
+                      data-requires-auth-message="로그인이 필요합니다. 로그인 후 다시 시도해주세요.">
+                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path d="M10 3a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5h-5.5a.75.75 0 0 1 0-1.5h5.5v-5.5A.75.75 0 0 1 10 3Z" />
+                </svg>
+                <span>새 대화</span>
+              </button>
+            </div>
           </div>
-          <div class="app-sidebar-footer">
-            <button type="button"
-                    class="new-conversation-btn"
-                    data-new-conversation
-                    data-requires-auth-message="로그인이 필요합니다. 로그인 후 다시 시도해주세요.">
-              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path d="M10 3a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5h-5.5a.75.75 0 0 1 0-1.5h5.5v-5.5A.75.75 0 0 1 10 3Z" />
-              </svg>
-              <span>새 대화</span>
-            </button>
-          </div>
-        </div>
-      </aside>
-      #}
+        </aside>
+      -->
       <section class="app-content" data-sidebar-content>
         <div class="app-content-inner">
           {% block content %}{% endblock %}

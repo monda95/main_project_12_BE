@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchSection = document.getElementById("search-section");
   const searchContainer = document.querySelector("[data-search-container]");
   const mainGrid = document.querySelector("[data-main-grid]");
+
   const chatSection = document.getElementById("chat-section");
   const chatBox = document.getElementById("chat-box");
   const chatInput = document.getElementById("chat-input");
@@ -194,10 +195,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const trigger = document.querySelector("[data-theme-trigger]");
     const currentText = document.querySelector("[data-theme-current-text]");
     const indicator = document.querySelector("[data-theme-indicator]");
+    const menu = form.closest("[data-theme-menu]");
+    const dropdown = menu?.querySelector(".theme-dropdown");
     const optionLabels = Array.from(
       form.querySelectorAll("[data-theme-option]")
     );
     const inputs = Array.from(form.querySelectorAll("input[name='theme']"));
+    let closeThemeMenu = () => {};
+    let openThemeMenu = () => {};
 
     const labelMap = {
       light: "라이트 모드",
@@ -355,6 +360,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const preference = target.value;
       persistPreference(preference);
       applyTheme(preference);
+      closeThemeMenu();
     });
 
     const handleSystemChange = () => {
@@ -370,33 +376,86 @@ document.addEventListener("DOMContentLoaded", () => {
       systemMatcher.addListener(handleSystemChange);
     }
 
-    if (trigger) {
+    if (trigger && menu) {
       trigger.setAttribute("aria-haspopup", "true");
       trigger.setAttribute("aria-expanded", "false");
 
-      const schedule = window.requestAnimationFrame
-        ? (callback) => window.requestAnimationFrame(callback)
-        : (callback) => setTimeout(callback, 0);
-
-      const updateExpansionState = () => {
-        const isExpanded =
-          document.activeElement === trigger || form.contains(document.activeElement);
-        trigger.setAttribute("aria-expanded", isExpanded ? "true" : "false");
+      openThemeMenu = () => {
+        if (menu.classList.contains("is-open")) return;
+        menu.classList.add("is-open");
+        trigger.setAttribute("aria-expanded", "true");
       };
 
-      trigger.addEventListener("focus", updateExpansionState);
-      trigger.addEventListener("blur", () => {
-        schedule(updateExpansionState);
-      });
+      closeThemeMenu = ({ restoreFocus = false } = {}) => {
+        if (!menu.classList.contains("is-open")) return;
+        menu.classList.remove("is-open");
+        trigger.setAttribute("aria-expanded", "false");
+        if (restoreFocus) {
+          trigger.focus();
+        }
+      };
 
-      form.addEventListener("focusin", updateExpansionState);
-      form.addEventListener("focusout", () => {
-        schedule(updateExpansionState);
+      const toggleThemeMenu = () => {
+        if (menu.classList.contains("is-open")) {
+          closeThemeMenu();
+        } else {
+          openThemeMenu();
+          const activeInput = form.querySelector(
+            "input[name='theme']:checked"
+          );
+          if (activeInput) {
+            activeInput.focus();
+          } else if (dropdown && typeof dropdown.focus === "function") {
+            dropdown.focus();
+          }
+        }
+      };
+
+      trigger.addEventListener("click", (event) => {
+        event.preventDefault();
+        toggleThemeMenu();
       });
 
       trigger.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
+          event.preventDefault();
+          closeThemeMenu();
           trigger.blur();
+          return;
+        }
+
+        if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openThemeMenu();
+          const activeInput = form.querySelector("input[name='theme']:checked");
+          if (activeInput) {
+            activeInput.focus();
+          }
+        }
+      });
+
+      const handleOutsidePointerDown = (event) => {
+        if (!menu.classList.contains("is-open")) return;
+        if (!menu.contains(event.target)) {
+          closeThemeMenu();
+        }
+      };
+
+      document.addEventListener("pointerdown", handleOutsidePointerDown);
+
+      form.addEventListener("focusin", openThemeMenu);
+
+      form.addEventListener("focusout", (event) => {
+        const next = event.relatedTarget;
+        if (!next || !menu.contains(next)) {
+          closeThemeMenu();
+        }
+      });
+
+      form.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeThemeMenu({ restoreFocus: true });
         }
       });
     }
@@ -890,6 +949,7 @@ document.addEventListener("DOMContentLoaded", () => {
         element.removeAttribute("aria-hidden");
       };
 
+feat2
       const escapeHtml = (value) =>
         String(value).replace(/[&<>'"]/g, (match) => {
           const map = {
@@ -910,6 +970,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (mainGrid) {
           mainGrid.classList.add("is-chat-active");
         }
+feat2
         if (chatSection) {
           showElement(chatSection);
         }
