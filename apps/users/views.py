@@ -1,5 +1,6 @@
 import logging
 import requests
+from django.contrib import messages
 from django.contrib.auth import get_user_model, authenticate, login
 from django.contrib.auth import logout as django_logout
 from django.contrib.auth.tokens import default_token_generator
@@ -155,6 +156,7 @@ class SignupPageView(TemplateView):
             if serializer.is_valid():
                 user = serializer.save()
                 transaction.on_commit(lambda: send_verification_email(request, user))
+                messages.success(request, "회원가입이 완료되었습니다. 로그인 후 이용해주세요.")
                 return redirect("login-page")
             self._bind_serializer_errors_to_form(serializer, form)
         return self.render_to_response(self.get_context_data(form=form))

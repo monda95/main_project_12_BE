@@ -6,6 +6,14 @@
 <div class="auth-card">
   <h2 class="auth-card__title">로그인</h2>
 
+  {% if messages %}
+    <div class="auth-card__alerts">
+      {% for message in messages %}
+        <div class="auth-card__alert auth-card__alert--{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   <!-- 로그인 폼 -->
   <form method="post" class="auth-card__form" data-login-form>
     {% csrf_token %}
