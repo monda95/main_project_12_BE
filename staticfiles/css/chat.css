@@ -48,6 +48,7 @@
   border-radius: 0.75rem;
   padding: 0.5rem 1rem;
   box-shadow: var(--chat-bubble-shadow);
+
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -76,6 +77,8 @@
   word-break: break-word;
   white-space: pre-line;
 }
+
+
 
 .chat-bubble-typing {
   background: var(--chat-bubble-typing-bg);

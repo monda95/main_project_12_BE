@@ -281,7 +281,11 @@ class InferenceService:
         )
 
         # 3. 사용자 메시지 저장 (원본 그대로)
-        Message.objects.create(conversation=conversation, role="user", content=prompt)
+        Message.objects.create(
+            conversation=conversation,
+            role=Message.Role.USER,
+            content=prompt,
+        )
 
         # 4. Gemini API 호출
         gemini_result = InferenceService.call_gemini_api(refined_prompt, options)
@@ -335,9 +339,10 @@ class InferenceService:
 
         ai_msg = Message.objects.create(
             conversation=conversation,
-            role="assistant",
+            role=Message.Role.AI,
             content=json.dumps(
-                parsed_content, ensure_ascii=False
+                parsed_content,
+                ensure_ascii=False,
             ),  # DB에는 문자열로 저장
         )
 
@@ -361,7 +366,7 @@ class InferenceService:
         # 8. 최종 결과 반환 (dict 보장)
         return {
             "message_id": ai_msg.id,
-            "role": ai_msg.role,
+            "role": "assistant",
             "content": parsed_content,  # ✅ dict로 반환
             "usage": {
                 "prompt_tokens": gemini_result.get("prompt_tokens") or 0,

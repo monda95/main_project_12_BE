@@ -15,12 +15,93 @@
       data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">
 
   <!-- Header -->
-  {% include "includes/header.html" %}
-
+  <header class="site-header header-banner" data-header>
+    <div class="header-banner-inner max-w-6xl mx-auto flex flex-col gap-4 px-6 py-4 md:flex-row md:items-center md:justify-between">
+      <div class="header-banner-left flex flex-col gap-2 md:flex-row md:items-center md:gap-6">
+        <div class="flex items-center gap-3">
+          <a href="{% url 'main-page' %}" class="site-logo focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-lg" data-theme-title>
+            Nourisher
+          </a>
+          <!-- 사이드바 기능 비활성화: 토글 버튼 제거 -->
+          {#
+          <button type="button"
+                  class="sidebar-toggle-btn inline-flex items-center justify-center rounded-full border border-transparent px-3 py-2 text-sm font-semibold transition lg:hidden"
+                  data-sidebar-toggle
+                  aria-expanded="false"
+                  aria-controls="app-sidebar">
+            메뉴
+          </button>
+          #}
+        </div>
+        <p class="header-banner-tagline">AI 음식 영양 분석 도우미</p>
+      </div>
+      <div class="header-banner-right flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
+        <div class="relative group" data-theme-menu>
+          <button type="button" class="flex items-center gap-2 rounded-full border px-4 py-2 shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 theme-control-btn" data-theme-trigger>
+            <span class="text-xs uppercase tracking-[0.35em] theme-trigger-caption" data-theme-trigger-label>사용자 설정</span>
+            <span class="flex items-center gap-2 text-sm font-medium" data-theme-label>
+              <span class="inline-flex h-2 w-2 rounded-full" data-theme-indicator></span>
+              <span data-theme-current-text>기본 모드</span>
+            </span>
+          </button>
+          <div class="absolute right-0 top-full mt-2.5 w-56 rounded-2xl border shadow-xl backdrop-blur theme-dropdown invisible opacity-0 transition-all duration-200 ease-out group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+            <form class="px-4 py-3 space-y-4" aria-label="테마 선택" data-theme-form>
+              <div>
+                <p class="text-[10px] uppercase tracking-[0.35em]">사용자설정</p>
+                <p class="text-xs">원하는 UI 모드를 선택하세요.</p>
+              </div>
+              <div class="flex flex-col gap-2">
+                <label for="theme-system" class="cursor-pointer" data-theme-option="system">
+                  <input type="radio" name="theme" value="system" id="theme-system" class="sr-only peer">
+                  <div class="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition theme-option">
+                    <span class="font-medium">사용자설정</span>
+                    <span class="text-[10px] font-semibold tracking-[0.3em]" data-default-label="SYSTEM" data-active-label="ACTIVE">SYSTEM</span>
+                  </div>
+                </label>
+                <label for="theme-light" class="cursor-pointer" data-theme-option="light">
+                  <input type="radio" name="theme" value="light" id="theme-light" class="sr-only peer" checked>
+                  <div class="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition theme-option">
+                    <span class="font-medium">기본</span>
+                    <span class="text-[10px] font-semibold tracking-[0.3em]" data-default-label="LIGHT" data-active-label="ACTIVE">LIGHT</span>
+                  </div>
+                </label>
+                <label for="theme-dark" class="cursor-pointer" data-theme-option="dark">
+                  <input type="radio" name="theme" value="dark" id="theme-dark" class="sr-only peer">
+                  <div class="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition theme-option">
+                    <span class="font-medium">다크</span>
+                    <span class="text-[10px] font-semibold tracking-[0.3em]" data-default-label="DARK" data-active-label="ACTIVE">DARK</span>
+                  </div>
+                </label>
+              </div>
+            </form>
+          </div>
+        </div>
+        <nav class="header-auth-actions">
+          {% if user.is_authenticated %}
+            <form method="post" action="{% url 'logout' %}" class="contents" data-logout-form>
+              {% csrf_token %}
+              <button type="submit" class="header-auth-btn header-auth-btn--logout">
+                로그아웃
+              </button>
+            </form>
+          {% else %}
+            <a href="{% url 'login-page' %}" class="header-auth-btn header-auth-btn--login">
+              로그인
+            </a>
+            <a href="{% url 'signup-page' %}" class="header-auth-btn header-auth-btn--signup">
+              회원가입
+            </a>
+          {% endif %}
+        </nav>
+      </div>
+    </div>
+  </header>
 
   <!-- Main -->
   <main class="site-main">
     <div class="app-shell">
+      <!-- 사이드바 기능 비활성화: 전체 마크업 가드 -->
+      {#
       <div class="app-sidebar-backdrop" data-sidebar-backdrop></div>
       <aside id="app-sidebar" class="app-sidebar" data-sidebar>
         <div class="app-sidebar-inner">
@@ -60,6 +141,7 @@
           </div>
         </div>
       </aside>
+      #}
       <section class="app-content" data-sidebar-content>
         <div class="app-content-inner">
           {% block content %}{% endblock %}
