@@ -921,7 +921,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: calc(var(--header-height) + 1.5rem) clamp(1.5rem, 4vw, 3rem) 3rem;
+  padding: calc(var(--header-height) + 0.75rem) clamp(1.5rem, 4vw, 3rem) 3rem;
   transition: padding 0.35s ease;
 }
 
@@ -933,6 +933,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-top: clamp(0.75rem, 1.8vw, 1.75rem);
   gap: clamp(1.5rem, 2vw, 2.5rem);
 }
 
@@ -1053,7 +1054,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   .app-content {
     grid-column: 1;
     align-items: center;
-    padding: calc(var(--header-height) + 2rem) clamp(2rem, 4vw, 4rem) 3.5rem;
+    padding: calc(var(--header-height) + 1rem) clamp(2rem, 4vw, 4rem) 3.5rem;
   }
 
   .app-shell.is-sidebar-collapsed {
@@ -1090,7 +1091,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   }
 
   .app-content {
-    padding: calc(var(--header-height) + 1.5rem) 1.25rem 3rem;
+    padding: calc(var(--header-height) + 0.5rem) 1.25rem 3rem;
     align-items: center;
   }
 
