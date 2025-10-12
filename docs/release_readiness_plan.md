@@ -9,6 +9,7 @@
 ## 1. 스타일 정밀 마감
 - `docs/ui_style_gap_analysis.md`의 체크리스트를 우선 처리하고, 전역 토큰/다크 모드 적용률을 QA로 검증. 필요 시 `docs/ui_style_snapshot.md`를 참조해 하드코딩 잔여 위치를 역추적한다.
 - Tailwind CDN 의존을 제거할지 결정: 정적 번들로 고정할 경우 CSP/성능 이점 확보.
+- 결정 시 로컬/CI에서 Tailwind를 빌드하고, 산출된 CSS/JS만 EC2(t2.micro)에 업로드해 Nginx가 서빙하도록 한다. t2.micro 인스턴스에서는 런타임 빌드를 금지한다.
 - 접근성 테스트: 대비비율(Axe DevTools), 키보드 탭 플로우, 포커스 트랩(테마 드롭다운·사이드바)을 최소 1회 이상 수동 검증.
 
 ## 2. 요구사항 표 대비 기능 QA
