@@ -14,6 +14,14 @@
   --surface-subtle: rgba(17, 24, 39, 0.6);
   --indicator-active: var(--color-secondary);
   --indicator-inactive: rgba(99, 102, 241, 0.18);
+
+  /* 기본 테마 옵션 커스텀 프로퍼티 */
+  --theme-option-accent-default: var(--indicator-active);
+  --theme-option-ring-default: rgba(99, 102, 241, 0.2);
+  --theme-option-fill-default: rgba(99, 102, 241, 0.12);
+  --theme-option-accent: var(--theme-option-accent-default);
+  --theme-option-ring: var(--theme-option-ring-default);
+  --theme-option-fill: var(--theme-option-fill-default);
   --sidebar-width: 15.625rem;
   --sidebar-collapsed-width: 5rem;
   --header-height: 6rem;

@@ -15,7 +15,6 @@
 - 헤더 인증 버튼(`.header-auth-btn--login`)과 포커스 상태가 토큰 기반으로 치환됐으며, 남은 하드코딩은 QA 대상 아님으로 정리됨.【F:static/css/style.css†L174-L236】
 - 사이드바와 대화 목록(`.app-sidebar`, `.conversation-item`)은 배경/테두리/호버 상태가 토큰화됐고, 실제 페이지 Tailwind 충돌 여부는 QA 필요.【F:static/css/style.css†L260-L408】
 - 채팅 버블, 어시스턴트 카드 역시 전역 토큰을 사용하도록 교체됨. 추가적인 명칭 정리 및 도트/그림자 강도 튜닝은 후속 작업으로 분리 예정.【F:static/css/chat.css†L1-L188】
-feat2
 
 ## 3. 레이아웃 구조 스냅샷
 - `.app-shell` 기준으로 고정 헤더 + 사이드바 + 콘텐츠 3단 구성이며, 사이드바는 슬라이드 인/아웃을 위한 `transform` 전환이 남아 있다.【F:static/css/style.css†L310-L347】
