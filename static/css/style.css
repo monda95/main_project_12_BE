@@ -210,13 +210,13 @@ h6 {
 
 .header-banner-inner {
   width: 100%;
-  max-width: clamp(20rem, 90vw, 72rem);
+  max-width: clamp(22rem, 95vw, 90rem);
   margin: 0 auto;
-  padding: clamp(1.25rem, 3vw, 1.75rem) clamp(1.5rem, 4vw, 2.5rem);
+  padding: clamp(1.5rem, 3.5vw, 2.25rem) clamp(1.5rem, 4vw, 2.75rem);
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
-  align-items: center;
+  align-items: start;
   justify-items: center;
 }
 
@@ -228,6 +228,9 @@ h6 {
 }
 
 .header-banner-left {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
   justify-self: start;
 }
 
