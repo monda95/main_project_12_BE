@@ -933,6 +933,7 @@ body[data-theme='dark'] .conversation-empty[data-state='error'] {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-top: clamp(1.125rem, 2.4vw, 2.25rem);
   gap: clamp(1.5rem, 2vw, 2.5rem);
 }
 
