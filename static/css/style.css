@@ -417,6 +417,7 @@ body[data-theme='dark'] .header-banner-tagline {
   justify-content: flex-start;
   gap: 0.45rem;
   padding: 2.35rem 0.9rem 0.9rem;
+
   border: 1px solid var(--surface-border);
   border-radius: 1rem;
   font-size: 0.9rem;
@@ -434,6 +435,7 @@ body[data-theme='dark'] .header-banner-tagline {
   font-weight: 500;
   font-size: 0.78rem;
   line-height: 1.45;
+
   color: var(--surface-subtle);
 }
 
@@ -442,6 +444,7 @@ body[data-theme='dark'] .header-banner-tagline {
   top: 1rem;
   left: 50%;
   transform: translateX(-50%);
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -470,6 +473,7 @@ body[data-theme='dark'] .header-banner-tagline {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
+
 }
 
 .header-auth-actions form {
@@ -1863,6 +1867,8 @@ body[data-theme='dark'] .ai-response p {
   margin-right: auto;
 }
 
+[data-search-container][hidden],
+#search-section[hidden],
 #chat-section[hidden] {
   display: none !important;
 }

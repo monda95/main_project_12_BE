@@ -1569,6 +1569,12 @@ body[data-theme='dark'] .ai-response p {
   grid-template-columns: minmax(0, 1fr);
 }
 
+[data-search-container][hidden],
+#search-section[hidden],
+#chat-section[hidden] {
+  display: none !important;
+}
+
 #search-section h2 {
   margin: 0;
   font-size: clamp(1.35rem, 1vw + 1.1rem, 1.75rem);
