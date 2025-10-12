@@ -1,9 +1,14 @@
+import ast
+import json
+
 from django.views import View
 from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, render
 from django.http import JsonResponse
+from django.utils.html import escape, format_html, format_html_join
+from django.utils.safestring import mark_safe
 
 from apps.inference.services import InferenceService
 from apps.core.permissions import IsOwner
@@ -15,6 +20,165 @@ from .serializers import (
 )
 
 
+ASSISTANT_GUIDE_TEXT = "🤖 Nourisher는 식품 정보에 특화된 비서예요. 음식 관련 질문을 해주세요."
+ASSISTANT_FALLBACK_HTML = format_html(
+    '<div class="text-gray-700">{}</div>',
+    mark_safe(escape(ASSISTANT_GUIDE_TEXT).replace("\n", "<br>")),
+)
+
+
+def _format_user_message(text: str | None) -> str:
+    if not text:
+        return ""
+    return mark_safe(escape(text).replace("\n", "<br>"))
+
+
+def _dump_message_content(payload) -> str:
+    if isinstance(payload, str):
+        return payload
+    if payload is None:
+        return ""
+    try:
+        return json.dumps(payload, ensure_ascii=False)
+    except (TypeError, ValueError):
+        return str(payload)
+
+
+def _render_assistant_card(payload: dict) -> str:
+    nutrition = payload.get("nutrition") if isinstance(payload, dict) else None
+    if not isinstance(nutrition, dict):
+        nutrition = {}
+
+    macro_pairs = []
+    for label, key in (
+        ("열량", "calories"),
+        ("단백질", "protein"),
+        ("지방", "fat"),
+        ("탄수화물", "carbohydrates"),
+    ):
+        value = nutrition.get(key)
+        value_str = str(value).strip() if value not in (None, "") else ""
+        if value_str:
+            macro_pairs.append((label, value_str))
+
+    macro_section = ""
+    if macro_pairs:
+        macro_items = format_html_join(
+            "",
+            "<li><span>{}</span><span>{}</span></li>",
+            macro_pairs,
+        )
+        macro_section = format_html(
+            '<ul class="assistant-card__list">{}</ul>',
+            macro_items,
+        )
+
+    detail_pairs = []
+    for label, key in (
+        ("⚠️ 알레르기", "allergy"),
+        ("📦 보관", "storage"),
+        ("⚙️ 가공", "processing"),
+        ("🌱 원료", "source"),
+    ):
+        value = payload.get(key) if isinstance(payload, dict) else None
+        value_str = str(value).strip() if value not in (None, "") else ""
+        if value_str:
+            detail_pairs.append((label, value_str))
+
+    detail_section = ""
+    if detail_pairs:
+        detail_section = format_html_join(
+            "",
+            '<div class="assistant-card__item"><span class="assistant-card__item-label">{}</span><span>{}</span></div>',
+            detail_pairs,
+        )
+
+    if not macro_section and not detail_section:
+        return ASSISTANT_FALLBACK_HTML
+
+    header_html = format_html(
+        '<header class="assistant-card__header"><h3>{}</h3><p>{}</p></header>',
+        "🍽️ 영양 정보",
+        "100g 기준 주요 정보를 정리했어요.",
+    )
+
+    divider_html = (
+        format_html('<hr class="assistant-card__divider">')
+        if macro_section and detail_section
+        else ""
+    )
+
+    parts = [header_html]
+    if macro_section:
+        parts.append(macro_section)
+    if divider_html:
+        parts.append(divider_html)
+    if detail_section:
+        parts.append(detail_section)
+
+    return mark_safe(
+        '<article class="assistant-card" aria-label="영양 정보 카드">'
+        + "".join(str(part) for part in parts)
+        + "</article>"
+    )
+
+
+def _render_assistant_message(raw_content) -> str:
+    payload = raw_content
+    if isinstance(raw_content, str):
+        stripped = raw_content.strip()
+        if not stripped:
+            payload = {}
+        else:
+            try:
+                payload = json.loads(stripped)
+            except json.JSONDecodeError:
+                try:
+                    payload = ast.literal_eval(stripped)
+                except (ValueError, SyntaxError):
+                    payload = {"raw_text": stripped}
+
+    if isinstance(payload, dict):
+        card_html = _render_assistant_card(payload)
+        if card_html != ASSISTANT_FALLBACK_HTML:
+            return card_html
+
+        raw_text = payload.get("raw_text")
+        if raw_text:
+            return _format_user_message(str(raw_text))
+
+        return ASSISTANT_FALLBACK_HTML
+
+    if isinstance(payload, str) and payload:
+        return _format_user_message(payload)
+
+    return ASSISTANT_FALLBACK_HTML
+
+
+def _prepare_messages(raw_messages) -> list[dict]:
+    prepared: list[dict] = []
+    for msg in raw_messages:
+        raw_role = getattr(msg, "role", "")
+        content = getattr(msg, "content", "")
+
+        if raw_role in (Message.Role.USER, "user"):
+            prepared.append(
+                {
+                    "id": getattr(msg, "id", None),
+                    "role": "user",
+                    "display_content": _format_user_message(content),
+                }
+            )
+        else:
+            prepared.append(
+                {
+                    "id": getattr(msg, "id", None),
+                    "role": "assistant",
+                    "display_content": _render_assistant_message(content),
+                }
+            )
+
+    return prepared
 @extend_schema_view(
     list=extend_schema(summary="대화 목록 조회", tags=["Conversations"]),
     create=extend_schema(summary="새 대화 생성", tags=["Conversations"]),
@@ -128,7 +292,9 @@ class MessageListCreateView(generics.ListCreateAPIView):
 
         # 1. 유저 메시지 저장
         user_msg = Message.objects.create(
-            conversation=conversation, role="user", content=user_content
+            conversation=conversation,
+            role=Message.Role.USER,
+            content=user_content,
         )
 
         # 2. AI 응답 생성 및 저장
@@ -138,10 +304,11 @@ class MessageListCreateView(generics.ListCreateAPIView):
             user=request.user if request.user.is_authenticated else None,
             options={},
         )
+        ai_raw_content = result.get("content", "")
         ai_msg = Message.objects.create(
             conversation=conversation,
-            role="assistant",
-            content=result.get("content", ""),
+            role=Message.Role.AI,
+            content=_dump_message_content(ai_raw_content),
         )
 
         # 3. 두 메시지를 묶어서 응답
@@ -223,7 +390,9 @@ class ConversationPageView(View):
 
             # 2. 유저 메시지 저장
             user_msg = Message.objects.create(
-                conversation=conversation, role="user", content=query
+                conversation=conversation,
+                role=Message.Role.USER,
+                content=query,
             )
 
             # 3. AI 응답 저장
@@ -233,13 +402,16 @@ class ConversationPageView(View):
                 user=request.user if request.user.is_authenticated else None,
                 options={},
             )
+            ai_raw_content = result.get("content", "")
             ai_msg = Message.objects.create(
                 conversation=conversation,
-                role="assistant",
-                content=result.get("content", ""),
+                role=Message.Role.AI,
+                content=_dump_message_content(ai_raw_content),
             )
 
             messages = [user_msg, ai_msg]
+
+        prepared_messages = _prepare_messages(messages)
 
         return render(
             request,
@@ -247,6 +419,6 @@ class ConversationPageView(View):
             {
                 "conversation": conversation,
                 "conversation_id": conversation.id if conversation else None,
-                "messages": messages,
+                "messages": prepared_messages,
             },
         )
