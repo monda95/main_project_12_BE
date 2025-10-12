@@ -20,11 +20,10 @@
   <!-- Header -->
   {% include "includes/header.html" %}
 
+
   <!-- Main -->
   <main class="flex-1 pt-24">
     <div class="app-shell">
-      <!-- 사이드바 기능 비활성화: 전체 마크업 가드 -->
-      {#
       <div class="app-sidebar-backdrop" data-sidebar-backdrop></div>
       <aside id="app-sidebar" class="app-sidebar" data-sidebar>
         <div class="app-sidebar-inner">
@@ -64,7 +63,6 @@
           </div>
         </div>
       </aside>
-      #}
       <section class="app-content" data-sidebar-content>
         <div class="app-content-inner">
           {% block content %}{% endblock %}
