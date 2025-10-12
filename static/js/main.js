@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const SIDEBAR_ENABLED = false;
   initThemeControls();
   initHeaderScroll();
   initSidebarToggle();
@@ -412,6 +413,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------- Sidebar ----------
   function initSidebarToggle() {
+    if (!SIDEBAR_ENABLED) return;
     const shell = document.querySelector(".app-shell");
     const sidebar = document.querySelector("[data-sidebar]");
     const toggleBtn = document.querySelector("[data-sidebar-toggle]");
@@ -468,6 +470,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---------- Conversation Sidebar ----------
   function initConversationSidebar() {
+    if (!SIDEBAR_ENABLED) return;
     const shell = document.querySelector(".app-shell");
     const sidebar = document.querySelector("[data-sidebar]");
     const collapseBtn = document.querySelector("[data-sidebar-collapse]");
