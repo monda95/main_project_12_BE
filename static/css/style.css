@@ -1915,7 +1915,7 @@ body[data-theme='dark'] .ai-response p {
   gap: 2rem; /* 기존 1.5rem → 2.0rem 로 변경 */
   padding: clamp(1.75rem, 3vw, 2.75rem);
   padding-bottom: 2.5rem; /* 추가 */
-  background: #f9fafb;
+  background: var(--surface-color);
   border-radius: 1.5rem;
   border: 1px solid var(--surface-border);
   box-shadow: var(--shadow-elevated);

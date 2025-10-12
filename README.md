@@ -184,3 +184,4 @@ docker-compose exec uv run manage.py migrate
 * 수동 실행: python manage.py refresh_queries
 * Docker Compose: web + db 통합 실행 (Celery 분리 설계 포함)
 * 로깅: 실행 로그 및 AI 호출 결과 콘솔 출력
+* Nginx: `deploy/nginx/app.conf` 예제 구성 추가(정적 자산 alias + 프록시 헤더 기본값)
