@@ -169,6 +169,26 @@ docker-compose exec uv run manage.py migrate
 
 ---
 
+## 🖥️ 프런트엔드 (SPA)
+
+새로운 React 기반 SPA 클라이언트가 `frontend/` 디렉터리에 추가되었습니다.
+
+```bash
+cd frontend
+pnpm install  # 또는 npm install / yarn install
+pnpm dev      # Vite 개발 서버 (기본 포트 5173)
+pnpm build    # 정적 산출물 생성 (dist/)
+```
+
+환경 변수
+
+* `VITE_API_BASE_URL` – 백엔드 API 엔드포인트 (예: `http://localhost:8000`)
+* `VITE_I18N_LOCALE` – 기본 언어 (기본값 `ko`)
+
+빌드 결과물(`dist/`)은 Django 정적 파일 혹은 Nginx 등에서 정적 서빙하면 됩니다.
+
+---
+
 ## 🔐 보안 & 인증
 
 * JWT 토큰 인증
