@@ -25,16 +25,18 @@
           <a href="{% url 'main-page' %}" class="site-logo focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-lg" data-theme-title>
             Nourisher
           </a>
-          <!-- 사이드바 기능 비활성화: 토글 버튼 제거 -->
-          {#
+
+          <!--
+          
           <button type="button"
                   class="sidebar-toggle-btn inline-flex items-center justify-center rounded-full border border-transparent px-3 py-2 text-sm font-semibold transition lg:hidden"
                   data-sidebar-toggle
                   aria-expanded="false"
                   aria-controls="app-sidebar">
             메뉴
-          </button>
-          #}
+          </button> 사이드바 기능 비활성화: 토글 버튼 제거 -->
+          
+
         </div>
         <p class="header-banner-tagline">AI 음식 영양 분석 도우미</p>
       </div>
@@ -103,8 +105,12 @@
   <!-- Main -->
   <main class="flex-1 pt-24">
     <div class="app-shell">
-      <!-- 사이드바 기능 비활성화: 전체 마크업 가드 -->
-      {#
+
+      <!-- 사이드바 레이아웃은 현재 비활성화되어 있습니다. -->
+      <section class="app-content">
+
+      <!-- 
+    
       <div class="app-sidebar-backdrop" data-sidebar-backdrop></div>
       <aside id="app-sidebar" class="app-sidebar" data-sidebar>
         <div class="app-sidebar-inner">
@@ -146,6 +152,7 @@
       </aside>
       #}
       <section class="app-content" data-sidebar-content>
+사이드바 기능 비활성화: 전체 마크업 가드 -->
         <div class="app-content-inner">
           {% block content %}{% endblock %}
         </div>
@@ -154,11 +161,7 @@
   </main>
 
   <!-- Footer -->
-  {#  <footer class="bg-white shadow-inner mt-12">#}
-  {#    <div class="max-w-6xl mx-auto text-center py-4 text-gray-500 text-sm">#}
-  {#      &copy; 2025 Nourisher — Powered by Django & Gemini#}
-  {#    </div>#}
-  {#  </footer>#}
+  <!-- 푸터는 향후 재도입을 위해 비워둡니다. -->
 
   <!-- JS -->
   {% block extra_scripts %}{% endblock %}
