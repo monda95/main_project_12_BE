@@ -36,40 +36,75 @@
         <p class="header-banner-tagline">AI 음식 영양 분석 도우미</p>
       </div>
       <div class="header-banner-right flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
-        <div class="relative group" data-theme-menu>
-          <button type="button" class="flex items-center gap-2 rounded-full border px-4 py-2 shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 theme-control-btn" data-theme-trigger>
-            <span class="text-xs uppercase tracking-[0.35em] theme-trigger-caption" data-theme-trigger-label>사용자 설정</span>
-            <span class="flex items-center gap-2 text-sm font-medium" data-theme-label>
-              <span class="inline-flex h-2 w-2 rounded-full" data-theme-indicator></span>
+        <div class="theme-menu" data-theme-menu>
+          <button type="button"
+                  class="theme-control-btn"
+                  data-theme-trigger
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  aria-controls="theme-menu-panel">
+            <span class="theme-trigger-caption" data-theme-trigger-label>사용자 설정</span>
+            <span class="theme-trigger-label" data-theme-label>
+              <span class="theme-indicator-dot" data-theme-indicator></span>
               <span data-theme-current-text>기본 모드</span>
             </span>
           </button>
-          <div class="absolute right-0 top-full mt-2.5 w-56 rounded-2xl border shadow-xl backdrop-blur theme-dropdown invisible opacity-0 transition-all duration-200 ease-out group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-            <form class="px-4 py-3 space-y-4" aria-label="테마 선택" data-theme-form>
-              <div>
-                <p class="text-[10px] uppercase tracking-[0.35em]">사용자설정</p>
-                <p class="text-xs">원하는 UI 모드를 선택하세요.</p>
+          <div class="theme-dropdown" id="theme-menu-panel" role="presentation">
+            <form class="theme-dropdown__form"
+                  aria-label="테마 선택"
+                  data-theme-form>
+              <div class="theme-dropdown__intro">
+                <p>사용자설정</p>
+                <p>원하는 UI 모드를 선택하세요.</p>
               </div>
-              <div class="flex flex-col gap-2">
-                <label for="theme-system" class="cursor-pointer" data-theme-option="system">
-                  <input type="radio" name="theme" value="system" id="theme-system" class="sr-only peer">
-                  <div class="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition theme-option">
-                    <span class="font-medium">사용자설정</span>
-                    <span class="text-[10px] font-semibold tracking-[0.3em]" data-default-label="SYSTEM" data-active-label="ACTIVE">SYSTEM</span>
+              <div class="theme-option-list">
+                <label for="theme-system"
+                       data-theme-option="system"
+                       role="option"
+                       aria-selected="false">
+                  <input type="radio"
+                         name="theme"
+                         value="system"
+                         id="theme-system"
+                         class="sr-only">
+                  <div class="theme-option">
+                    <span class="theme-option__label">사용자설정</span>
+                    <span class="theme-option__badge"
+                          data-default-label="SYSTEM"
+                          data-active-label="ACTIVE">SYSTEM</span>
                   </div>
                 </label>
-                <label for="theme-light" class="cursor-pointer" data-theme-option="light">
-                  <input type="radio" name="theme" value="light" id="theme-light" class="sr-only peer" checked>
-                  <div class="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition theme-option">
-                    <span class="font-medium">기본</span>
-                    <span class="text-[10px] font-semibold tracking-[0.3em]" data-default-label="LIGHT" data-active-label="ACTIVE">LIGHT</span>
+                <label for="theme-light"
+                       data-theme-option="light"
+                       role="option"
+                       aria-selected="true">
+                  <input type="radio"
+                         name="theme"
+                         value="light"
+                         id="theme-light"
+                         class="sr-only"
+                         checked>
+                  <div class="theme-option">
+                    <span class="theme-option__label">기본</span>
+                    <span class="theme-option__badge"
+                          data-default-label="LIGHT"
+                          data-active-label="ACTIVE">LIGHT</span>
                   </div>
                 </label>
-                <label for="theme-dark" class="cursor-pointer" data-theme-option="dark">
-                  <input type="radio" name="theme" value="dark" id="theme-dark" class="sr-only peer">
-                  <div class="flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition theme-option">
-                    <span class="font-medium">다크</span>
-                    <span class="text-[10px] font-semibold tracking-[0.3em]" data-default-label="DARK" data-active-label="ACTIVE">DARK</span>
+                <label for="theme-dark"
+                       data-theme-option="dark"
+                       role="option"
+                       aria-selected="false">
+                  <input type="radio"
+                         name="theme"
+                         value="dark"
+                         id="theme-dark"
+                         class="sr-only">
+                  <div class="theme-option">
+                    <span class="theme-option__label">다크</span>
+                    <span class="theme-option__badge"
+                          data-default-label="DARK"
+                          data-active-label="ACTIVE">DARK</span>
                   </div>
                 </label>
               </div>
