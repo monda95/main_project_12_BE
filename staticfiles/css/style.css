@@ -378,9 +378,15 @@ body[data-theme='dark'] .header-auth-btn--logout:focus-visible {
   font-weight: 700;
 }
 
-.theme-option:hover {
+.theme-option:hover,
+.theme-option:focus-visible {
   border-color: var(--theme-option-accent, var(--theme-option-accent-default));
+  background: var(--theme-option-fill, var(--theme-option-fill-default));
+  color: var(--theme-option-accent, var(--theme-option-accent-default));
+  box-shadow: 0 0 0 1px var(--theme-option-ring, var(--theme-option-ring-default)),
+    0 18px 32px -22px var(--theme-option-ring, var(--theme-option-ring-default));
   transform: translateY(-1px);
+  outline: none;
 }
 
 .theme-option.active {
