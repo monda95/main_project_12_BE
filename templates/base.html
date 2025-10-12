@@ -78,7 +78,7 @@
         </div>
         <nav class="header-auth-actions">
           {% if user.is_authenticated %}
-            <form method="post" action="{% url 'logout' %}" class="contents">
+            <form method="post" action="{% url 'logout' %}" class="contents" data-logout-form>
               {% csrf_token %}
               <button type="submit" class="header-auth-btn header-auth-btn--logout">
                 로그아웃

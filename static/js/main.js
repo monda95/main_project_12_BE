@@ -13,6 +13,168 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-search-fill]")
   );
 
+  const tokenStorage = (() => {
+    const keys = {
+      access: "access_token",
+      refresh: "refresh_token",
+    };
+
+    const safeSet = (key, value) => {
+      try {
+        if (value) {
+          localStorage.setItem(key, value);
+        }
+      } catch (error) {
+        console.warn(`토큰을 저장하지 못했습니다. (${key})`, error);
+      }
+    };
+
+    const safeRemove = (key) => {
+      try {
+        localStorage.removeItem(key);
+      } catch (error) {
+        console.warn(`토큰을 삭제하지 못했습니다. (${key})`, error);
+      }
+    };
+
+    const safeGet = (key) => {
+      try {
+        return localStorage.getItem(key);
+      } catch (error) {
+        console.warn(`토큰을 불러오지 못했습니다. (${key})`, error);
+        return null;
+      }
+    };
+
+    return {
+      setTokens(access, refresh) {
+        if (access) {
+          safeSet(keys.access, access);
+        }
+        if (refresh) {
+          safeSet(keys.refresh, refresh);
+        }
+      },
+      clearTokens() {
+        safeRemove(keys.access);
+        safeRemove(keys.refresh);
+      },
+      getAccess() {
+        return safeGet(keys.access);
+      },
+      getRefresh() {
+        return safeGet(keys.refresh);
+      },
+    };
+  })();
+
+  const initLoginFormSync = () => {
+    const loginForm = document.querySelector("[data-login-form]");
+    if (!loginForm) return;
+
+    loginForm.addEventListener("submit", async (event) => {
+      if (loginForm.dataset.jwtSync === "done") {
+        return;
+      }
+
+      event.preventDefault();
+
+      const formData = new FormData(loginForm);
+      const email = (formData.get("email") || "").toString().trim();
+      const password = (formData.get("password") || "").toString();
+
+      if (!email || !password) {
+        loginForm.dataset.jwtSync = "done";
+        loginForm.submit();
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/v1/auth/login/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!response.ok) {
+          console.warn("로그인 토큰 발급이 실패했습니다.", response.status);
+        } else {
+          const contentType = response.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            const data = await response.json();
+            if (data?.access && data?.refresh) {
+              tokenStorage.setTokens(data.access, data.refresh);
+              console.info("로그인 토큰을 저장했습니다.");
+            }
+          }
+        }
+      } catch (error) {
+        console.error("로그인 토큰 동기화 중 오류가 발생했습니다.", error);
+      } finally {
+        loginForm.dataset.jwtSync = "done";
+        loginForm.submit();
+      }
+    });
+  };
+
+  const initLogoutSync = () => {
+    const logoutForm = document.querySelector("[data-logout-form]");
+    if (!logoutForm) return;
+
+    logoutForm.addEventListener("submit", async (event) => {
+      if (logoutForm.dataset.jwtSync === "done") {
+        return;
+      }
+
+      event.preventDefault();
+
+      const access = tokenStorage.getAccess();
+      const refresh = tokenStorage.getRefresh();
+
+      if (!refresh) {
+        console.warn("저장된 리프레시 토큰이 없어 바로 로그아웃합니다.");
+        tokenStorage.clearTokens();
+        logoutForm.dataset.jwtSync = "done";
+        logoutForm.submit();
+        return;
+      }
+
+      try {
+        const headers = {
+          "Content-Type": "application/json",
+        };
+
+        if (access) {
+          headers.Authorization = `Bearer ${access}`;
+        }
+
+        const response = await fetch("/api/v1/auth/logout/", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ refresh }),
+          keepalive: true,
+        });
+
+        if (!response.ok) {
+          console.warn("로그아웃 API 호출이 실패했습니다.", response.status);
+        } else {
+          console.info("로그아웃 API 호출이 완료되었습니다.");
+        }
+      } catch (error) {
+        console.error("로그아웃 요청 중 오류가 발생했습니다.", error);
+      } finally {
+        tokenStorage.clearTokens();
+        logoutForm.dataset.jwtSync = "done";
+        logoutForm.submit();
+      }
+    });
+  };
+
+  initLoginFormSync();
+  initLogoutSync();
+
   function ensureChatUiReady(context = "초기화") {
     const ready = Boolean(
       searchBtn && searchInput && searchSection && chatSection && chatBox
