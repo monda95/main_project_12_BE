@@ -15,6 +15,7 @@ from django.views.generic import TemplateView, FormView
 from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -242,46 +243,83 @@ class LogoutView(generics.GenericAPIView):
     로그아웃 API
 
     - 클라이언트로부터 받은 **Refresh Token을 블랙리스트에 추가**하여 더 이상 사용할 수 없도록 처리합니다.
+    - 세션으로 로그인된 사용자 역시 함께 로그아웃되도록 처리합니다.
+    - 일반 폼 요청은 메인 페이지로 리다이렉션합니다.
     """
 
     serializer_class = RefreshTokenSerializer
     permission_classes = [permissions.AllowAny]
     throttle_classes: list = []
 
+    def _wants_json(self, request):
+        accept = request.headers.get("Accept", "")
+        content_type = request.headers.get("Content-Type", "")
+        x_requested_with = request.headers.get("X-Requested-With")
+        return (
+            "application/json" in accept
+            or "application/json" in content_type
+            or x_requested_with == "XMLHttpRequest"
+        )
+
     def post(self, request, *args, **kwargs):
-        refresh_value = request.data.get("refresh")
+        refresh_value = request.data.get("refresh") if request.data else None
         user = request.user if request.user.is_authenticated else None
 
-        if not refresh_value:
+        serializer_error = None
+        blacklist_failed = False
+
+        if refresh_value:
+            try:
+                serializer = self.get_serializer(data={"refresh": refresh_value})
+                serializer.is_valid(raise_exception=True)
+                refresh_token = RefreshToken(serializer.validated_data["refresh"])
+                refresh_token.blacklist()
+                logger.info("[로그아웃] Refresh 토큰을 블랙리스트에 등록했습니다.")
+            except ValidationError as exc:
+                serializer_error = exc
+            except Exception:
+                blacklist_failed = True
+                logger.warning(
+                    "[로그아웃] Refresh 토큰 블랙리스트 등록 중 오류가 발생했습니다.",
+                    exc_info=True,
+                )
+        else:
             if user and user.is_superuser:
                 logger.info(
-                    "[로그아웃] 슈퍼유저 %s가 토큰 없이 로그아웃을 완료했습니다.",
+                    "[로그아웃] 슈퍼유저 %s가 토큰 없이 로그아웃을 요청했습니다.",
                     getattr(user, "email", user.get_username()),
                 )
             elif user:
                 logger.info(
-                    "[로그아웃] 사용자 %s가 토큰 없이 로그아웃을 요청하여 추가 조치 없이 종료했습니다.",
+                    "[로그아웃] 사용자 %s가 토큰 없이 로그아웃을 요청했습니다.",
                     getattr(user, "email", user.get_username()),
                 )
             else:
-                logger.info(
-                    "[로그아웃] 비로그인 요청이 토큰 없이 로그아웃을 시도해 추가 조치 없이 종료했습니다."
-                )
-            return Response(status=status.HTTP_204_NO_CONTENT)
+                logger.info("[로그아웃] 비로그인 사용자가 로그아웃을 요청했습니다.")
 
-        serializer = self.get_serializer(data={"refresh": refresh_value})
-        serializer.is_valid(raise_exception=True)
         try:
-            refresh_token = RefreshToken(serializer.validated_data["refresh"])
-            refresh_token.blacklist()
-            logger.info("[로그아웃] Refresh 토큰을 블랙리스트에 등록했습니다.")
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            if user:
+                logger.info(
+                    "[로그아웃] 세션 사용자 %s 로그아웃을 처리합니다.",
+                    getattr(user, "email", user.get_username()),
+                )
+            django_logout(request)
+            logger.info("[로그아웃] 세션 로그아웃 처리가 완료되었습니다.")
         except Exception:
             logger.warning(
-                "[로그아웃] Refresh 토큰 블랙리스트 등록에 실패했습니다.",
+                "[로그아웃] 세션 로그아웃 처리 중 오류가 발생했습니다.",
                 exc_info=True,
             )
+
+        if serializer_error:
+            raise serializer_error
+
+        if blacklist_failed:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        if self._wants_json(request):
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return redirect("main-page")
 
 
 @extend_schema(summary="[인증] 로그인 (토큰 발급)", tags=["Auth & Users"])
