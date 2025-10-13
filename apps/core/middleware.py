@@ -1,5 +1,11 @@
 """공통 미들웨어 모음."""
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+
 
 class ForceHttpSchemeMiddleware:
     """모든 요청을 HTTP 스킴으로 강제한다.
@@ -14,11 +20,44 @@ class ForceHttpSchemeMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
+    SECURE_HINT_KEYS = (
+        "HTTP_X_FORWARDED_PROTO",
+        "HTTP_X_FORWARDED_SCHEME",
+        "HTTP_X_FORWARDED_SSL",
+    )
+
+    SECURE_BOOLEAN_KEYS = (
+        "HTTP_FRONT_END_HTTPS",
+        "HTTPS",
+    )
+
     def __call__(self, request):
-        # X-Forwarded-Proto 헤더는 완전히 제거해서 Django가 참고하지 않게 한다.
-        request.META.pop("HTTP_X_FORWARDED_PROTO", None)
+        removed = {}
+
+        for key in self.SECURE_HINT_KEYS:
+            if key in request.META:
+                removed[key] = request.META.pop(key)
+
+        boolean_overrides = {}
+
+        for key in self.SECURE_BOOLEAN_KEYS:
+            current = request.META.get(key)
+            if current and current.lower() != "off":
+                request.META[key] = "off"
+                boolean_overrides[key] = current
+
+        if removed or boolean_overrides:
+            logger.warning(
+                "HTTPS 강제 힌트를 정리했습니다 | 삭제: %s, off 처리: %s",
+                removed or None,
+                boolean_overrides or None,
+            )
+
         # WSGI 스킴도 HTTP로 덮어써 절대경로 계산 시 HTTPS가 등장하지 않도록 한다.
         request.META["wsgi.url_scheme"] = "http"
+        request.META["SERVER_PORT"] = "80"
+
+
         # 혹시 이전 미들웨어에서 override된 값이 남아 있다면 False로 재설정한다.
         setattr(request, "_is_secure_override", False)
 
