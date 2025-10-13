@@ -6,6 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+
 class ForceHttpSchemeMiddleware:
     """모든 요청을 HTTP 스킴으로 강제한다.
 
@@ -56,10 +57,12 @@ class ForceHttpSchemeMiddleware:
         request.META["wsgi.url_scheme"] = "http"
         request.META["SERVER_PORT"] = "80"
 
+
         # 혹시 이전 미들웨어에서 override된 값이 남아 있다면 False로 재설정한다.
         setattr(request, "_is_secure_override", False)
 
         return self.get_response(request)
+
 
 
 class DisableHSTSMiddleware:
@@ -74,10 +77,12 @@ class DisableHSTSMiddleware:
     header_name = "Strict-Transport-Security"
     header_value = "max-age=0; includeSubDomains"
 
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         response = self.get_response(request)
         response[self.header_name] = self.header_value
+
         return response
