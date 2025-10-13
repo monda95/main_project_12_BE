@@ -25,6 +25,7 @@ class ForceHttpSchemeMiddleware:
         return self.get_response(request)
 
 
+
 class DisableHSTSMiddleware:
     """브라우저에 저장된 HSTS 캐시를 즉시 비활성화한다.
 
@@ -37,10 +38,12 @@ class DisableHSTSMiddleware:
     header_name = "Strict-Transport-Security"
     header_value = "max-age=0; includeSubDomains"
 
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
         response = self.get_response(request)
         response[self.header_name] = self.header_value
+
         return response
