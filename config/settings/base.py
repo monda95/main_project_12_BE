@@ -60,7 +60,9 @@ INSTALLED_APPS = [
 
 # === 미들웨어 ===
 MIDDLEWARE = [
+    "apps.core.middleware.ForceHttpSchemeMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "apps.core.middleware.DisableHSTSMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
