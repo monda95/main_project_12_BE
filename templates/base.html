@@ -1,0 +1,200 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Nourisher{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}?v={{ STATIC_VERSION }}">
+  <link rel="stylesheet" href="{% static 'css/chat.css' %}?v={{ STATIC_VERSION }}">
+  <link rel="stylesheet" href="{% static 'css/style.fixed.css' %}?v={{ STATIC_VERSION }}">
+</head>
+<body data-theme="light"
+      data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">
+
+  <!-- Header -->
+  <header class="site-header header-banner" data-header>
+    <div class="header-banner-inner max-w-6xl mx-auto px-6 py-4">
+      <div class="header-banner-left">
+        <a href="{% url 'main-page' %}" class="site-logo focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-lg" data-theme-title>
+          Nourisher
+        </a>
+        <!-- 사이드바 기능 비활성화: 토글 버튼 제거 -->
+        <!--
+          <button type="button"
+                  class="sidebar-toggle-btn inline-flex items-center justify-center rounded-full border border-transparent px-3 py-2 text-sm font-semibold transition lg:hidden"
+                  data-sidebar-toggle
+                  aria-expanded="false"
+                  aria-controls="app-sidebar">
+            메뉴
+          </button>
+        -->
+      </div>
+      <div class="header-banner-center">
+        <p class="header-banner-title">Nourisher | AI 음식영양 분석도우미</p>
+      </div>
+      <div class="header-banner-right">
+        <div class="header-auth-wrapper">
+          <div class="theme-menu" data-theme-menu>
+            <button type="button"
+                    class="theme-control-btn"
+                    data-theme-trigger
+                    aria-haspopup="listbox"
+                    aria-expanded="false"
+                    aria-controls="theme-menu-panel">
+              <span class="theme-trigger-caption" data-theme-trigger-label>사용자 설정</span>
+              <span class="theme-trigger-label" data-theme-label>
+                <span class="theme-indicator-dot" data-theme-indicator></span>
+                <span data-theme-current-text>기본 모드</span>
+              </span>
+            </button>
+            <div class="theme-dropdown" id="theme-menu-panel" role="presentation">
+              <form class="theme-dropdown__form"
+                    aria-label="테마 선택"
+                    data-theme-form>
+                <div class="theme-dropdown__intro">
+                  <p>사용자설정</p>
+                  <p>원하는 UI 모드를 선택하세요.</p>
+                </div>
+                <div class="theme-option-list">
+                  <label for="theme-system"
+                         data-theme-option="system"
+                         role="option"
+                         aria-selected="false">
+                    <input type="radio"
+                           name="theme"
+                           value="system"
+                           id="theme-system"
+                           class="sr-only">
+                    <div class="theme-option">
+                      <span class="theme-option__badge"
+                            data-default-label="SYSTEM"
+                            data-active-label="ACTIVE">SYSTEM</span>
+                      <p class="theme-option__label">사용자설정</p>
+                    </div>
+                  </label>
+                  <label for="theme-light"
+                         data-theme-option="light"
+                         role="option"
+                         aria-selected="true">
+                    <input type="radio"
+                           name="theme"
+                           value="light"
+                           id="theme-light"
+                           class="sr-only"
+                           checked>
+                    <div class="theme-option">
+                      <span class="theme-option__badge"
+                            data-default-label="LIGHT"
+                            data-active-label="ACTIVE">LIGHT</span>
+                      <p class="theme-option__label">기본</p>
+                    </div>
+                  </label>
+                  <label for="theme-dark"
+                         data-theme-option="dark"
+                         role="option"
+                         aria-selected="false">
+                    <input type="radio"
+                           name="theme"
+                           value="dark"
+                           id="theme-dark"
+                           class="sr-only">
+                    <div class="theme-option">
+                      <span class="theme-option__badge"
+                            data-default-label="DARK"
+                            data-active-label="ACTIVE">DARK</span>
+                      <p class="theme-option__label">다크</p>
+                    </div>
+                  </label>
+                </div>
+              </form>
+            </div>
+
+          </div>
+          <nav class="header-auth-actions">
+            {% if user.is_authenticated %}
+              <form method="post" action="{% url 'logout' %}" class="contents" data-logout-form>
+                {% csrf_token %}
+                <button type="submit" class="header-auth-btn header-auth-btn--logout">
+                  로그아웃
+                </button>
+              </form>
+            {% else %}
+              <a href="{% url 'login-page' %}" class="header-auth-btn header-auth-btn--login">
+                로그인
+              </a>
+              <a href="{% url 'signup-page' %}" class="header-auth-btn header-auth-btn--signup">
+                회원가입
+              </a>
+            {% endif %}
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="site-main">
+    <div class="app-shell app-shell--no-sidebar">
+      <!-- 사이드바 기능 비활성화: 전체 마크업 가드 -->
+      <!--
+        <div class="app-sidebar-backdrop" data-sidebar-backdrop></div>
+        <aside id="app-sidebar" class="app-sidebar" data-sidebar>
+          <div class="app-sidebar-inner">
+            <div class="app-sidebar-top">
+              <a href="{% url 'main-page' %}" class="app-sidebar-logo">
+                <span class="app-sidebar-logo-mark">N</span>
+              </a>
+              <button type="button"
+                      class="sidebar-collapse-btn"
+                      data-sidebar-collapse
+                      aria-label="사이드바 접기"
+                      aria-expanded="true">
+                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd"
+                        d="M12.78 5.22a.75.75 0 0 0-1.06 0L8.47 8.47a.75.75 0 0 0 0 1.06l3.25 3.25a.75.75 0 1 0 1.06-1.06L10.06 9l2.72-2.72a.75.75 0 0 0 0-1.06Z"
+                        clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+            <div class="app-sidebar-section" aria-live="polite">
+              <p class="app-sidebar-heading">Conversations</p>
+              <div class="conversation-empty" data-conversation-state>
+                대화를 불러오는 중입니다...
+              </div>
+              <ul class="conversation-list" data-conversation-list aria-label="대화 목록" hidden></ul>
+            </div>
+            <div class="app-sidebar-footer">
+              <button type="button"
+                      class="new-conversation-btn"
+                      data-new-conversation
+                      data-requires-auth-message="로그인이 필요합니다. 로그인 후 다시 시도해주세요.">
+                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path d="M10 3a.75.75 0 0 1 .75.75v5.5h5.5a.75.75 0 0 1 0 1.5h-5.5v5.5a.75.75 0 0 1-1.5 0v-5.5h-5.5a.75.75 0 0 1 0-1.5h5.5v-5.5A.75.75 0 0 1 10 3Z" />
+                </svg>
+                <span>새 대화</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+      -->
+      <section class="app-content" data-sidebar-content>
+        <div class="app-content-inner">
+          {% block content %}{% endblock %}
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <!-- 푸터는 향후 재도입을 위해 비워둡니다. -->
+
+  <!-- JS -->
+  {% block extra_scripts %}{% endblock %}
+  <script src="{% static 'js/chat.js' %}"></script>
+  <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

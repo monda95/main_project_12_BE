@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}로그인 - Nourisher{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <h2 class="auth-card__title">로그인</h2>
+
+  {% if messages %}
+    <div class="auth-card__alerts">
+      {% for message in messages %}
+        <div class="auth-card__alert auth-card__alert--{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- 로그인 폼 -->
+  <form method="post" class="auth-card__form" data-login-form>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="auth-card__error">
+        <ul>
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+    <div>
+      <label class="theme-label" for="{{ form.email.id_for_label }}">이메일</label>
+      <input
+        type="email"
+        name="{{ form.email.html_name }}"
+        id="{{ form.email.id_for_label }}"
+        value="{{ form.email.value|default:'' }}"
+        class="theme-input {% if form.email.errors %}theme-input--error{% endif %}"
+        required
+        autocomplete="email"
+      >
+      {% for error in form.email.errors %}
+        <p class="theme-input__error">{{ error }}</p>
+      {% endfor %}
+    </div>
+    <div>
+      <label class="theme-label" for="{{ form.password.id_for_label }}">비밀번호</label>
+      <input
+        type="password"
+        name="{{ form.password.html_name }}"
+        id="{{ form.password.id_for_label }}"
+        class="theme-input {% if form.password.errors %}theme-input--error{% endif %}"
+        required
+        autocomplete="current-password"
+      >
+      {% for error in form.password.errors %}
+        <p class="theme-input__error">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="theme-primary-btn theme-primary-btn--block">
+      로그인
+    </button>
+  </form>
+
+  <!-- 푸터: 회원가입 링크 -->
+  <p class="auth-card__footer">
+    계정이 없으신가요?
+    <a href="{% url 'signup-page' %}" class="theme-link">회원가입</a>
+  </p>
+
+  <!-- OAuth 로그인 -->
+  <div class="auth-card__oauth">
+    <p class="auth-card__description">
+      Nourisher는 GitHub 계정으로 로그인할 수 있습니다.
+    </p>
+    <a href="{% url 'start_github_oauth' %}" class="auth-card__oauth-btn">
+      <svg aria-hidden="true" focusable="false"
+           viewBox="0 0 24 24" fill="currentColor" width="20" height="20"
+           xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" clip-rule="evenodd"
+              d="M12 .297c-6.63 0-12 5.373-12 12
+              0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577
+              0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61
+              -.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.083-.729.083-.729
+              1.205.084 1.838 1.236 1.838 1.236
+              1.07 1.835 2.809 1.305 3.495.998.108-.775.418-1.305.762-1.605
+              -2.665-.3-5.466-1.335-5.466-5.93
+              0-1.31.465-2.381 1.235-3.221-.135-.303-.54-1.523.105-3.176
+              0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405
+              1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23
+              .645 1.653.24 2.873.12 3.176.765.84 1.23 1.911 1.23 3.221
+              0 4.61-2.805 5.625-5.475 5.92.435.375.825 1.096.825 2.22
+              0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57
+              C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12z" />
+      </svg>
+      GitHub 계정으로 로그인하기
+    </a>
+  </div>
+</div>
+{% endblock %}
