@@ -1,18 +1,36 @@
 #!/bin/bash
 set -e
 
-echo "🔧 Waiting for Postgres..."
+echo "🔧 PostgreSQL 준비를 기다리는 중..."
 until pg_isready -h $POSTGRES_HOST -p $POSTGRES_PORT; do
-  echo "⏳ Postgres not ready yet..."
+  echo "⏳ 아직 PostgreSQL이 준비되지 않았습니다..."
   sleep 1
 done
-echo "✅ Postgres is ready!"
+echo "✅ PostgreSQL 연결 완료"
 
-echo "==== Running migrations ===="
+echo "==== 데이터베이스 마이그레이션 실행 ===="
 uv run python manage.py migrate --noinput
 
+echo "==== 정적 파일 수집(collectstatic) ===="
+uv run python manage.py collectstatic --noinput
+
+echo "🔑 정적/미디어 디렉터리 권한 정리 중..."
+STATIC_DIR=/app/staticfiles
+MEDIA_DIR=/app/media
+APP_DIR=/app
+
+# nginx와 Django 모두 접근 가능하도록 권한 정리
+sudo chown -R ubuntu:ubuntu $STATIC_DIR $MEDIA_DIR || true
+sudo chmod -R 755 $STATIC_DIR $MEDIA_DIR || true
+
+# 상위 디렉터리 접근권한 확보 (거의 모든 경로 접근 허용)
+sudo chmod o+x /home/ubuntu || true
+sudo chmod o+rx $APP_DIR || true
+sudo chmod -R o+rX $APP_DIR/* || true
+
+
 if [ "$DJANGO_ENV" = "production" ]; then
-  echo "🚀 Starting Gunicorn (Uvicorn Workers)"
+  echo "🚀 Gunicorn(Uvicorn 워커) 시작"
   export DJANGO_SETTINGS_MODULE=config.settings.prod
   uv run gunicorn \
     --bind 0.0.0.0:8000 \
@@ -33,7 +51,7 @@ if [ "$DJANGO_ENV" = "production" ]; then
 #    --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
 else
-  echo "🛠️ Starting Django Development Server"
+  echo "🛠️ Django 개발 서버 실행"
   export DJANGO_SETTINGS_MODULE=config.settings.dev
   uv run python manage.py runserver 0.0.0.0:8000
 fi

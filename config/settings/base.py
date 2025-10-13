@@ -1,49 +1,41 @@
-# === 환경 로딩 ===
+# ============================================
+# Django Base Settings (HTTP-only / EC2 배포용)
+# ============================================
+
 import os
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
-# === 환경변수 로드 ===
+# === 환경 로딩 ===
 load_dotenv()
 
 # === 경로/플래그 ===
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-DEBUG = (
-    os.getenv("DEBUG", "True") == "True"
-)  # dev/prod 분기 플래그(운영 보안/렌더러/이메일 등 자동 토글)
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
-# === CORS 개발용: 모든 출처 허용 ===
+# === CORS ===
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = (
-    True  # Swagger 요청에서 X-CSRFTOKEN 제거로 CSRF토큰으로 인한 Failed to fetch 회피
-)
-# CSRF_TRUSTED_ORIGINS = [
-#     "http://127.0.0.1:8000",
-#     "http://localhost:8000",
-# ]
+CORS_ALLOW_CREDENTIALS = True  # Swagger 등에서 CSRF 오류 방지
+
 # === 보안 키 ===
 SECRET_KEY = os.getenv(
     "DJANGO_SECRET_KEY",
     "django-insecure-^kyhex_ex7)0t@+46k#n(8k*n+l51=0ucdy4d^&u=p#_tf(vth",
 )
 
-# === 외부 API 키 ===
+# === 외부 API ===
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-flash")
 
-# === 호스트/CSRF ===
+# === 호스트 ===
 ALLOWED_HOSTS = [
     h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()
 ]
-# CSRF_TRUSTED_ORIGINS = [
-#     o.strip() for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
-# ]
-# ↑ 운영 배포 시 필수: 실제 접근 도메인/오리진을 환경변수로 주입(프록시/도메인 구성에 맞게 갱신)
 
 # === 앱 ===
 INSTALLED_APPS = [
-    # Django
+    # Django 기본
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -53,7 +45,7 @@ INSTALLED_APPS = [
     # 3rd-party
     "rest_framework",
     "rest_framework_simplejwt",
-    "rest_framework_simplejwt.token_blacklist",  # Refresh 회전 후 블랙리스트 적용을 위해 필요
+    "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "django_filters",
     "corsheaders",
@@ -68,7 +60,9 @@ INSTALLED_APPS = [
 
 # === 미들웨어 ===
 MIDDLEWARE = [
+    "apps.core.middleware.ForceHttpSchemeMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "apps.core.middleware.DisableHSTSMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -103,13 +97,6 @@ ASGI_APPLICATION = "config.asgi.application"
 WSGI_APPLICATION = "config.wsgi.application"
 
 # === 데이터베이스(PostgreSQL) ===
-REQUIRED_VARS = [
-    "POSTGRES_HOST",
-    "POSTGRES_PORT",
-    "POSTGRES_DB",
-    "POSTGRES_USER",
-    "POSTGRES_PASSWORD",
-]
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -118,10 +105,8 @@ DATABASES = {
         "NAME": os.getenv("POSTGRES_DB", "fluent"),
         "USER": os.getenv("POSTGRES_USER", "fluent_user"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", "0000"),
-        # "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "60")),  # 연결 재사용으로 성능/비용 최적화
     }
 }
-
 
 # === 인증/비밀번호 정책 ===
 AUTH_PASSWORD_VALIDATORS = [
@@ -146,7 +131,6 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    # 개발은 Browsable 허용, 운영은 JSON-only로 자동 전환(↓ DEBUG 분기)
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
@@ -158,47 +142,27 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": os.getenv("THROTTLE_RATE_ANON", "20/min"),  # 익명 사용자 분당 20회
-        "user": os.getenv("THROTTLE_RATE_USER", "60/min"),  # 인증 사용자 분당 60회
+        "anon": os.getenv("THROTTLE_RATE_ANON", "20/min"),
+        "user": os.getenv("THROTTLE_RATE_USER", "60/min"),
     },
 }
 if not DEBUG:
     REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
         "rest_framework.renderers.JSONRenderer"
     ]
-    # ↑ 운영에서 UI 렌더러 제거(성능/정보노출 최소화)
 
-# === 스키마/Swagger(drf-spectacular) ===
+# === Swagger / drf-spectacular ===
 SPECTACULAR_SETTINGS = {
     "TITLE": "Smart Nourish Assistant API",
     "DESCRIPTION": "음식·영양 정보 특화 AI 가상비서 API 문서",
     "VERSION": "1.0.0",
-    "SECURITY": [{"bearerAuth": []}],  # Swagger 전역 보안 스키마(JWT) 선언
+    "SECURITY": [{"bearerAuth": []}],
     "COMPONENTS": {
         "securitySchemes": {
             "bearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
         }
     },
     "SWAGGER_UI_SETTINGS": {"persistAuthorization": True},
-    "TAGS": [
-        {
-            "name": "Auth & Users",
-            "description": "회원가입, 로그인/로그아웃, 내 정보 조회/수정, 탈퇴 등 사용자 계정 관련 API",
-        },
-        {
-            "name": "Conversations",
-            "description": "대화 생성, 메시지 기록, 대화 관리 API",
-        },
-        {
-            "name": "AI Inference",
-            "description": "Gemini AI 기반 추론 API 및 실행 로그 관리, 운영자 용 모니터링",
-        },
-        {
-            "name": "Search & Stats",
-            "description": "검색 로그, 인기 검색어, 추천 질문 및 통계 API",
-        },
-    ],
-    "SCHEMA_PATH_PREFIX": "/api/v1/",
 }
 
 # === 국제화/시간대 ===
@@ -210,31 +174,25 @@ USE_TZ = True
 # === 정적/미디어 ===
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
-
+STATICFILES_DIRS = [BASE_DIR / "static"]
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # === 기타 ===
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-APPEND_SLASH = True  # url 끝에 / 허용 비허용
+APPEND_SLASH = True
 
 # === SimpleJWT ===
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(os.getenv("JWT_ACCESS_MIN", "30"))),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=int(os.getenv("JWT_REFRESH_DAYS", "7"))),
-    "ROTATE_REFRESH_TOKENS": True,  # 요구사항: Refresh 회전
-    "BLACKLIST_AFTER_ROTATION": True,  # 요구사항: 회전 직전 토큰 블랙리스트
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
 }
-# ↑ 위 2개 옵션은 token_blacklist 앱까지 활성화되어야 실제 효력
 
 # === 이메일 ===
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 if not DEBUG:
-    # 운영에서는 SMTP로 자동 전환(환경변수로 자격증명 주입)
     EMAIL_BACKEND = os.getenv(
         "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
     )
@@ -247,55 +205,60 @@ if not DEBUG:
         "DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-reply@example.com"
     )
 
-# === 이메일 인증 강제 플래그 ===
-AUTH_EMAIL_VERIFICATION_REQUIRED = (
-    os.getenv("AUTH_EMAIL_VERIFICATION_REQUIRED", "False") == "True"
+# === OAuth2 설정 ===
+OAUTH_ALLOWED_PROVIDERS = [
+    p.strip()
+    for p in os.getenv("OAUTH_ALLOWED_PROVIDERS", "github").split(",")
+    if p.strip()
+]
+OAUTH_ALLOW_SIGNUP = os.getenv("OAUTH_ALLOW_SIGNUP", "true").lower() == "true"
+OAUTH_TRUST_PROVIDER_EMAIL = (
+    os.getenv("OAUTH_TRUST_PROVIDER_EMAIL", "true").lower() == "true"
 )
-# ↑ 요구사항: 운영에서만 True 권장(dev에서는 False). 로그인 뷰에서 이 플래그로 차단.
+OAUTH_CLIENTS = {
+    "github": {
+        "client_id": os.getenv("GITHUB_CLIENT_ID", ""),
+        "client_secret": os.getenv("GITHUB_CLIENT_SECRET", ""),
+        "redirect_uri": os.getenv("GITHUB_REDIRECT_URI", ""),
+    },
+}
 
-# === 프록시/HTTPS 보안 ===
-USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-
-# ↓ EC2 환경은 HTTPS 미적용 상태이므로 전부 False 처리
+# ==================================================
+# ✅ HTTP-only 안전 배포용 보안 설정 (HTTPS 오인 완전 차단)
+# ==================================================
+USE_X_FORWARDED_HOST = False
+SECURE_PROXY_SSL_HEADER = None
 SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
 SECURE_HSTS_SECONDS = 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 SECURE_HSTS_PRELOAD = False
 X_FRAME_OPTIONS = "SAMEORIGIN"
 
-# === 로깅(S-프로파일: 콘솔 전용) ===
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+CSRF_TRUSTED_ORIGINS = [
+    "http://13.125.180.143",
+    "http://localhost",
+    "http://127.0.0.1",
+]
 
+# === 로깅 ===
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 LOGGING = {
     "version": 1,
-    "disable_existing_loggers": False,  # Django 기본 로거 유지
-    "handlers": {
-        # 콘솔 출력 핸들러 (개발/도커 로그 확인용)
-        "console": {
-            "class": "logging.StreamHandler",
-        },
-    },
-    "root": {
-        # 루트 로거 (기본 로그 처리)
-        "handlers": ["console"],
-        "level": LOG_LEVEL,  # 환경변수로 조정 가능 (기본 INFO)
-    },
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": LOG_LEVEL},
     "loggers": {
-        # inference 서비스 모듈 전용 로거
-        # Gemini API 호출 에러/성공을 구분해 콘솔에 찍기 위해 별도 설정
         "apps.inference.services": {
             "handlers": ["console"],
-            "level": "DEBUG",  # DEBUG 이상 전부 출력
-            "propagate": True,  # root까지 전파
+            "level": "DEBUG",
+            "propagate": True,
         },
-        # Django 기본 request 로거
-        # 400/403/404/500 등 클라이언트/서버 에러를 콘솔에 찍어줌
         "django.request": {
             "handlers": ["console"],
             "level": "DEBUG",
@@ -303,56 +266,3 @@ LOGGING = {
         },
     },
 }
-
-
-# === OAuth2 ===
-OAUTH_ALLOWED_PROVIDERS = [
-    p.strip()
-    for p in os.getenv("OAUTH_ALLOWED_PROVIDERS", "github").split(",")
-    if p.strip()
-]
-OAUTH_ALLOW_SIGNUP = (
-    os.getenv("OAUTH_ALLOW_SIGNUP", "true").lower() == "true"
-)  # 소셜 최초 로그인 시 회원 생성 허용
-OAUTH_TRUST_PROVIDER_EMAIL = (
-    os.getenv("OAUTH_TRUST_PROVIDER_EMAIL", "true").lower() == "true"
-)  # 공급자 email_verified 신뢰
-
-OAUTH_CLIENTS = {
-    # "google": {
-    #     "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
-    #     "client_secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
-    #     "redirect_uri": os.getenv("GOOGLE_REDIRECT_URI", ""),
-    # },
-    "github": {
-        "client_id": os.getenv("GITHUB_CLIENT_ID", ""),
-        "client_secret": os.getenv("GITHUB_CLIENT_SECRET", ""),
-        "redirect_uri": os.getenv("GITHUB_REDIRECT_URI", ""),
-    },
-    # "kakao": {
-    #     "client_id": os.getenv("KAKAO_CLIENT_ID", ""),
-    #     "client_secret": os.getenv("KAKAO_CLIENT_SECRET", ""),
-    #     "redirect_uri": os.getenv("KAKAO_REDIRECT_URI", ""),
-    # },
-    # "naver": {
-    #     "client_id": os.getenv("NAVER_CLIENT_ID", ""),
-    #     "client_secret": os.getenv("NAVER_CLIENT_SECRET", ""),
-    #     "redirect_uri": os.getenv("NAVER_REDIRECT_URI", ""),
-    # },
-}
-
-# Swagger 제외 경로(브라우저 콜백)
-SPECTACULAR_SETTINGS["EXCLUDE_PATHS"] = SPECTACULAR_SETTINGS.get(
-    "EXCLUDE_PATHS", []
-) + [
-    r"^/api/v1/auth/verify/",
-]
-
-# 배포 때 활성화
-# from celery.schedules import crontab
-# CELERY_BEAT_SCHEDULE = {
-#     "refresh-popular-queries-mv": {
-#         "task": "core.tasks.refresh_popular_queries_mv",
-#         "schedule": crontab(minute=0, hour="*/12"),  # 12시간마다 실행
-#     },
-# }
