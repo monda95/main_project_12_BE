@@ -256,20 +256,18 @@ AUTH_EMAIL_VERIFICATION_REQUIRED = (
 # === 프록시/HTTPS 보안 ===
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-# ↑ Nginx 등 프록시 뒤에서 원본 스킴/호스트를 신뢰하여 HTTPS 인식
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True  # 운영: HTTP→HTTPS 강제
-    SESSION_COOKIE_SECURE = True  # 운영: Secure 쿠키
-    CSRF_COOKIE_SECURE = True  # 운영: Secure 쿠키
-    CSRF_COOKIE_HTTPONLY = True  # 운영: JS에서 접근 불가
-    SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_HSTS_SECONDS = int(
-        os.getenv("SECURE_HSTS_SECONDS", "31536000")
-    )  # 운영: HSTS(기본 1년)
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    X_FRAME_OPTIONS = "DENY"
+
+# ↓ EC2 환경은 HTTPS 미적용 상태이므로 전부 False 처리
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_HSTS_SECONDS = 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
+X_FRAME_OPTIONS = "SAMEORIGIN"
 
 # === 로깅(S-프로파일: 콘솔 전용) ===
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

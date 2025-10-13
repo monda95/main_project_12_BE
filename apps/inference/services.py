@@ -145,9 +145,10 @@ class InferenceService:
             }
 
         url = (
-            f"https://generativelanguage.googleapis.com/v1/models/"
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{settings.GEMINI_MODEL_NAME}:generateContent?key={api_key}"
         )
+
         headers = {"Content-Type": "application/json"}
         payload = {
             "contents": [{"parts": [{"text": prompt_content}]}],
